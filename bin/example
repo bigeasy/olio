@@ -1,0 +1,10 @@
+rm ./socket
+
+olio ./socket listen &
+olio=$!
+
+olio ./socket run --workers 8 ./bin/echo.bin.js
+
+olio ./socket serve --workers 8 ./bin/http.bin.js
+
+wait $olio
