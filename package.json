@@ -41,6 +41,10 @@
                             "proof":                        "3.0.x"
     },
     "main":                 "olio",
+    "bin":
+    {
+                            "olio":                         "olio.bin.js"
+    },
     "scripts":
     {
                             "test": "proof platform win32 && proof test */*.t.js || t/test"
