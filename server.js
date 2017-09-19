@@ -73,7 +73,18 @@ var Operation = require('operation/variadic')
 
 //
 function Server (argv) {
-    cluster.setupMaster({ exec: argv[0], args: argv.slice(1) })
+    var fs = require('fs')
+    var command = process.env.PATH.split(':').map(function (directory) {
+        return path.join(directory, argv[0])
+    }).filter(function (file) {
+        try {
+            fs.statSync(file)
+            return true
+        } catch (e) {
+            return false
+        }
+    }).shift()
+    cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._argv = argv
     this._children = []
     this._destructible = new Destructible('olio/server')
@@ -98,7 +109,6 @@ Server.prototype.send = function (message, socket) {
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
     for (var id in cluster.workers) {
-        console.log('!!!!!!!')
         cluster.workers[id].send({ module: 'olio', method: 'shutdown' })
     }
 }
