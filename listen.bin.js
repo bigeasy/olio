@@ -16,9 +16,7 @@
 
     ___ . ___
  */
-require('arguable')(module, {
-    properties: { prefix: [] },
-}, require('cadence')(function (async, program) {
+require('arguable')(module, require('cadence')(function (async, program) {
     // Convert an HTTP request into a raw socket.
     var Downgrader = require('downgrader')
 
@@ -44,18 +42,14 @@ require('arguable')(module, {
 
     var server = http.createServer(listener.reactor.middleware)
     server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
-    server.on('upgrade', function () {
-        console.log('upgrade')
-    })
 
     destructible.addDestructor('listen', server, 'close')
 
     async(function () {
         server.listen(program.socket, async())
     }, function () {
+        program.ready.unlatch()
         delta(destructible.monitor([ 'server' ])).ee(server).on('close')
         destructible.completed(5000, async())
     })
-}), {
-    argv: []
-})
+}))

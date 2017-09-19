@@ -7,19 +7,23 @@
         --help              display this message
     ___ . ___
  */
-require('arguable')(module, require('cadence')(function (async, program) {
+require('arguable')(module, {
+    properties: { prefix: [] }
+}, require('cadence')(function (async, program) {
     var path = require('path')
     var argv = program.argv.slice()
     var socket = argv.shift()
     var command = argv.shift()
     var arguable = require(path.join(__dirname, command + '.bin.js'))
-    arguable(argv, {
+    // TODO This is almost an `exec`, pass in `ready`?
+    var child = arguable(argv, {
         stdout: program.stdout,
         env: program.env,
         stdin: program.stdin,
         stderr: program.stderr,
         events: program,
         send: program.send,
-        properties: { socket: socket }
+        properties: { socket: socket, prefix: program.prefix }
     }, async())
+    child.ready.wait(program.ready, 'unlatch')
 }))
