@@ -37,43 +37,41 @@ require('arguable')(module, require('cadence')(function (async, program) {
     })
 
     var Destructible = require('destructible')
-    var destructible = new Destructible('./bin/http.bin.js')
-
-    var olio = new Olio(program, function (constructor) {
-        constructor.middleware = reactor.middleware
-        constructor.sender([ './bin/echo.bin.js' ], function (index) {
-            return new Requester
-        })
-    })
-
+    var destructible = new Destructible(900, './bin/http.bin.js')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
-    olio.listen(destructible.monitor('olio'))
-    destructible.addDestructor('olio', olio, 'destroy')
+    destructible.completed.wait(async())
 
-    var http = require('http')
+    async([function () {
+        destructible.destroy()
+    }], function () {
+        var olio = new Olio(program, function (constructor) {
+            constructor.middleware = reactor.middleware
+            constructor.sender([ './bin/echo.bin.js' ], function (index) {
+                return new Requester
+            })
+        })
 
+        destructible.completed.wait(olio.ready, 'unlatch')
+        olio.ready.wait(async())
 
-    var delta = require('delta')
-
-    var Thereafter = require('thereafter')
-    var thereafter = new Thereafter
-
-    destructible.addDestructor('thereafter', thereafter, 'cancel')
-
-    thereafter.run(function (ready) {
-        olio.ready.wait(ready, 'unlatch')
-    })
-
-    thereafter.run(function (ready) {
-        var server = http.createServer(reactor.middleware)
+        destructible.addDestructor('olio', olio, 'destroy')
+        olio.listen(destructible.monitor('olio'))
+    }, function () {
+        var http = require('http')
         var cluster = require('cluster')
-        delta(destructible.monitor('http')).ee(server).on('close')
-        destructible.addDestructor('connection', cluster.worker, 'disconnect')
-        destructible.addDestructor('server', server, 'close')
-        server.listen(8080)
-        ready.unlatch()
-    })
+        var delta = require('delta')
 
-    destructible.completed(900, async())
+        var server = http.createServer(reactor.middleware)
+        async(function () {
+            destructible.addDestructor('connection', cluster.worker, 'disconnect')
+            destructible.addDestructor('server', server, 'close')
+
+            server.listen(8080, async())
+        }, function () {
+            delta(destructible.monitor('http')).ee(server).on('close')
+        })
+    }, function () {
+        destructible.completed.wait(async())
+    })
 }))

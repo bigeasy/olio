@@ -25,7 +25,7 @@ function Runner (options) {
         count: coalesce(options.subordinates, 1),
         array: []
     }
-    this._destructible = new Destructible('olio/runner')
+    this._destructible = new Destructible(1000, 'olio/runner')
     this._destructible.markDestroyed(this)
 }
 
@@ -71,7 +71,7 @@ Runner.prototype.run = cadence(function (async) {
     for (var i = 0; i < this._children.count; i++) {
         this._run(i, this._destructible.monitor([ 'child', i ]))
     }
-    this._destructible.completed(1000, async())
+    this._destructible.completed.wait(async())
 })
 
 module.exports = Runner

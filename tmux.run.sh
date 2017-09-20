@@ -1,12 +1,6 @@
-function shutdown () {
-    if [[ ! -z "$olio" ]]; then
-        kill "$olio"
-    fi
-}
+set -e
 
-# trap shutdown INT
-
-rm ./socket
+rm -f ./socket
 
 node olio.bin.js ./socket listen &
 olio=$!

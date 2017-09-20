@@ -27,29 +27,35 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var delta = require('delta')
 
     var Destructible = require('destructible')
-    var destructible = new Destructible('olio/listen.bin')
-
+    var destructible = new Destructible(5000, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
-    var Listener = require('./listener.js')
-    var listener = new Listener(program.socket, program.prefix)
+    destructible.completed.wait(async())
 
-    listener.listen(destructible.monitor([ 'listener' ]))
-    destructible.addDestructor('listener', listener, 'destroy')
+    async([function () {
+        destructible.destroy()
+    }], function () {
+        var Listener = require('./listener.js')
+        var listener = new Listener(program.socket, program.prefix)
 
-    var downgrader = new Downgrader
-    downgrader.on('socket', Operation([ listener, 'socket' ]))
+        destructible.addDestructor('listener', listener, 'destroy')
+        listener.listen(destructible.monitor([ 'listener' ]))
 
-    var server = http.createServer(listener.reactor.middleware)
-    server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+        var downgrader = new Downgrader
+        downgrader.on('socket', Operation([ listener, 'socket' ]))
 
-    destructible.addDestructor('listen', server, 'close')
+        var server = http.createServer(listener.reactor.middleware)
+        server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
 
-    async(function () {
-        server.listen(program.socket, async())
+        destructible.addDestructor('listen', server, 'close')
+
+        async(function () {
+            server.listen(program.socket, async())
+        }, function () {
+            program.ready.unlatch()
+            delta(destructible.monitor([ 'server' ])).ee(server).on('close')
+        })
     }, function () {
-        program.ready.unlatch()
-        delta(destructible.monitor([ 'server' ])).ee(server).on('close')
-        destructible.completed(5000, async())
+        destructible.completed.wait(async())
     })
 }))

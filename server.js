@@ -74,20 +74,23 @@ var Operation = require('operation/variadic')
 //
 function Server (argv) {
     var fs = require('fs')
-    var command = process.env.PATH.split(':').map(function (directory) {
-        return path.join(directory, argv[0])
-    }).filter(function (file) {
-        try {
-            fs.statSync(file)
-            return true
-        } catch (e) {
-            return false
-        }
-    }).shift()
+    var command = argv[0]
+    if (command[0] != '.') {
+        command = process.env.PATH.split(':').map(function (directory) {
+            return path.join(directory, argv[0])
+        }).filter(function (file) {
+            try {
+                fs.statSync(file)
+                return true
+            } catch (e) {
+                return false
+            }
+        }).shift()
+    }
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._argv = argv
     this._children = []
-    this._destructible = new Destructible('olio/server')
+    this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
     this._destructible.addDestructor('shutdown', this, '_shutdown')
 }
@@ -137,7 +140,7 @@ Server.prototype.run = function (count, environment) {
 
 
 Server.prototype.listen = function (callback) {
-    this._destructible.completed(2000, callback)
+    this._destructible.completed.wait(callback)
 }
 
 module.exports = Server

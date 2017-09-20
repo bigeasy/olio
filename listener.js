@@ -16,7 +16,7 @@ var Keyify = require('keyify')
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
 function Listener (socketPath) {
-    this._destructible = new Destructible('olio/listener')
+    this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
@@ -116,7 +116,7 @@ Listener.prototype.serve = cadence(function (async, request) {
 })
 
 Listener.prototype.listen = function (callback) {
-    this._destructible.completed(4000, callback)
+    this._destructible.completed.wait(callback)
 }
 
 Listener.prototype.destroy = function () {

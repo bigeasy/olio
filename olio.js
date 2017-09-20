@@ -38,7 +38,7 @@ function Olio (program, configurator) {
     this._receiver = constructor.receiver
     this._shutdown = constructor.shutdown
 
-    this._destructible = new Destructible('olio')
+    this._destructible = new Destructible(750, 'olio')
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
@@ -187,7 +187,7 @@ Olio.prototype.destroy = function () {
 }
 
 Olio.prototype.listen = function (callback) {
-    this._destructible.completed(750, callback)
+    this._destructible.completed.wait(callback)
 }
 
 module.exports = Olio

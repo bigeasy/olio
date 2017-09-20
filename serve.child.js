@@ -18,27 +18,35 @@
 require('arguable')(module, require('cadence')(function (async, program) {
     var Server = require('./server')
     var server = new Server(program.argv)
-    var Destructible = require('destructible')
-    var destructible = new Destructible('olio.serve')
 
     var Operation = require('operation/variadic')
 
+    var Destructible = require('destructible')
+    var destructible = new Destructible(3000, 'olio.serve')
+
     program.on('shutdown', destructible.destroy.bind(destructible))
-    destructible.addDestructor('server', server, 'destroy')
 
-    var message
-    program.on('message', message = Operation([ server, 'send' ]))
-    destructible.addDestructor('message', function () {
-        program.removeListener('message', message)
+    destructible.completed.wait(async())
+
+    async([function () {
+        destructible.destroy()
+    }], function () {
+        var message
+        program.on('message', message = Operation([ server, 'send' ]))
+        destructible.addDestructor('message', function () {
+            program.removeListener('message', message)
+        })
+
+        destructible.addDestructor('server', server, 'destroy')
+
+        server.listen(destructible.monitor('children'))
+
+        server.run(program.ultimate.workers, function (index) {
+            var env = JSON.parse(JSON.stringify(program.env))
+            env.OLIO_WORKER_INDEX = index
+            return env
+        })
+    }, function () {
+        destructible.completed.wait(async())
     })
-
-    server.listen(destructible.monitor('children'))
-
-    server.run(program.ultimate.workers, function (index) {
-        var env = JSON.parse(JSON.stringify(program.env))
-        env.OLIO_WORKER_INDEX = index
-        return env
-    })
-
-    destructible.completed(3000, async())
 }))
