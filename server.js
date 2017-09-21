@@ -105,7 +105,7 @@ Server.prototype.send = function (message, socket) {
             cluster.workers[id].send(message)
         }
     } else {
-        cluster.workers[message.to].send(message, coalesce(socket))
+        this._children[message.to].send(message, coalesce(socket))
     }
 }
 
