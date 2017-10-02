@@ -23,9 +23,10 @@
                             "arguable":                     "5.2.x",
                             "delta":                        "1.2.x",
                             "downgrader":                   "0.1.x",
-                            "destructible":                 "0.15.x",
+                            "descendent":                   "0.0.x",
+                            "destructible":                 "0.17.x",
                             "cadence":                      "1.0.x",
-                            "conduit":                      "0.13.x",
+                            "conduit":                      "0.14.x",
                             "extant":                       "1.0.x",
                             "finalist":                     "0.0.x",
                             "interrupt":                    "5.0.x",
@@ -35,13 +36,16 @@
                             "reactor":                      "8.0.x",
                             "rescue":                       "3.0.x",
                             "signal":                       "3.0.x",
-                            "staccato":                     "3.9.x",
+                            "staccato":                     "5.0.x",
                             "thereafter":                   "0.1.x",
                             "vizsla":                       "7.0.x"
     },
     "devDependencies":
     {
-                            "proof":                        "3.0.x"
+                            "proof":                        "3.0.x",
+                            "prolific.logger":              "5.0.x",
+                            "prolific.resolver":            "5.0.x",
+                            "prolific.shuttle":             "13.0.x"
     },
     "main":                 "olio",
     "bin":

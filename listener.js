@@ -12,16 +12,25 @@ var spawn = require('child_process').spawn
 var Destructible = require('destructible')
 var Keyify = require('keyify')
 
+var Descendent = require('descendent')
+
+var Operation = require('operation/variadic')
+
 // Exceptions that you can catch by type.
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
-function Listener (socketPath) {
+function Listener (process, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
+    this._descendent = new Descendent(process)
+    this._destructible.addDestructor('descendent', this._descendent, 'destroy')
+
     this._socketPath = socketPath
     this._children = []
+
+    this._process = process
 
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
@@ -52,6 +61,12 @@ Listener.prototype.socket = function (request, socket) {
     this._children[key].child.send(message, socket)
 }
 
+Listener.prototype.message = function (message, handle) {
+    if (this._process.send) {
+        this._process.send(message, coalesce(handle))
+    }
+}
+
 Listener.prototype.index = cadence(function (async) {
     return 'Olio Listener API\n'
 })
@@ -59,6 +74,8 @@ Listener.prototype.index = cadence(function (async) {
 Listener.prototype.run = cadence(function (async, request) {
     var body = request.body
     var runner = new Runner({
+        descendent: this._descendent,
+        process: process,
         workers: body.parameters.workers,
         argv: body.argv
     })
@@ -111,6 +128,7 @@ Listener.prototype.serve = cadence(function (async, request) {
     ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
     this._created(+body.parameters.workers, body.argv, child)
     this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
+//    child.on('message', Operation([ this, 'message' ]))
     this._monitor(child, this._destructible.monitor([ 'serve', body.argv ]))
     return { okay: true }
 })

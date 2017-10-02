@@ -93,6 +93,7 @@ Olio.prototype._createSender = cadence(function (async, sender, message, index) 
     var receiver = sender.builder.call(null, message.argv, index, message.count)
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
+    this._destructible.addDestructor([ 'readable', message.argv, index ], readable, 'destroy')
     async(function () {
         var request = http.request({
             socketPath: message.socketPath,
@@ -115,19 +116,18 @@ Olio.prototype._createSender = cadence(function (async, sender, message, index) 
             interrupt.assert(buffer != null && buffer.length == 4, 'closed before start')
             interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
             socket.unpipe(through)
+
+            this._destructible.invokeDestructor([ 'readable', message.argv, index ])
             readable.destroy()
 
             var conduit  = new Conduit(socket, socket, receiver)
 
-            this._destructible.addDestructor([ 'conduit', message.argv, message.count ], conduit, 'destroy')
-            this._destructible.addDestructor([ 'socket', message.argv, message.count ], socket, 'destroy')
-
+            this._destructible.addDestructor([ 'conduit', message.argv, index ], conduit, 'destroy')
+            this._destructible.addDestructor([ 'socket', message.argv, index ], socket, 'destroy')
             sender.receivers[index] = { conduit: conduit, receiver: receiver }
             conduit.listen(null, async())
             ready.unlatch()
         })
-    }, function () {
-        console.log('sender done')
     })
 })
 

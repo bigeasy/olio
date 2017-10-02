@@ -22,11 +22,13 @@ function Runner (options) {
     var argv = options.argv.slice()
     this._children = {
         argv: argv,
-        count: coalesce(options.subordinates, 1),
+        count: coalesce(options.workers, 1),
         array: []
     }
     this._destructible = new Destructible(1000, 'olio/runner')
     this._destructible.markDestroyed(this)
+    this._process = options.process
+    this._descendent = options.descendent
 }
 
 Runner.prototype.destroy = function () {
@@ -34,13 +36,14 @@ Runner.prototype.destroy = function () {
 }
 
 Runner.prototype.send = function (message, handle) {
-    if (message.to == null) {
-        this._children.array.forEach(function (child) {
-            child.send(message)
-        })
-    } else {
-        console.log(message)
-        this._children.array[message.to.index].send(message, coalesce(handle))
+    if (message.module == 'olio') {
+        if (message.to == null) {
+            this._children.array.forEach(function (child) {
+                child.send(message, handle)
+            })
+        } else {
+            this._children.array[message.to.index].send(message, coalesce(handle))
+        }
     }
 }
 
@@ -55,6 +58,7 @@ Runner.prototype._run = cadence(function (async, index) {
     var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), {
         stdio: [ 0, 1, 2, 'ipc' ]
     })
+    this._descendent.addChild(child, { child: child, index: index })
     this._children.array[index] = child
     this._destructible.addDestructor([ 'child', index ], child, 'kill')
     child.send({ module: 'olio', method: 'initialize', argv: this._children.argv, index: index })

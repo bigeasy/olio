@@ -72,7 +72,7 @@ var Operation = require('operation/variadic')
 // it is generated internally.
 
 //
-function Server (argv) {
+function Server (process, argv) {
     var fs = require('fs')
     var command = argv[0]
     if (command[0] != '.') {
@@ -89,6 +89,7 @@ function Server (argv) {
     }
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._argv = argv
+    this._process = process
     this._children = []
     this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
@@ -97,6 +98,12 @@ function Server (argv) {
 
 Server.prototype.destroy = function () {
     this._destructible.destroy()
+}
+
+Server.prototype.message = function (message, handle) {
+    if (this._process.send) {
+        this._process.send(message, coalesce(handle))
+    }
 }
 
 Server.prototype.send = function (message, socket) {
@@ -134,6 +141,7 @@ Server.prototype.run = function (count, environment) {
             index: i
         })
         this._children.push(child)
+        child.on('message', Operation([ this, 'message' ]))
         this._monitor(child, this._destructible.monitor([ 'child', i ]))
     }
 }

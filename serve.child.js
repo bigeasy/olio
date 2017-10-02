@@ -17,7 +17,7 @@
  */
 require('arguable')(module, require('cadence')(function (async, program) {
     var Server = require('./server')
-    var server = new Server(program.argv)
+    var server = new Server(program, program.argv)
 
     var Operation = require('operation/variadic')
 
