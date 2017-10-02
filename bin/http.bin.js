@@ -42,6 +42,13 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var destructible = new Destructible(900, './bin/http.bin.js')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
+    var logger = require('prolific.logger').createLogger('olio.http')
+    var Shuttle = require('prolific.shuttle')
+    console.log('start shuttle')
+    var shuttle = Shuttle.shuttle(program, logger)
+    console.log('shuttling')
+    destructible.addDestructor('shuttle', shuttle, 'close')
+
     destructible.completed.wait(async())
 
     async([function () {
@@ -76,6 +83,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
             delta(destructible.monitor('http')).ee(server).on('close')
         })
     }, function () {
+        logger.info('started', { http: true })
         destructible.completed.wait(async())
     })
 }))

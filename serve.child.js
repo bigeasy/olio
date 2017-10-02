@@ -16,15 +16,20 @@
     ___ . ___
  */
 require('arguable')(module, require('cadence')(function (async, program) {
-    var Server = require('./server')
-    var server = new Server(program, program.argv)
-
     var Operation = require('operation/variadic')
 
     var Destructible = require('destructible')
     var destructible = new Destructible(3000, 'olio.serve')
 
+    var Descendent = require('descendent')
+    var descendent = new Descendent(program)
+
     program.on('shutdown', destructible.destroy.bind(destructible))
+
+    destructible.addDestructor('descendent', descendent, 'destroy')
+
+    var Server = require('./server')
+    var server = new Server(program, program.argv, descendent)
 
     destructible.completed.wait(async())
 

@@ -126,6 +126,7 @@ Listener.prototype.serve = cadence(function (async, request) {
         path.join(__dirname, 'serve.child.js'),
         '--workers', body.parameters.workers
     ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
+    this._descendent.addChild(child, null)
     this._created(+body.parameters.workers, body.argv, child)
     this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
 //    child.on('message', Operation([ this, 'message' ]))

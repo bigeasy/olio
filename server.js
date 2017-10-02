@@ -72,7 +72,7 @@ var Operation = require('operation/variadic')
 // it is generated internally.
 
 //
-function Server (process, argv) {
+function Server (process, argv, descendent) {
     var fs = require('fs')
     var command = argv[0]
     if (command[0] != '.') {
@@ -94,25 +94,22 @@ function Server (process, argv) {
     this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
     this._destructible.addDestructor('shutdown', this, '_shutdown')
+    this._descendent = descendent
 }
 
 Server.prototype.destroy = function () {
     this._destructible.destroy()
 }
 
-Server.prototype.message = function (message, handle) {
-    if (this._process.send) {
-        this._process.send(message, coalesce(handle))
-    }
-}
-
 Server.prototype.send = function (message, socket) {
-    if (message.to == null) {
-        for (var id in cluster.workers) {
-            cluster.workers[id].send(message)
+    if (message.module == 'olio') {
+        if (message.to == null) {
+            for (var id in cluster.workers) {
+                cluster.workers[id].send(message)
+            }
+        } else {
+            this._children[message.to.index].send(message, coalesce(socket))
         }
-    } else {
-        this._children[message.to.index].send(message, coalesce(socket))
     }
 }
 
@@ -140,8 +137,8 @@ Server.prototype.run = function (count, environment) {
             argv: this._argv,
             index: i
         })
+        this._descendent.addChild(child.process, null)
         this._children.push(child)
-        child.on('message', Operation([ this, 'message' ]))
         this._monitor(child, this._destructible.monitor([ 'child', i ]))
     }
 }
