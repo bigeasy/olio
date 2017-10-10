@@ -17,7 +17,7 @@ function Constructor (olio) {
 Constructor.prototype.sender = function (argv, builder) {
     var ready = new Signal
     this._olio._latches.push(ready)
-    this._olio._senders.array.push({ argv: argv, builder: builder, receivers: [], ready: ready  })
+    this._olio._senders.array.push({ count: null, argv: argv, builder: builder, receivers: [], ready: ready  })
 }
 
 var cadence = require('cadence')
@@ -140,6 +140,10 @@ Olio.prototype.sender = function (path, index) {
     return this._getLink(path).receivers[index].receiver
 }
 
+Olio.prototype.count = function (path, index) {
+    return this._getLink(path).count
+}
+
 Olio.prototype._message = function (message, socket) {
     if (message.module == 'olio') {
         switch (message.method) {
@@ -154,6 +158,7 @@ Olio.prototype._message = function (message, socket) {
         case 'created':
             var sender = this._getLink(message.argv)
             if (sender != null) {
+                sender.count = message.count
                 for (var i = 0; i < message.count; i++) {
                     this._createSender(sender, message, i, this._destructible.monitor([ 'sender', message.argv, i ]))
                 }
