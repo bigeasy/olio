@@ -97,8 +97,8 @@ Listener.prototype._created = function (count, argv, child) {
     var keyified = Keyify.stringify(argv)
     this._children[keyified] = { count: count, argv: argv, child: child }
     for (var key in this._children) {
+        var sibling = this._children[key]
         if (keyified != key) {
-            var sibling = this._children[key]
             sibling.child.send({
                 module: 'olio',
                 method: 'created',
