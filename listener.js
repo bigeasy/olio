@@ -107,15 +107,15 @@ Listener.prototype._created = function (count, argv, child) {
                 count: count,
                 argv: argv
             })
-            child.send({
-                module: 'olio',
-                method: 'created',
-                socketPath: this._socketPath,
-                to: null,
-                count: sibling.count,
-                argv: sibling.argv
-            })
         }
+        child.send({
+            module: 'olio',
+            method: 'created',
+            socketPath: this._socketPath,
+            to: null,
+            count: sibling.count,
+            argv: sibling.argv
+        })
     }
 }
 
