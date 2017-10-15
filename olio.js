@@ -80,8 +80,8 @@ Olio.prototype._getSender = function (argv) {
                 if (sender.argv[j] != argv[j]) {
                     continue LINKS
                 }
-                return this._senders.map[key] = sender
             }
+            return this._senders.map[key] = sender
         }
     }
     return null
