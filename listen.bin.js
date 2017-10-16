@@ -33,6 +33,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     destructible.completed.wait(async())
 
+    var children = program.argv.map(JSON.parse.bind(JSON))
+
     async([function () {
         destructible.destroy()
     }], function () {
@@ -41,7 +43,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var descendent = new Descendent(process)
         destructible.addDestructor('descendent', descendent, 'destroy')
 
-        var listener = new Listener(descendent, program.socket, program.prefix)
+        var listener = new Listener(descendent, program.socket)
 
         destructible.addDestructor('listener', listener, 'destroy')
         listener.listen(destructible.monitor([ 'listener' ]))
@@ -57,8 +59,9 @@ require('arguable')(module, require('cadence')(function (async, program) {
         async(function () {
             server.listen(program.socket, async())
         }, function () {
-            program.ready.unlatch()
             delta(destructible.monitor([ 'server' ])).ee(server).on('close')
+            listener.children(children)
+            program.ready.unlatch()
         })
     }, function () {
         destructible.completed.wait(async())

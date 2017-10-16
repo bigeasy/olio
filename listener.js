@@ -33,13 +33,6 @@ function Listener (descendent, socketPath) {
 
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
-        dispatcher.dispatch('POST /run', 'run')
-        dispatcher.dispatch('POST /serve', 'serve')
-        dispatcher.logger = function (entry) {
-            if (entry.error) {
-                console.log(entry.error.stack)
-            }
-        }
     })
 }
 
@@ -119,22 +112,40 @@ Listener.prototype._created = function (count, argv, child) {
 }
 
 Listener.prototype.serve = cadence(function (async, request) {
-    var body = request.body
-    var key = Keyify.stringify(body.argv)
-    var child = this._children[key] = spawn('node', [
-        path.join(__dirname, 'serve.child.js'),
-        '--workers', body.parameters.workers
-    ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
-    this._descendent.addChild(child, null)
-    this._created(+body.parameters.workers, body.argv, child)
-    this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
-//    child.on('message', Operation([ this, 'message' ]))
-    this._monitor(child, this._destructible.monitor([ 'serve', body.argv ]))
     return { okay: true }
 })
 
 Listener.prototype.listen = function (callback) {
     this._destructible.completed.wait(callback)
+}
+
+Listener.prototype.children = function (children) {
+    children.forEach(function (body) {
+        switch (body.method) {
+        case 'serve':
+            var key = Keyify.stringify(body.argv)
+            var child = this._children[key] = spawn('node', [
+                path.join(__dirname, 'serve.child.js'),
+                '--workers', body.parameters.workers
+            ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
+            this._descendent.addChild(child, null)
+            this._created(+body.parameters.workers, body.argv, child)
+            this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
+            this._monitor(child, this._destructible.monitor([ 'serve', body.argv ]))
+            break
+        case 'run':
+            var runner = new Runner({
+                descendent: this._descendent,
+                process: process,
+                workers: body.parameters.workers,
+                argv: body.argv
+            })
+            this._destructible.addDestructor([ 'run', body.argv ], runner, 'destroy')
+            runner.run(this._destructible.monitor([ 'run', body.argv ]))
+            this._created(+body.parameters.workers, body.argv, runner)
+            break
+        }
+    }, this)
 }
 
 Listener.prototype.destroy = function () {
