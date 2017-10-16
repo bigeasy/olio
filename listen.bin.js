@@ -7,7 +7,6 @@
 
         --help              display this message
         --socket <string>   socket
-        --workers <string>  socket
 
     ___ $ ___ en_US ___
 
@@ -26,6 +25,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var http = require('http')
     var delta = require('delta')
 
+    var Descendent = require('descendent')
+
     var Destructible = require('destructible')
     var destructible = new Destructible(5000, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
@@ -36,7 +37,11 @@ require('arguable')(module, require('cadence')(function (async, program) {
         destructible.destroy()
     }], function () {
         var Listener = require('./listener.js')
-        var listener = new Listener(program, program.socket, program.prefix)
+
+        var descendent = new Descendent(process)
+        destructible.addDestructor('descendent', descendent, 'destroy')
+
+        var listener = new Listener(descendent, program.socket, program.prefix)
 
         destructible.addDestructor('listener', listener, 'destroy')
         listener.listen(destructible.monitor([ 'listener' ]))

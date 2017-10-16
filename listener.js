@@ -19,13 +19,12 @@ var Operation = require('operation/variadic')
 // Exceptions that you can catch by type.
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
-function Listener (process, socketPath) {
+function Listener (descendent, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
-    this._descendent = new Descendent(process)
-    this._destructible.addDestructor('descendent', this._descendent, 'destroy')
+    this._descendent = descendent
 
     this._socketPath = socketPath
     this._children = []
