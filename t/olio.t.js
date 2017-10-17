@@ -14,6 +14,7 @@ function prove (async, okay) {
     var Olio = require('..')
 
     var Requester = require('conduit/requester')
+    var Responder = require('conduit/responder')
 
     var bin = require('../olio.bin')
     var fs = require('fs')
@@ -26,23 +27,26 @@ function prove (async, okay) {
         }
     }
 
-    var program, server
+    var olio, server
     async(function () {
         var downgrader = new Downgrader
         downgrader.on('socket', function (request, socket) {
-            okay({
-                toIndex: request.headers['x-olio-to-index'],
-                toArguments: JSON.parse(request.headers['x-olio-to-argv']),
-                fromIndex: request.headers['x-olio-from-index'],
-                fromArguments: JSON.parse(request.headers['x-olio-from-argv'])
-            }, {
-                toIndex: '0',
-                toArguments: [ 'program', 'that' ],
-                fromIndex: '2',
-                fromArguments: [ 'program', 'this' ]
+            var message = {
+                to: {
+                    index: +request.headers['x-olio-to-index'],
+                    argv: JSON.parse(request.headers['x-olio-to-argv']),
+                },
+                from: {
+                    index: +request.headers['x-olio-from-index'],
+                    argv: JSON.parse(request.headers['x-olio-from-argv'])
+                }
+            }
+            okay(message, {
+                to: { index: 0, argv: [ 'program', 'that' ] },
+                from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
             destructible.addDestructor('socket', socket, 'destroy')
-            socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]))
+            olio._createReceiver(message, socket, destructible.rescue('create'))
         })
 
         server = http.createServer(function () {})
@@ -55,9 +59,9 @@ function prove (async, okay) {
         var events = require('events')
         var program = new events.EventEmitter
 
-        var olio = new Olio(program, function (configure) {
-            configure.responder = function () {
-                return 1
+        olio = new Olio(program, function (configure) {
+            configure.receiver = function () {
+                return new Responder(null)
             }
             configure.sender([ 'program', 'that' ], function () {
                 return new Requester()
