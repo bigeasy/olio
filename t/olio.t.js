@@ -5,6 +5,7 @@ function prove (async, okay) {
 
     var http = require('http')
     var delta = require('delta')
+    var cadence = require('cadence')
 
     var Operation = require('operation/variadic')
 
@@ -86,15 +87,17 @@ function prove (async, okay) {
         olio.listen(destructible.monitor('olio'))
         destructible.addDestructor('olio', olio, 'destroy')
 
-        async(function () {
-            olio.ready.wait(async())
-        }, function () {
-            okay(true, 'ready')
-            okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
-            okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
-            okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
-            destructible.destroy()
-        })
+        cadence(function (async) {
+            async(function () {
+                olio.ready.wait(async())
+            }, function () {
+                okay(true, 'ready')
+                okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
+                okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
+                okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
+                destructible.destroy()
+            })
+        })(destructible.rescue('tests'))
 
 
         okay(Olio, 'require')

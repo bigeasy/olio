@@ -10,6 +10,7 @@ var Downgrader = require('downgrader')
 var Conduit = require('conduit')
 var fnv = require('hash.fnv')
 var Map = require('./map')
+var indexify = require('./indexify')
 
 function Constructor (olio) {
     this._olio = olio
@@ -116,12 +117,8 @@ Olio.prototype._createSender = cadence(function (async, sender, message, index) 
 
 Olio.prototype.sender = function (path, index) {
     var sender = this._map.get(path)
-    if (typeof index != 'number') {
-        var buffer = new Buffer(Keyify.stringify(index))
-        index = fnv(0, buffer, 0, buffer.length) % sender.count
-    }
-    console.log(this._map.get(path))
-    return this._map.get(path).receivers[index].receiver
+    index = indexify(index, sender.count)
+    return sender.receivers[index].receiver
 }
 
 Olio.prototype.count = function (path, index) {

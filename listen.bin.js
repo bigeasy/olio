@@ -26,10 +26,17 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var delta = require('delta')
 
     var Descendent = require('descendent')
+    var logger = require('prolific.logger').createLogger('olio')
 
     var Destructible = require('destructible')
     var destructible = new Destructible(5000, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
+
+    var Shuttle = require('prolific.shuttle')
+    var shuttle = Shuttle.shuttle(program, logger)
+    destructible.addDestructor('shuttle', shuttle, 'close')
+
+    logger.info('y', {})
 
     destructible.completed.wait(async())
 
@@ -65,5 +72,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
         })
     }, function () {
         destructible.completed.wait(async())
+    }, function () {
+        console.log('xxxxxxx')
+        logger.info('x', {})
     })
 }))
