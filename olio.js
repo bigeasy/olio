@@ -9,6 +9,7 @@ var Signal = require('signal')
 var Downgrader = require('downgrader')
 var Conduit = require('conduit')
 var fnv = require('hash.fnv')
+var Map = require('./map')
 
 function Constructor (olio) {
     this._olio = olio
@@ -17,7 +18,7 @@ function Constructor (olio) {
 Constructor.prototype.sender = function (argv, builder) {
     var ready = new Signal
     this._olio._latches.push(ready)
-    this._olio._senders.array.push({ count: null, argv: argv, builder: builder, receivers: [], ready: ready  })
+    this._olio._map.push(argv, { count: null, builder: builder, receivers: [], ready: ready  })
 }
 
 var cadence = require('cadence')
@@ -26,6 +27,7 @@ var Keyify = require('keyify')
 
 function Olio (program, configurator) {
     this._senders = { array: [], map: {} }
+    this._map = new Map
     this._latches = []
 
     this.ready = new Signal
@@ -67,25 +69,6 @@ Olio.prototype._createReceiver = cadence(function (async, message, socket) {
         socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
     })
 })
-
-Olio.prototype._getSender = function (argv) {
-    var key = Keyify.stringify(argv)
-    var sender
-    if (sender = this._senders.map[key]) {
-        return sender
-    }
-    LINKS: for (var i = 0, sender; (sender = this._senders.array[i]) != null; i++) {
-        if (sender.argv.length <= argv.length) {
-            for (var j = 0; j < sender.argv.length; j++) {
-                if (sender.argv[j] != argv[j]) {
-                    continue LINKS
-                }
-            }
-            return this._senders.map[key] = sender
-        }
-    }
-    return null
-}
 
 Olio.prototype._createSender = cadence(function (async, sender, message, index) {
     var ready = new Signal
@@ -132,16 +115,17 @@ Olio.prototype._createSender = cadence(function (async, sender, message, index) 
 })
 
 Olio.prototype.sender = function (path, index) {
-    var sender = this._getSender(path)
+    var sender = this._map.get(path)
     if (typeof index != 'number') {
         var buffer = new Buffer(Keyify.stringify(index))
         index = fnv(0, buffer, 0, buffer.length) % sender.count
     }
-    return this._getSender(path).receivers[index].receiver
+    console.log(this._map.get(path))
+    return this._map.get(path).receivers[index].receiver
 }
 
 Olio.prototype.count = function (path, index) {
-    return this._getSender(path).count
+    return this._map.get(path).count
 }
 
 Olio.prototype._message = function (message, socket) {
@@ -156,7 +140,7 @@ Olio.prototype._message = function (message, socket) {
             this._createReceiver(message, socket, this._destructible.rescue([ 'connect', message ]))
             break
         case 'created':
-            var sender = this._getSender(message.argv)
+            var sender = this._map.get(message.argv)
             if (sender != null) {
                 sender.count = message.count
                 for (var i = 0; i < message.count; i++) {

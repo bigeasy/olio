@@ -1,4 +1,4 @@
-require('proof')(3, require('cadence')(prove))
+require('proof')(6, require('cadence')(prove))
 
 function prove (async, okay) {
     var Downgrader = require('downgrader')
@@ -86,10 +86,16 @@ function prove (async, okay) {
         olio.listen(destructible.monitor('olio'))
         destructible.addDestructor('olio', olio, 'destroy')
 
-        olio.ready.wait(function () {
-            destructible.destroy()
+        async(function () {
+            olio.ready.wait(async())
+        }, function () {
             okay(true, 'ready')
+            okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
+            okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
+            okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
+            destructible.destroy()
         })
+
 
         okay(Olio, 'require')
         destructible.completed.wait(async())
