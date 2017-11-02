@@ -36,8 +36,6 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var shuttle = Shuttle.shuttle(program, logger)
     destructible.addDestructor('shuttle', shuttle, 'close')
 
-    logger.info('y', {})
-
     destructible.completed.wait(async())
 
     var children = program.argv.map(JSON.parse.bind(JSON))
@@ -72,8 +70,5 @@ require('arguable')(module, require('cadence')(function (async, program) {
         })
     }, function () {
         destructible.completed.wait(async())
-    }, function () {
-        console.log('xxxxxxx')
-        logger.info('x', {})
     })
 }))
