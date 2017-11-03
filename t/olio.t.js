@@ -47,7 +47,7 @@ function prove (async, okay) {
                 from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
             destructible.addDestructor('socket', socket, 'destroy')
-            olio._createReceiver(message, socket, destructible.rescue('create'))
+            olio._factory.createReceiver(olio, message, socket, destructible.rescue('create'))
         })
 
         server = http.createServer(function () {})

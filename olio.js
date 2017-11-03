@@ -1,16 +1,8 @@
 var Operation = require('operation/variadic')
-var stream = require('stream')
-var Staccato = require('staccato')
-var http = require('http')
-var interrupt = require('interrupt').createInterrupter('olio')
-var delta = require('delta')
-var assert = require('assert')
 var Signal = require('signal')
-var Downgrader = require('downgrader')
-var Conduit = require('conduit')
-var fnv = require('hash.fnv')
 var Map = require('./map')
 var indexify = require('./indexify')
+var SocketFactory = require('./factory/socket')
 
 function Constructor (olio) {
     this._olio = olio
@@ -47,73 +39,15 @@ function Olio (program, configurator) {
 
     this._ready(this._destructible.rescue('ready'))
 
+    var factory = this._factory = new SocketFactory(program)
+
     var message
-    program.on('message',  message = Operation([ this, '_message' ]))
+    this._factory.ee.on('message',  message = Operation([ this, '_message' ]))
     this._destructible.addDestructor('message', function () {
-        program.removeListener('message', message)
+        factory.ee.removeListener('message', message)
     })
+
 }
-
-Olio.prototype._createReceiver = cadence(function (async, message, socket) {
-    var receiver = this._receiver.call(null, message.argv)
-
-    var destructible = new Destructible([ 'receiver', message.from  ])
-    this._destructible.addDestructor([ 'receiver', message.from ], destructible, 'destroy')
-
-    async(function () {
-        var conduit = new Conduit(socket, socket, receiver)
-        conduit.ready.wait(async())
-        destructible.addDestructor('conduit', conduit, 'destroy')
-        destructible.addDestructor('socket', socket, 'destroy')
-        conduit.listen(null, this._destructible.monitor([ 'receiver', message.from ]))
-    }, function () {
-        socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
-    })
-})
-
-Olio.prototype._createSender = cadence(function (async, sender, message, index) {
-    var ready = new Signal
-    this._latches.push(ready)
-    var receiver = sender.builder.call(null, message.argv, index, message.count)
-    var through = new stream.PassThrough
-    var readable = new Staccato.Readable(through)
-    this._destructible.addDestructor([ 'readable', message.argv, index ], readable, 'destroy')
-    async(function () {
-        var request = http.request({
-            socketPath: message.socketPath,
-            url: 'http://olio',
-            headers: Downgrader.headers({
-                'x-olio-to-index': index,
-                'x-olio-to-argv': JSON.stringify(message.argv),
-                'x-olio-from-index': this._index,
-                'x-olio-from-argv': JSON.stringify(this._argv)
-            })
-        })
-        delta(async()).ee(request).on('upgrade')
-        request.end()
-    }, function (request, socket, head) {
-        async(function () {
-            readable.read(4, async())
-            through.write(head)
-            socket.pipe(through)
-        }, function (buffer) {
-            interrupt.assert(buffer != null && buffer.length == 4, 'closed before start')
-            interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
-            socket.unpipe(through)
-
-            this._destructible.invokeDestructor([ 'readable', message.argv, index ])
-            readable.destroy()
-
-            var conduit  = new Conduit(socket, socket, receiver)
-
-            this._destructible.addDestructor([ 'conduit', message.argv, index ], conduit, 'destroy')
-            this._destructible.addDestructor([ 'socket', message.argv, index ], socket, 'destroy')
-            sender.receivers[index] = { conduit: conduit, receiver: receiver }
-            conduit.listen(null, async())
-            ready.unlatch()
-        })
-    })
-})
 
 Olio.prototype.sender = function (path, index) {
     var sender = this._map.get(path)
@@ -134,14 +68,14 @@ Olio.prototype._message = function (message, socket) {
             this._initialized.unlatch()
             break
         case 'connect':
-            this._createReceiver(message, socket, this._destructible.rescue([ 'connect', message ]))
+            this._factory.createReceiver(this, message, socket, this._destructible.rescue([ 'connect', message ]))
             break
         case 'created':
             var sender = this._map.get(message.argv)
             if (sender != null) {
                 sender.count = message.count
                 for (var i = 0; i < message.count; i++) {
-                    this._createSender(sender, message, i, this._destructible.monitor([ 'sender', message.argv, i ]))
+                    this._factory.createSender(this, sender, message, null, i, this._destructible.monitor([ 'sender', message.argv, i ]))
                 }
                 sender.ready.unlatch()
             }
