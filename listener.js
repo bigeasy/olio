@@ -53,12 +53,6 @@ Listener.prototype.socket = function (request, socket) {
     this._children[key].child.send(message, socket)
 }
 
-Listener.prototype.message = function (message, handle) {
-    if (this._process.send) {
-        this._process.send(message, coalesce(handle))
-    }
-}
-
 Listener.prototype.index = cadence(function (async) {
     return 'Olio Listener API\n'
 })
@@ -110,10 +104,6 @@ Listener.prototype._created = function (count, argv, child) {
         })
     }
 }
-
-Listener.prototype.serve = cadence(function (async, request) {
-    return { okay: true }
-})
 
 Listener.prototype.listen = function (callback) {
     this._destructible.completed.wait(callback)

@@ -43,7 +43,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     async([function () {
         destructible.destroy()
     }], function () {
-        var Listener = require('./listener.js')
+        var Listener = require('./listener')
 
         var descendent = new Descendent(process)
         destructible.addDestructor('descendent', descendent, 'destroy')
