@@ -109,6 +109,15 @@ function prove (async, okay) {
                 okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
                 okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
                 okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
+                program.emit('message', {
+                    module: 'descendent',
+                    name: 'olio:message',
+                    to: [],
+                    path: [],
+                    body: {
+                        method: 'shutdown'
+                    }
+                })
                 destructible.destroy()
             })
         })(destructible.rescue('tests'))

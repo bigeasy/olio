@@ -3,6 +3,8 @@ var Signal = require('signal')
 var Map = require('./map')
 var indexify = require('./indexify')
 var SocketFactory = require('./factory/socket')
+var noop = require('nop')
+var coalesce = require('extant')
 
 function Constructor (olio) {
     this._olio = olio
@@ -32,7 +34,7 @@ function Olio (program, configurator) {
     configurator(constructor)
 
     this._receiver = constructor.receiver
-    this._shutdown = constructor.shutdown
+    this._shutdown = coalesce(constructor.shutdown, noop)
 
     this._destructible = new Destructible(750, 'olio')
     this._destructible.markDestroyed(this)
@@ -78,9 +80,7 @@ Olio.prototype._message = function (path, message, socket) {
         }
         break
     case 'shutdown':
-        if (this._shutdown) {
-            this._shutdown.call()
-        }
+        this._shutdown.call()
         break
     }
 }
