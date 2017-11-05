@@ -21,8 +21,16 @@ function prove (async, okay) {
     cadence(function () {
         async(function () {
             listener.index(async())
-        }, function (index) {
-            okay(index, 'Olio Listener API\n', 'index')
+        }, function (statusCode, headers, body) {
+            okay({
+                statusCode: statusCode,
+                headers: headers,
+                body: body
+            }, {
+                statusCode: 200,
+                headers: { 'content-type': 'text/plain' },
+                body: 'Olio Listener API\n'
+            }, 'index')
             var Downgrader = require('downgrader')
             var Operation = require('operation/variadic')
             var http = require('http')

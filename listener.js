@@ -56,7 +56,7 @@ Listener.prototype.socket = function (request, socket) {
 }
 
 Listener.prototype.index = cadence(function (async) {
-    return 'Olio Listener API\n'
+    return [ 200, { 'content-type': 'text/plain' }, 'Olio Listener API\n' ]
 })
 
 Listener.prototype._created = function (count, argv, child) {
