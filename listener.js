@@ -57,20 +57,6 @@ Listener.prototype.index = cadence(function (async) {
     return 'Olio Listener API\n'
 })
 
-Listener.prototype.run = cadence(function (async, request) {
-    var body = request.body
-    var runner = new Runner({
-        descendent: this._descendent,
-        process: process,
-        workers: body.parameters.workers,
-        argv: body.argv
-    })
-    this._destructible.addDestructor([ 'run', body.argv ], runner, 'destroy')
-    runner.run(this._destructible.monitor([ 'run', body.argv ]))
-    this._created(+body.parameters.workers, body.argv, runner)
-    return { okay: true }
-})
-
 Listener.prototype._monitor = cadence(function (async, child) {
     async(function () {
         delta(async()).ee(child).on('exit')
