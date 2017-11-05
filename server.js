@@ -117,6 +117,7 @@ Server.prototype.send = function (message, socket) {
 Server.prototype._shutdown = function () {
     for (var id in cluster.workers) {
         cluster.workers[id].send({ module: 'olio', method: 'shutdown' })
+        cluster.workers[id].disconnect()
     }
 }
 
