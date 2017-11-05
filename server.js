@@ -39,6 +39,7 @@ var Operation = require('operation/variadic')
 
 var Monitor = require('./monitor')
 var Descend = require('./descend')
+var Search = require('./search')
 
 // TODO Move this since I've generalized.
 //
@@ -77,19 +78,7 @@ var Descend = require('./descend')
 //
 function Server (process, argv, descendent) {
     var fs = require('fs')
-    var command = argv[0]
-    if (command[0] != '.') {
-        command = process.env.PATH.split(':').map(function (directory) {
-            return path.join(directory, argv[0])
-        }).filter(function (file) {
-            try {
-                fs.statSync(file)
-                return true
-            } catch (e) {
-                return false
-            }
-        }).shift()
-    }
+    var command = Search(argv[0], process.env.PATH)
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._argv = argv
     this._process = process

@@ -46,6 +46,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
             return env
         })
     }, function () {
+        program.ready.unlatch()
         destructible.completed.wait(async())
     })
 }))
