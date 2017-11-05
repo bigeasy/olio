@@ -1,11 +1,44 @@
+// Node.js API.
+var assert = require('assert')
+var events = require('events')
+
+// Contextualized callbacks and event handlers.
 var Operation = require('operation/variadic')
+
+// An evented semaphore.
 var Signal = require('signal')
-var Map = require('./map')
-var indexify = require('./indexify')
-var SocketFactory = require('./factory/socket')
-var noop = require('nop')
+
+// Return the first not null-like value.
 var coalesce = require('extant')
 
+// Asynchronous control flow.
+var cadence = require('cadence')
+
+// Do nothing.
+var noop = require('nop')
+
+// Generate a unique, canonical string key from a JSON object.
+var Keyify = require('keyify')
+
+// Controlled demolition of asynchronous operations.
+var Destructible = require('destructible')
+
+// Route messages through a process hierarchy using Node.js IPC.
+var Descendent = require('descendent')
+
+// Associate command lines used to start children with child information.
+var Map = require('./map')
+
+// Convert key material into an index into a table.
+var indexify = require('./indexify')
+
+// Pipe construction factory super type.
+var Factory = require('./factory/base')
+
+// Pipe construction around UNIX domain sockets.
+var SocketFactory = require('./factory/socket')
+
+// Olio configurator object.
 function Constructor (olio) {
     this._olio = olio
 }
@@ -16,12 +49,7 @@ Constructor.prototype.sender = function (argv, builder) {
     this._olio._map.push(argv, { count: null, builder: builder, receivers: [], ready: ready  })
 }
 
-var cadence = require('cadence')
-var Destructible = require('destructible')
-var Keyify = require('keyify')
-var Descendent = require('descendent')
-
-function Olio (program, configurator) {
+function Olio (factory, configurator) {
     this._senders = { array: [], map: {} }
     this._map = new Map
     this._latches = []
@@ -42,9 +70,14 @@ function Olio (program, configurator) {
 
     this._ready(this._destructible.rescue('ready'))
 
-    var factory = this._factory = new SocketFactory(program)
+    if (factory instanceof Factory) {
+        this._factory = factory
+    } else {
+        assert(factory instanceof events.EventEmitter)
+        factory = this._factory = new SocketFactory(factory)
+    }
 
-    var descendent = new Descendent(program)
+    var descendent = new Descendent(factory.ee)
     this._destructible.addDestructor('descendent', descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
 }
@@ -62,6 +95,7 @@ Olio.prototype.count = function (path, index) {
 Olio.prototype._message = function (path, message, socket) {
     switch (message.method) {
     case 'initialize':
+        console.log('here')
         this._argv = message.argv
         this._index = message.index
         this._initialized.unlatch()
@@ -74,7 +108,7 @@ Olio.prototype._message = function (path, message, socket) {
         if (sender != null) {
             sender.count = message.count
             for (var i = 0; i < message.count; i++) {
-                this._factory.createSender(this, sender, message, null, i, this._destructible.monitor([ 'sender', message.argv, i ]))
+                this._factory.createSender(this, sender, message, socket, i, this._destructible.monitor([ 'sender', message.argv, i ]))
             }
             sender.ready.unlatch()
         }
