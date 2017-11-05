@@ -20,6 +20,8 @@ function prove (async, okay) {
     var bin = require('../olio.bin')
     var fs = require('fs')
 
+    var Descendent = require('descendent')
+
     try {
         fs.unlinkSync('t/socket')
     } catch (e) {
@@ -59,6 +61,9 @@ function prove (async, okay) {
     }, function () {
         var events = require('events')
         var program = new events.EventEmitter
+        program.pid = 0
+
+        var descendent = new Descendent(program)
 
         olio = new Olio(program, function (configure) {
             configure.receiver = function () {
@@ -69,19 +74,28 @@ function prove (async, okay) {
             })
         })
 
-        program.emit('message', {})
         program.emit('message', {
-            module: 'olio',
-            method: 'initialize',
-            argv: [ 'program', 'this' ],
-            index: 2
+            module: 'descendent',
+            name: 'olio:message',
+            to: [],
+            path: [],
+            body: {
+                method: 'initialize',
+                argv: [ 'program', 'this' ],
+                index: 2
+            }
         })
         program.emit('message', {
-            module: 'olio',
-            method: 'created',
-            argv: [ 'program', 'that' ],
-            socketPath: 't/socket',
-            count: 1
+            module: 'descendent',
+            name: 'olio:message',
+            to: [],
+            path: [],
+            body: {
+                method: 'created',
+                argv: [ 'program', 'that' ],
+                socketPath: 't/socket',
+                count: 1
+            }
         })
 
         olio.listen(destructible.monitor('olio'))

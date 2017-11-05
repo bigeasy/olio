@@ -38,6 +38,7 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 var Operation = require('operation/variadic')
 
 var Monitor = require('./monitor')
+var Descend = require('./descend')
 
 // TODO Move this since I've generalized.
 //
@@ -92,33 +93,22 @@ function Server (process, argv, descendent) {
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._argv = argv
     this._process = process
-    this._children = []
     this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
     this._destructible.addDestructor('shutdown', this, '_shutdown')
     this._descendent = descendent
+    this._pids = []
+    this._descendent.on('olio:message', Descend(this._descendent, this._pids))
 }
 
 Server.prototype.destroy = function () {
     this._destructible.destroy()
 }
 
-Server.prototype.send = function (message, socket) {
-    if (message.module == 'olio') {
-        if (message.to == null) {
-            for (var id in cluster.workers) {
-                cluster.workers[id].send(message)
-            }
-        } else {
-            this._children[message.to.index].send(message, coalesce(socket))
-        }
-    }
-}
-
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
+    this._descendent.emit('olio:message', [], { to: null, method: 'shutdown' })
     for (var id in cluster.workers) {
-        cluster.workers[id].send({ module: 'olio', method: 'shutdown' })
         cluster.workers[id].disconnect()
     }
 }
@@ -126,14 +116,13 @@ Server.prototype._shutdown = function () {
 Server.prototype.run = function (count, environment) {
     for (var i = 0, I = coalesce(count, 1); i < I; i++) {
         var child = cluster.fork(environment(i))
-        child.send({
-            module: 'olio',
+        this._descendent.addChild(child.process, null)
+        this._descendent.down([ child.process.pid ], 'olio:message', {
             method: 'initialize',
             argv: this._argv,
             index: i
         })
-        this._descendent.addChild(child.process, null)
-        this._children.push(child)
+        this._pids.push(child.process.pid)
         Monitor(interrupt, this, child, this._destructible.monitor([ 'child', i ]))
     }
 }

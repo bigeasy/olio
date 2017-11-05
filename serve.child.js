@@ -36,12 +36,6 @@ require('arguable')(module, require('cadence')(function (async, program) {
     async([function () {
         destructible.destroy()
     }], function () {
-        var message
-        program.on('message', message = Operation([ server, 'send' ]))
-        destructible.addDestructor('message', function () {
-            program.removeListener('message', message)
-        })
-
         destructible.addDestructor('server', server, 'destroy')
 
         server.listen(destructible.monitor('children'))

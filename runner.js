@@ -27,6 +27,7 @@ function Runner (options) {
         count: coalesce(options.workers, 1),
         array: []
     }
+    this.pids = []
     this._destructible = new Destructible(1000, 'olio/runner')
     this._destructible.markDestroyed(this)
     this._process = options.process
@@ -37,34 +38,22 @@ Runner.prototype.destroy = function () {
     this._destructible.destroy()
 }
 
-Runner.prototype.send = function (message, handle) {
-    if (message.module == 'olio') {
-        if (message.to == null) {
-            this._children.array.forEach(function (child) {
-                child.send(message, handle)
-            })
-        } else {
-            this._children.array[message.to.index].send(message, coalesce(handle))
-        }
-    }
-}
-
-// TODO Starting workers as requested for pipelines would be done here now.
-Runner.prototype.message = function (message, handle) {
-    if (message.module == 'olio') {
-        this._children.array[message.index].send(message, coalesce(handle))
-    }
-}
-
 Runner.prototype._run = cadence(function (async, index) {
-    var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), {
-        stdio: [ 0, 1, 2, 'ipc' ]
-    })
-    this._descendent.addChild(child, { child: child, index: index })
-    this._children.array[index] = child
+    var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), { stdio: [ 0, 1, 2, 'ipc' ] })
+
+    this.pids.push(child.pid)
+
     this._destructible.addDestructor([ 'child', index ], child, 'kill')
-    child.send({ module: 'olio', method: 'initialize', argv: this._children.argv, index: index })
-    child.on('message', Operation([ this, 'message' ]))
+
+    this._children.array[index] = child
+
+    this._descendent.addChild(child, { child: child, index: index })
+    this._descendent.down([ child.pid ], 'olio:message', {
+        method: 'initialize',
+        argv: this._children.argv,
+        index: index
+    })
+
     Monitor(interrupt, this, child, async())
 })
 

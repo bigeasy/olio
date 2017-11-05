@@ -20,6 +20,7 @@ var Operation = require('operation/variadic')
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
+var Descend = require('./descend')
 
 function Listener (descendent, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
@@ -51,22 +52,24 @@ Listener.prototype.socket = function (request, socket) {
             argv: JSON.parse(request.headers['x-olio-from-argv'])
         }
     }
-    var key = Keyify.stringify(message.to.argv)
-    this._children[key].child.send(message, socket)
+    this._children[Keyify.stringify(message.to.argv)].descend.call(null, [], message, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
     return [ 200, { 'content-type': 'text/plain' }, 'Olio Listener API\n' ]
 })
 
-Listener.prototype._created = function (count, argv, child) {
+Listener.prototype._created = function (count, argv, pids) {
     var keyified = Keyify.stringify(argv)
-    this._children[keyified] = { count: count, argv: argv, child: child }
+    var child = this._children[keyified] = {
+        count: count,
+        argv: argv,
+        descend: Descend(this._descendent, pids)
+    }
     for (var key in this._children) {
         var sibling = this._children[key]
         if (keyified != key) {
-            sibling.child.send({
-                module: 'olio',
+            sibling.descend.call(null, [], {
                 method: 'created',
                 socketPath: this._socketPath,
                 to: null,
@@ -74,8 +77,7 @@ Listener.prototype._created = function (count, argv, child) {
                 argv: argv
             })
         }
-        child.send({
-            module: 'olio',
+        child.descend.call(null, [], {
             method: 'created',
             socketPath: this._socketPath,
             to: null,
@@ -93,13 +95,12 @@ Listener.prototype.children = function (children) {
     children.forEach(function (body) {
         switch (body.method) {
         case 'serve':
-            var key = Keyify.stringify(body.argv)
-            var child = this._children[key] = spawn('node', [
+            var child = spawn('node', [
                 path.join(__dirname, 'serve.child.js'),
                 '--workers', body.parameters.workers
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
             this._descendent.addChild(child, null)
-            this._created(+body.parameters.workers, body.argv, child)
+            this._created(+body.parameters.workers, body.argv, [ child.pid ])
             this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
             Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
@@ -112,7 +113,7 @@ Listener.prototype.children = function (children) {
             })
             this._destructible.addDestructor([ 'run', body.argv ], runner, 'destroy')
             runner.run(this._destructible.monitor([ 'run', body.argv ]))
-            this._created(+body.parameters.workers, body.argv, runner)
+            this._created(+body.parameters.workers, body.argv, runner.pids)
             break
         }
     }, this)

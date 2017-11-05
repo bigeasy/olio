@@ -17,6 +17,7 @@ Constructor.prototype.sender = function (argv, builder) {
 var cadence = require('cadence')
 var Destructible = require('destructible')
 var Keyify = require('keyify')
+var Descendent = require('descendent')
 
 function Olio (program, configurator) {
     this._senders = { array: [], map: {} }
@@ -41,12 +42,9 @@ function Olio (program, configurator) {
 
     var factory = this._factory = new SocketFactory(program)
 
-    var message
-    this._factory.ee.on('message',  message = Operation([ this, '_message' ]))
-    this._destructible.addDestructor('message', function () {
-        factory.ee.removeListener('message', message)
-    })
-
+    var descendent = new Descendent(program)
+    this._destructible.addDestructor('descendent', descendent, 'destroy')
+    descendent.on('olio:message', Operation([ this, '_message' ]))
 }
 
 Olio.prototype.sender = function (path, index) {
@@ -59,33 +57,31 @@ Olio.prototype.count = function (path, index) {
     return this._map.get(path).count
 }
 
-Olio.prototype._message = function (message, socket) {
-    if (message.module == 'olio') {
-        switch (message.method) {
-        case 'initialize':
-            this._argv = message.argv
-            this._index = message.index
-            this._initialized.unlatch()
-            break
-        case 'connect':
-            this._factory.createReceiver(this, message, socket, this._destructible.rescue([ 'connect', message ]))
-            break
-        case 'created':
-            var sender = this._map.get(message.argv)
-            if (sender != null) {
-                sender.count = message.count
-                for (var i = 0; i < message.count; i++) {
-                    this._factory.createSender(this, sender, message, null, i, this._destructible.monitor([ 'sender', message.argv, i ]))
-                }
-                sender.ready.unlatch()
+Olio.prototype._message = function (path, message, socket) {
+    switch (message.method) {
+    case 'initialize':
+        this._argv = message.argv
+        this._index = message.index
+        this._initialized.unlatch()
+        break
+    case 'connect':
+        this._factory.createReceiver(this, message, socket, this._destructible.rescue([ 'connect', message ]))
+        break
+    case 'created':
+        var sender = this._map.get(message.argv)
+        if (sender != null) {
+            sender.count = message.count
+            for (var i = 0; i < message.count; i++) {
+                this._factory.createSender(this, sender, message, null, i, this._destructible.monitor([ 'sender', message.argv, i ]))
             }
-            break
-        case 'shutdown':
-            if (this._shutdown) {
-                this._shutdown.call()
-            }
-            break
+            sender.ready.unlatch()
         }
+        break
+    case 'shutdown':
+        if (this._shutdown) {
+            this._shutdown.call()
+        }
+        break
     }
 }
 
