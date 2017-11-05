@@ -18,6 +18,8 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 // Contextualized callbacks and event handlers.
 var Operation = require('operation/variadic')
 
+var Monitor = require('./monitor')
+
 function Runner (options) {
     var argv = options.argv.slice()
     this._children = {
@@ -63,12 +65,7 @@ Runner.prototype._run = cadence(function (async, index) {
     this._destructible.addDestructor([ 'child', index ], child, 'kill')
     child.send({ module: 'olio', method: 'initialize', argv: this._children.argv, index: index })
     child.on('message', Operation([ this, 'message' ]))
-    async(function () {
-        delta(async()).ee(child).on('exit')
-    }, function (code, signal) {
-        console.log('child', index, code, signal)
-        interrupt.assert(this.destroyed || signal == 'SIGINT', 'subordinate.exit', { code: code, signal: signal })
-    })
+    Monitor(interrupt, this, child, async())
 })
 
 Runner.prototype.run = cadence(function (async) {

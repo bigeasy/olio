@@ -37,6 +37,8 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 // Contextualized callbacks and event handlers.
 var Operation = require('operation/variadic')
 
+var Monitor = require('./monitor')
+
 // TODO Move this since I've generalized.
 //
 // Create a listener that will launch the router executable specfied by the
@@ -121,14 +123,6 @@ Server.prototype._shutdown = function () {
     }
 }
 
-Server.prototype._monitor = cadence(function (async, child) {
-    async(function () {
-        delta(async()).ee(child).on('exit')
-    }, function (code, signal) {
-        interrupt.assert(this.destroyed || signal == 'SIGINT', 'subordinate.exit', { code: code, signal: signal })
-    })
-})
-
 Server.prototype.run = function (count, environment) {
     for (var i = 0, I = coalesce(count, 1); i < I; i++) {
         var child = cluster.fork(environment(i))
@@ -140,7 +134,7 @@ Server.prototype.run = function (count, environment) {
         })
         this._descendent.addChild(child.process, null)
         this._children.push(child)
-        this._monitor(child, this._destructible.monitor([ 'child', i ]))
+        Monitor(interrupt, this, child, this._destructible.monitor([ 'child', i ]))
     }
 }
 

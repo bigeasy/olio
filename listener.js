@@ -19,6 +19,8 @@ var Operation = require('operation/variadic')
 // Exceptions that you can catch by type.
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
+var Monitor = require('./monitor')
+
 function Listener (descendent, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
@@ -55,14 +57,6 @@ Listener.prototype.socket = function (request, socket) {
 
 Listener.prototype.index = cadence(function (async) {
     return 'Olio Listener API\n'
-})
-
-Listener.prototype._monitor = cadence(function (async, child) {
-    async(function () {
-        delta(async()).ee(child).on('exit')
-    }, function (code, signal) {
-        interrupt.assert(this.destroyed || signal == 'SIGINT', 'subordinate.exit', { code: code, signal: signal })
-    })
 })
 
 Listener.prototype._created = function (count, argv, child) {
@@ -107,7 +101,7 @@ Listener.prototype.children = function (children) {
             this._descendent.addChild(child, null)
             this._created(+body.parameters.workers, body.argv, child)
             this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
-            this._monitor(child, this._destructible.monitor([ 'serve', body.argv ]))
+            Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
         case 'run':
             var runner = new Runner({
