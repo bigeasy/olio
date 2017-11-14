@@ -95,7 +95,6 @@ Olio.prototype.count = function (path, index) {
 Olio.prototype._message = function (path, message, socket) {
     switch (message.method) {
     case 'initialize':
-        console.log('here')
         this._argv = message.argv
         this._index = message.index
         this._initialized.unlatch()
