@@ -36,9 +36,6 @@ Mock.prototype.create = function (argv, count, factory) {
 }
 
 Mock.prototype.createSender = cadence(function (async, olio, sender, message, receivers, index) {
-    //var ready = new Signal
-    //ready.unlatch()
-    //olio._latches.push(ready)
     var sink = receivers.shift()
     var source = sender.builder.call(null, message.argv, index, message.count)
     sink.read.shifter().pump(source, 'enqueue')
@@ -48,8 +45,6 @@ Mock.prototype.createSender = cadence(function (async, olio, sender, message, re
     olio._destructible.addDestructor([ 'conduit', message.argv, index ], function () {
         wait()
     })
-    console.log('here')
-    //ready.unlatch()
 })
 
 module.exports = Mock
