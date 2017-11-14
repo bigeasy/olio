@@ -11,22 +11,15 @@ function prove (async, okay) {
         configuration.receiver = function () {
         }
         configuration.sender([ 'program', 'command' ], function () {
-            return new Requester
+            return new Caller
         })
     })
-    var Responder = require('conduit/responder')
-    var Requester = require('conduit/requester')
-    var responder = new Responder({
-        request: cadence(function (async, envelope) {
-        })
-    })
+    var Procedure = require('conduit/procedure')
+    var Caller = require('conduit/caller')
+    var responder = new Procedure(cadence(function (async, envelope) {}))
     mock.initialize([ 'program', 'self' ], 0)
     mock.create([ 'program', 'command' ], 1, function () {
-        return new Responder({
-            request: cadence(function (async, envelope) {
-                return [ 1 ]
-            })
-        })
+        return new Procedure(cadence(function (async, envelope) { return [ 1 ] }))
     })
 
     var Destructible = require('destructible')

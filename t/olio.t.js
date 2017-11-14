@@ -14,8 +14,8 @@ function prove (async, okay) {
 
     var Olio = require('..')
 
-    var Requester = require('conduit/requester')
-    var Responder = require('conduit/responder')
+    var Caller = require('conduit/caller')
+    var Procedure = require('conduit/procedure')
 
     var bin = require('../olio.bin')
     var fs = require('fs')
@@ -67,10 +67,10 @@ function prove (async, okay) {
 
         olio = new Olio(program, function (configure) {
             configure.receiver = function () {
-                return new Responder(null)
+                return new Procedure(function () {})
             }
             configure.sender([ 'program', 'that' ], function () {
-                return new Requester()
+                return new Caller
             })
         })
 

@@ -10,13 +10,13 @@
 require('arguable')(module, require('cadence')(function (async, program) {
     var Olio = require('..')
     var cadence = require('cadence')
-    var Requester = require('conduit/requester')
+    var Caller = require('conduit/caller')
     var Reactor = require('reactor')
     var reactor = new Reactor({
         echo: cadence(function (async, request, index) {
             async(function () {
                 console.log(+index)
-                olio.sender([ './bin/echo.bin.js' ], +index).request({
+                olio.sender([ './bin/echo.bin.js' ], +index).invoke({
                     url: request.url,
                     body: request.body
                 }, async())
@@ -56,7 +56,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     }], function () {
         var olio = new Olio(program, function (constructor) {
             constructor.sender([ './t/run.bin.js' ], function (index) {
-                return new Requester
+                return new Caller
             })
         })
 

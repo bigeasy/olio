@@ -1,12 +1,11 @@
 require('proof')(2, require('cadence')(prove))
 
 function prove (async, okay) {
-    var Requester = require('conduit/requester')
-    var Responder = require('conduit/responder')
+    var Caller = require('conduit/caller')
+    var Procedure = require('conduit/procedure')
     var olio = require('../mock')(function (configuration) {
         configuration.receiver([ 'app', 'command' ], 1, function () {
-            return new Requester({
-            })
+            return new Caller
         })
     })
     okay(!!olio.sender([ 'app', 'command' ], 0), 'get')
