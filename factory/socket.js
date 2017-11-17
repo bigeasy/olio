@@ -2,7 +2,6 @@ var Conduit = require('conduit')
 var Destructible = require('destructible')
 var cadence = require('cadence')
 var util = require('util')
-var Factory = require('./base')
 var Signal = require('signal')
 var stream = require('stream')
 var Staccato = require('staccato')
@@ -11,10 +10,8 @@ var Downgrader = require('downgrader')
 var delta = require('delta')
 var interrupt = require('interrupt').createInterrupter('olio')
 
-function SocketFactory (ee) {
-    Factory.call(this, ee)
+function SocketFactory () {
 }
-util.inherits(SocketFactory, Factory)
 
 SocketFactory.prototype.createReceiver = cadence(function (async, olio, message, socket) {
     var receiver = olio._receiver.call(null, message.argv)

@@ -8,8 +8,8 @@ function prove (async, okay) {
     var ee = new events.EventEmitter
     var Mock = require('../mock2')
     var Olio = require('../olio')
-    var mock = new Mock
-    var olio = new Olio(mock, function (configuration) {
+    var mock = new Mock(ee)
+    var olio = new Olio(ee, function (configuration) {
         configuration.receiver = function () {
             return new Procedure(function (envelope, callback) { callback(null, 0) })
         }

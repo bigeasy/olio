@@ -2,20 +2,20 @@ var http = require('http')
 var Destructible = require('destructible')
 var cadence = require('cadence')
 var Signal = require('signal')
-var Factory = require('./factory/base')
 var util = require('util')
 var events = require('events')
 var Descendent = require('descendent')
 
-function Mock () {
-    Factory.call(this, new events.EventEmitter)
-    this._descendent = new Descendent(this.ee)
+function Mock (ee) {
+    this._descendent = new Descendent(ee)
     this._destructible = new Destructible(5000, 'olio/mock')
     this.ready = new Signal
 }
-util.inherits(Mock, Factory)
 
 Mock.prototype.initialize = function (argv, index) {
+    this._descendent.across('olio:message', {
+        method: 'factory'
+    }, this)
     this._descendent.across('olio:message', {
         method: 'initialize',
         argv: argv,

@@ -32,9 +32,6 @@ var Map = require('./map')
 // Convert key material into an index into a table.
 var indexify = require('./indexify')
 
-// Pipe construction factory super type.
-var Factory = require('./factory/base')
-
 // Pipe construction around UNIX domain sockets.
 var SocketFactory = require('./factory/socket')
 
@@ -49,7 +46,7 @@ Constructor.prototype.sender = function (argv, builder) {
     this._olio._map.push(argv, { count: null, builder: builder, receivers: [], ready: ready  })
 }
 
-function Olio (factory, configurator) {
+function Olio (ee, configurator) {
     this._senders = { array: [], map: {} }
     this._map = new Map
     this._latches = []
@@ -70,16 +67,11 @@ function Olio (factory, configurator) {
 
     this._ready(this._destructible.rescue('ready'))
 
-    if (factory instanceof Factory) {
-        this._factory = factory
-    } else {
-        assert(factory instanceof events.EventEmitter)
-        factory = this._factory = new SocketFactory(factory)
-    }
-
-    var descendent = new Descendent(factory.ee)
+    var descendent = new Descendent(ee)
     this._destructible.addDestructor('descendent', descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
+
+    this._factory = new SocketFactory
 }
 
 Olio.prototype.sender = function (path, index) {
@@ -92,22 +84,25 @@ Olio.prototype.count = function (path, index) {
     return this._map.get(path).count
 }
 
-Olio.prototype._message = function (path, message, socket) {
+Olio.prototype._message = function (path, message, handle) {
     switch (message.method) {
+    case 'factory':
+        this._factory = handle
+        break
     case 'initialize':
         this._argv = message.argv
         this._index = message.index
         this._initialized.unlatch()
         break
     case 'connect':
-        this._factory.createReceiver(this, message, socket, this._destructible.rescue([ 'connect', message ]))
+        this._factory.createReceiver(this, message, handle, this._destructible.rescue([ 'connect', message ]))
         break
     case 'created':
         var sender = this._map.get(message.argv)
         if (sender != null) {
             sender.count = message.count
             for (var i = 0; i < message.count; i++) {
-                this._factory.createSender(this, sender, message, socket, i, this._destructible.monitor([ 'sender', message.argv, i ]))
+                this._factory.createSender(this, sender, message, handle, i, this._destructible.monitor([ 'sender', message.argv, i ]))
             }
             sender.ready.unlatch()
         }
