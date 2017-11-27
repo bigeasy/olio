@@ -37,8 +37,7 @@
                             "reactor":                      "10.1.x",
                             "rescue":                       "3.2.x",
                             "signal":                       "3.2.x",
-                            "staccato":                     "5.0.x",
-                            "vizsla":                       "9.0.x"
+                            "staccato":                     "5.0.x"
     },
     "devDependencies":
     {
