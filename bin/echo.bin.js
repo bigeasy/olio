@@ -8,7 +8,7 @@
     ___ . ___
  */
 require('arguable')(module, require('cadence')(function (async, program) {
-    var Responder = require('conduit/responder')
+    var Procedure = require('conduit/procedure')
 
     var Destructible = require('destructible')
     var destructible = new Destructible(1000, './bin/echo.bin.js')
@@ -24,12 +24,10 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var Olio = require('..')
     var olio = new Olio(program, function (constructor) {
         constructor.receiver = function () {
-            return new Responder({
-                request: cadence(function (async, envelope) {
-                    console.log(envelope)
-                    return [ 1 ]
-                })
-            })
+            return new Procedure(cadence(function (async, envelope) {
+                console.log(envelope)
+                return [ 1 ]
+            }))
         }
     })
 

@@ -1,13 +1,15 @@
 require('proof')(2, require('cadence')(prove))
 
 function prove (async, okay) {
+    var Procedure = require('conduit/procedure')
+    var Caller = require('conduit/caller')
     var cadence = require('cadence')
     var events = require('events')
     var ee = new events.EventEmitter
     var Mock = require('../mock2')
     var Olio = require('../olio')
-    var mock = new Mock
-    var olio = new Olio(mock, function (configuration) {
+    var mock = new Mock(ee)
+    var olio = new Olio(ee, function (configuration) {
         configuration.receiver = function () {
             return new Procedure(function (envelope, callback) { callback(null, 0) })
         }
@@ -15,9 +17,6 @@ function prove (async, okay) {
             return new Caller
         })
     })
-    var Procedure = require('conduit/procedure')
-    var Caller = require('conduit/caller')
-    var responder = new Procedure(cadence(function (async, envelope) {}))
     mock.initialize([ 'program', 'self' ], 0)
     mock.sibling([ 'program', 'command' ], 1, function () {
         return new Procedure(cadence(function (async, envelope) { return [ 1 ] }))
