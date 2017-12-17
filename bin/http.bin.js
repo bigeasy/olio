@@ -36,8 +36,6 @@ require('arguable')(module, require('cadence')(function (async, program) {
         }
     })
 
-    var finalist = require('finalist')
-
     var Destructible = require('destructible')
     var destructible = new Destructible(900, './bin/http.bin.js')
     program.on('shutdown', destructible.destroy.bind(destructible))
@@ -51,6 +49,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     destructible.completed.wait(async())
 
+    var Signal = require('signal')
+
     async([function () {
         destructible.destroy()
     }], function () {
@@ -61,10 +61,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
             })
         })
 
-        finalist(function (callback) {
-            destructible.completed.wait(callback)
-            olio.ready.wait(callback)
-        }, async())
+        Signal.first(destructible.completed, olio.ready, async())
 
         destructible.addDestructor('olio', olio, 'destroy')
         olio.listen(destructible.monitor('olio'))
