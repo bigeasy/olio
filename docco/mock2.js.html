@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>mock2.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+
+
+                <a class="source" href="descend.js.html">
+                  descend.js
+                </a>
+
+
+                <a class="source" href="indexify.js.html">
+                  indexify.js
+                </a>
+
+
+                <a class="source" href="listen.bin.js.html">
+                  listen.bin.js
+                </a>
+
+
+                <a class="source" href="listener.js.html">
+                  listener.js
+                </a>
+
+
+                <a class="source" href="map.js.html">
+                  map.js
+                </a>
+
+
+                <a class="source" href="mock.js.html">
+                  mock.js
+                </a>
+
+
+                <a class="source" href="mock2.js.html">
+                  mock2.js
+                </a>
+
+
+                <a class="source" href="monitor.js.html">
+                  monitor.js
+                </a>
+
+
+                <a class="source" href="olio.bin.js.html">
+                  olio.bin.js
+                </a>
+
+
+                <a class="source" href="olio.js.html">
+                  olio.js
+                </a>
+
+
+                <a class="source" href="prolific.configure.js.html">
+                  prolific.configure.js
+                </a>
+
+
+                <a class="source" href="run.bin.js.html">
+                  run.bin.js
+                </a>
+
+
+                <a class="source" href="runner.js.html">
+                  runner.js
+                </a>
+
+
+                <a class="source" href="search.js.html">
+                  search.js
+                </a>
+
+
+                <a class="source" href="serve.bin.js.html">
+                  serve.bin.js
+                </a>
+
+
+                <a class="source" href="serve.child.js.html">
+                  serve.child.js
+                </a>
+
+
+                <a class="source" href="server.js.html">
+                  server.js
+                </a>
+
+            </div>
+          </div>
+        </li>
+      </ul>
+
+    <ul class="sections">
+
+          <li id="title">
+              <div class="annotation">
+                  <h1>mock2.js</h1>
+              </div>
+          </li>
+
+
+
+        <li id="section-1">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> http = <span class="hljs-built_in">require</span>(<span class="hljs-string">'http'</span>)
+<span class="hljs-keyword">var</span> Destructible = <span class="hljs-built_in">require</span>(<span class="hljs-string">'destructible'</span>)
+<span class="hljs-keyword">var</span> cadence = <span class="hljs-built_in">require</span>(<span class="hljs-string">'cadence'</span>)
+<span class="hljs-keyword">var</span> Signal = <span class="hljs-built_in">require</span>(<span class="hljs-string">'signal'</span>)
+<span class="hljs-keyword">var</span> util = <span class="hljs-built_in">require</span>(<span class="hljs-string">'util'</span>)
+<span class="hljs-keyword">var</span> events = <span class="hljs-built_in">require</span>(<span class="hljs-string">'events'</span>)
+<span class="hljs-keyword">var</span> Descendent = <span class="hljs-built_in">require</span>(<span class="hljs-string">'descendent'</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Mock</span> (<span class="hljs-params">ee</span>) </span>{
+    <span class="hljs-keyword">this</span>._descendent = <span class="hljs-keyword">new</span> Descendent(ee)
+    <span class="hljs-keyword">this</span>._destructible = <span class="hljs-keyword">new</span> Destructible(<span class="hljs-number">5000</span>, <span class="hljs-string">'olio/mock'</span>)
+    <span class="hljs-keyword">this</span>.ready = <span class="hljs-keyword">new</span> Signal
+}
+
+Mock.prototype.initialize = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">argv, index</span>) </span>{
+    <span class="hljs-keyword">this</span>._descendent.across(<span class="hljs-string">'olio:message'</span>, {
+        <span class="hljs-attr">method</span>: <span class="hljs-string">'factory'</span>
+    }, <span class="hljs-keyword">this</span>)
+    <span class="hljs-keyword">this</span>._descendent.across(<span class="hljs-string">'olio:message'</span>, {
+        <span class="hljs-attr">method</span>: <span class="hljs-string">'initialize'</span>,
+        <span class="hljs-attr">argv</span>: argv,
+        <span class="hljs-attr">index</span>: index
+    })
+}
+
+Mock.prototype.sender = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">argv, index, sender</span>) </span>{
+    <span class="hljs-keyword">this</span>._descendent.across(<span class="hljs-string">'olio:message'</span>, {
+        <span class="hljs-attr">method</span>: <span class="hljs-string">'connect'</span>,
+        <span class="hljs-attr">from</span>: { <span class="hljs-attr">argv</span>: argv, <span class="hljs-attr">index</span>: index }
+    }, sender)
+    <span class="hljs-keyword">return</span> sender
+}
+
+Mock.prototype.sibling = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">argv, count, factory</span>) </span>{
+    <span class="hljs-keyword">this</span>._descendent.across(<span class="hljs-string">'olio:message'</span>, {
+        <span class="hljs-attr">method</span>: <span class="hljs-string">'created'</span>,
+        <span class="hljs-attr">argv</span>: argv,
+        <span class="hljs-attr">count</span>: count
+    }, factory)
+}
+
+Mock.prototype.createReceiver = cadence(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">async, olio, message, sender</span>) </span>{
+    <span class="hljs-keyword">var</span> receiver = olio._receiver.call(<span class="hljs-literal">null</span>, message.from.argv, message.from.index)
+
+    <span class="hljs-keyword">var</span> destructible = <span class="hljs-keyword">new</span> Destructible([ <span class="hljs-string">'receiver'</span>, message.from  ])
+    olio._destructible.addDestructor([ <span class="hljs-string">'receiver'</span>, message.from ], destructible, <span class="hljs-string">'destroy'</span>)
+
+    sender.read.shifter().pump(receiver.write, <span class="hljs-string">'enqueue'</span>)
+    receiver.read.shifter().pump(sender.write, <span class="hljs-string">'enqueue'</span>)
+    <span class="hljs-keyword">var</span> receiver = olio._receiver.call(<span class="hljs-literal">null</span>, message.from.argv, message.from.index)
+})
+
+Mock.prototype.createSender = cadence(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">async, olio, sender, message, factory, index</span>) </span>{
+    <span class="hljs-keyword">var</span> sink = factory(index, sender.count)
+    <span class="hljs-keyword">var</span> source = sender.builder.call(<span class="hljs-literal">null</span>, message.argv, index, message.count)
+    sink.read.shifter().pump(source.write, <span class="hljs-string">'enqueue'</span>)
+    source.read.shifter().pump(sink.write, <span class="hljs-string">'enqueue'</span>)
+    sender.receivers[index] = { <span class="hljs-attr">receiver</span>: source }
+    <span class="hljs-keyword">var</span> wait = <span class="hljs-keyword">async</span>()
+    olio._destructible.addDestructor([ <span class="hljs-string">'conduit'</span>, message.argv, index ], <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+        wait()
+    })
+})
+
+<span class="hljs-built_in">module</span>.exports = Mock
+
+</pre></div></div>
+
+        </li>
+
+    </ul>
+  </div>
+</body>
+</html>

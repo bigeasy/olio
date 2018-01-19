@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>server.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+
+
+                <a class="source" href="descend.js.html">
+                  descend.js
+                </a>
+
+
+                <a class="source" href="indexify.js.html">
+                  indexify.js
+                </a>
+
+
+                <a class="source" href="listen.bin.js.html">
+                  listen.bin.js
+                </a>
+
+
+                <a class="source" href="listener.js.html">
+                  listener.js
+                </a>
+
+
+                <a class="source" href="map.js.html">
+                  map.js
+                </a>
+
+
+                <a class="source" href="mock.js.html">
+                  mock.js
+                </a>
+
+
+                <a class="source" href="mock2.js.html">
+                  mock2.js
+                </a>
+
+
+                <a class="source" href="monitor.js.html">
+                  monitor.js
+                </a>
+
+
+                <a class="source" href="olio.bin.js.html">
+                  olio.bin.js
+                </a>
+
+
+                <a class="source" href="olio.js.html">
+                  olio.js
+                </a>
+
+
+                <a class="source" href="prolific.configure.js.html">
+                  prolific.configure.js
+                </a>
+
+
+                <a class="source" href="run.bin.js.html">
+                  run.bin.js
+                </a>
+
+
+                <a class="source" href="runner.js.html">
+                  runner.js
+                </a>
+
+
+                <a class="source" href="search.js.html">
+                  search.js
+                </a>
+
+
+                <a class="source" href="serve.bin.js.html">
+                  serve.bin.js
+                </a>
+
+
+                <a class="source" href="serve.child.js.html">
+                  serve.child.js
+                </a>
+
+
+                <a class="source" href="server.js.html">
+                  server.js
+                </a>
+
+            </div>
+          </div>
+        </li>
+      </ul>
+
+    <ul class="sections">
+
+          <li id="title">
+              <div class="annotation">
+                  <h1>server.js</h1>
+              </div>
+          </li>
+
+
+
+        <li id="section-1">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>The listener implements a Node.js Cluster “Master.” I call it a listener
+because I think of it as listening to the bound port.</p>
+<p>Our listener implementation starts the cluster workers. It uses the
+<code>Cluster.setupMaster</code> method to specify a specific worker executable instead
+of using the behavior that looks like fork yet behaves nothing like fork and
+is therefore very confusing.</p>
+<p>In case you ever forget; you must use cluster to support Windows. Your
+support here should be enough to evolve a Windows implementation that is as
+performant as Node.js can be on Windows. Windows is slow about passing
+handles, so you shouldn’t roll your own handle passing strategy. It would
+only work for TCP/TLS anyway. You can’t pass the TCP handles of an HTTP
+server around and no your are not going to implement HTTP parsing.</p>
+
+            </div>
+
+        </li>
+
+
+        <li id="section-2">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>From the Node.js API.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> path = <span class="hljs-built_in">require</span>(<span class="hljs-string">'path'</span>)
+<span class="hljs-keyword">var</span> assert = <span class="hljs-built_in">require</span>(<span class="hljs-string">'assert'</span>)
+<span class="hljs-keyword">var</span> url = <span class="hljs-built_in">require</span>(<span class="hljs-string">'url'</span>)
+<span class="hljs-keyword">var</span> cluster = <span class="hljs-built_in">require</span>(<span class="hljs-string">'cluster'</span>)
+<span class="hljs-keyword">var</span> children = <span class="hljs-built_in">require</span>(<span class="hljs-string">'child_process'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-3">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Return the first not null-like value.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> coalesce = <span class="hljs-built_in">require</span>(<span class="hljs-string">'extant'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-4">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Control-flow utilities.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> delta = <span class="hljs-built_in">require</span>(<span class="hljs-string">'delta'</span>)
+<span class="hljs-keyword">var</span> cadence = <span class="hljs-built_in">require</span>(<span class="hljs-string">'cadence'</span>)
+<span class="hljs-keyword">var</span> Signal = <span class="hljs-built_in">require</span>(<span class="hljs-string">'signal'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-5">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Controlled demolition of objects.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Destructible = <span class="hljs-built_in">require</span>(<span class="hljs-string">'destructible'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-6">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Exceptions that you can catch by type.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> interrupt = <span class="hljs-built_in">require</span>(<span class="hljs-string">'interrupt'</span>).createInterrupter(<span class="hljs-string">'subordinate'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-7">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Contextualized callbacks and event handlers.</p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> Operation = <span class="hljs-built_in">require</span>(<span class="hljs-string">'operation/variadic'</span>)
+
+<span class="hljs-keyword">var</span> Monitor = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./monitor'</span>)
+<span class="hljs-keyword">var</span> Descend = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./descend'</span>)
+<span class="hljs-keyword">var</span> Search = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./search'</span>)
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-8">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>TODO Move this since I’ve generalized.</p>
+<p>Create a listener that will launch the router executable specfied by the
+<code>argv</code> option.</p>
+<p>The Node.js Cluster module spreads the TCP connections to a port across
+multiple workers. The router is the child process that shares the work of
+responding to parituclar sockets or HTTP requests.</p>
+<p>Subordinate implements a worker pinning where</p>
+<p>We let the Cluster module distribute he work using its load balancing
+strategy. The router will inspect the request for a key, hash the key, and
+then send it to the correct worker based on the hashed key value.</p>
+<p>That describes hashed operation which is what’s brining this project to
+life. Other modes operation suggest themselves, but I’m not using them quite
+yet.</p>
+<p>The <code>secret</code> option is used to indicate that a request has
+been routed and is supposed to go to a specific worker. The when a request
+comes in from outside the application the router that receives it will chose
+a worker based on a hash of the key value. It then forwards the request
+through a long-lived multiplexed connection to the worker at the hashed
+index.</p>
+<p>If you want to directly specify a worker by index you would specify the index
+in a request header along with the secret to indicate that you know what
+you’re doing.</p>
+<p>For inter-process communication between trusted processes the secret may be
+generated externally and passed into the subordinate executable. Otherwise,
+it is generated internally.</p>
+
+            </div>
+
+        </li>
+
+
+        <li id="section-9">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Server</span> (<span class="hljs-params">process, argv, descendent</span>) </span>{
+    <span class="hljs-keyword">var</span> fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>)
+    <span class="hljs-keyword">var</span> command = Search(argv[<span class="hljs-number">0</span>], process.env.PATH)
+    cluster.setupMaster({ <span class="hljs-attr">exec</span>: command, <span class="hljs-attr">args</span>: argv.slice(<span class="hljs-number">1</span>) })
+    <span class="hljs-keyword">this</span>._argv = argv
+    <span class="hljs-keyword">this</span>._process = process
+    <span class="hljs-keyword">this</span>._destructible = <span class="hljs-keyword">new</span> Destructible(<span class="hljs-number">2000</span>, <span class="hljs-string">'olio/server'</span>)
+    <span class="hljs-keyword">this</span>._destructible.markDestroyed(<span class="hljs-keyword">this</span>)
+    <span class="hljs-keyword">this</span>._destructible.addDestructor(<span class="hljs-string">'shutdown'</span>, <span class="hljs-keyword">this</span>, <span class="hljs-string">'_shutdown'</span>)
+    <span class="hljs-keyword">this</span>._descendent = descendent
+    <span class="hljs-keyword">this</span>._pids = []
+    <span class="hljs-keyword">this</span>._descendent.on(<span class="hljs-string">'olio:message'</span>, Descend(<span class="hljs-keyword">this</span>._descendent, <span class="hljs-keyword">this</span>._pids))
+}
+
+Server.prototype.destroy = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">this</span>._destructible.destroy()
+}
+
+</pre></div></div>
+
+        </li>
+
+
+        <li id="section-10">
+            <div class="annotation">
+
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p><a href="https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ">https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ</a></p>
+
+            </div>
+
+            <div class="content"><div class='highlight'><pre>Server.prototype._shutdown = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">this</span>._descendent.emit(<span class="hljs-string">'olio:message'</span>, [], { <span class="hljs-attr">to</span>: <span class="hljs-literal">null</span>, <span class="hljs-attr">method</span>: <span class="hljs-string">'shutdown'</span> })
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> id <span class="hljs-keyword">in</span> cluster.workers) {
+        cluster.workers[id].disconnect()
+    }
+}
+
+Server.prototype.run = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">count, environment</span>) </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>, I = coalesce(count, <span class="hljs-number">1</span>); i &lt; I; i++) {
+        <span class="hljs-keyword">var</span> child = cluster.fork(environment(i))
+        <span class="hljs-keyword">this</span>._descendent.addChild(child.process, <span class="hljs-literal">null</span>)
+        <span class="hljs-keyword">this</span>._descendent.down([ child.process.pid ], <span class="hljs-string">'olio:message'</span>, {
+            <span class="hljs-attr">method</span>: <span class="hljs-string">'initialize'</span>,
+            <span class="hljs-attr">argv</span>: <span class="hljs-keyword">this</span>._argv,
+            <span class="hljs-attr">index</span>: i
+        })
+        <span class="hljs-keyword">this</span>._pids.push(child.process.pid)
+        Monitor(interrupt, <span class="hljs-keyword">this</span>, child, <span class="hljs-keyword">this</span>._destructible.monitor([ <span class="hljs-string">'child'</span>, i ]))
+    }
+}
+
+
+Server.prototype.listen = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">callback</span>) </span>{
+    <span class="hljs-keyword">this</span>._destructible.completed.wait(callback)
+}
+
+<span class="hljs-built_in">module</span>.exports = Server
+
+</pre></div></div>
+
+        </li>
+
+    </ul>
+  </div>
+</body>
+</html>
