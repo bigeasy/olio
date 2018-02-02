@@ -21,15 +21,15 @@
     "dependencies":
     {
                             "arguable":                     "6.1.x",
-                            "delta":                        "1.2.x",
-                            "downgrader":                   "0.1.x",
-                            "descendent":                   "0.0.x",
-                            "destructible":                 "0.18.x",
                             "cadence":                      "1.0.x",
                             "conduit":                      "0.16.x",
+                            "delta":                        "1.2.x",
+                            "descendent":                   "0.0.x",
+                            "destructible":                 "0.18.x",
+                            "downgrader":                   "0.1.x",
                             "extant":                       "1.0.x",
-                            "interrupt":                    "5.0.x",
                             "hash.fnv":                     "1.0.x",
+                            "interrupt":                    "5.0.x",
                             "keyify":                       "0.0.x",
                             "nop":                          "1.0.x",
                             "operation":                    "1.6.x",
@@ -40,10 +40,10 @@
     },
     "devDependencies":
     {
-                            "proof":                        "3.0.x",
                             "prolific.logger":              "5.0.x",
                             "prolific.resolver":            "5.0.x",
-                            "prolific.shuttle":             "17.0.x"
+                            "prolific.shuttle":             "17.0.x",
+                            "proof":                        "3.0.x"
     },
     "main":                 "olio",
     "bin":
