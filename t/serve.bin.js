@@ -44,9 +44,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     var logger = require('prolific.logger').createLogger('olio.http')
     var Shuttle = require('prolific.shuttle')
-    console.log('start shuttle')
     var shuttle = Shuttle.shuttle(program, logger)
-    console.log('shuttling')
     destructible.addDestructor('shuttle', shuttle, 'close')
 
     destructible.completed.wait(async())

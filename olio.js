@@ -65,7 +65,7 @@ function Olio (ee, configurator) {
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
-    this._ready(this._destructible.rescue('ready'))
+    this._ready(this._destructible.monitor('ready', true))
 
     var descendent = new Descendent(ee)
     this._destructible.addDestructor('descendent', descendent, 'destroy')
@@ -95,7 +95,7 @@ Olio.prototype._message = function (path, message, handle) {
         this._initialized.unlatch()
         break
     case 'connect':
-        this._factory.createReceiver(this, message, handle, this._destructible.rescue([ 'connect', message ]))
+        this._factory.createReceiver(this, message, handle, this._destructible.monitor([ 'connect', message ], true))
         break
     case 'created':
         var sender = this._map.get(message.argv)

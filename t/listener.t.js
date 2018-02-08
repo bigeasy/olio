@@ -14,12 +14,16 @@ function prove (async, okay) {
     var destructible = new Destructible(1000, 'destructible')
 
     destructible.completed.wait(async())
-    destructible.addDestructor('listener', listener, 'destroy')
 
-    listener.listen(destructible.monitor('listen'))
-
-    cadence(function () {
+    destructible.monitor('test', cadence(function (async, initializer) {
+        initializer.ready()
         async(function () {
+            destructible.destruct.wait(listener, 'destroy')
+            destructible.monitor([ 'listener' ], function (initializer, callback) {
+                listener.listen(callback)
+                initializer.ready()
+            }, async())
+        }, function () {
             listener.index(async())
         }, function (statusCode, headers, body) {
             okay({
@@ -36,10 +40,7 @@ function prove (async, okay) {
             var http = require('http')
 
             var descendent = new Descendent(process)
-            destructible.addDestructor('descendent', descendent, 'destroy')
-
-            destructible.addDestructor('listener', listener, 'destroy')
-            listener.listen(destructible.monitor([ 'listener' ]))
+            destructible.destruct.wait(descendent, 'destroy')
 
             var downgrader = new Downgrader
             downgrader.on('socket', Operation([ listener, 'socket' ]))
@@ -61,5 +62,5 @@ function prove (async, okay) {
                 console.log('done')
             })
         })
-    })(destructible.monitor('test'))
+    }), async())
 }

@@ -49,7 +49,7 @@ function prove (async, okay) {
                 from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
             destructible.addDestructor('socket', socket, 'destroy')
-            olio._factory.createReceiver(olio, message, socket, destructible.rescue('create'))
+            olio._factory.createReceiver(olio, message, socket, destructible.monitor('create', true))
         })
 
         server = http.createServer(function () {})
@@ -120,7 +120,7 @@ function prove (async, okay) {
                 })
                 destructible.destroy()
             })
-        })(destructible.rescue('tests'))
+        })(destructible.monitor('tests', true))
 
 
         okay(Olio, 'require')

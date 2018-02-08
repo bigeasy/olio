@@ -101,7 +101,7 @@ Listener.prototype.children = function (children) {
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
             this._descendent.addChild(child, null)
             this._created(+body.parameters.workers, body.argv, [ child.pid ])
-            this._destructible.addDestructor([ 'serve', body.argv ], child, 'kill')
+            this._destructible.destruct.wait(child, 'kill')
             Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
         case 'run':
@@ -111,7 +111,7 @@ Listener.prototype.children = function (children) {
                 workers: body.parameters.workers,
                 argv: body.argv
             })
-            this._destructible.addDestructor([ 'run', body.argv ], runner, 'destroy')
+            this._destructible.destruct.wait(runner, 'destroy')
             runner.run(this._destructible.monitor([ 'run', body.argv ]))
             this._created(+body.parameters.workers, body.argv, runner.pids)
             break
