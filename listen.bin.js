@@ -48,7 +48,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var descendent = new Descendent(process)
         destructible.addDestructor('descendent', descendent, 'destroy')
 
-        var listener = new Listener(descendent, program.socket)
+        var listener = new Listener(descendent, program.properties.socket)
 
         destructible.addDestructor('listener', listener, 'destroy')
         listener.listen(destructible.monitor([ 'listener' ]))
@@ -62,7 +62,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         destructible.addDestructor('listen', server, 'close')
 
         async(function () {
-            server.listen(program.socket, async())
+            server.listen(program.properties.socket, async())
         }, function () {
             delta(destructible.monitor([ 'server' ])).ee(server).on('close')
             listener.children(children)
