@@ -43,7 +43,7 @@ Runner.prototype._run = cadence(function (async, index) {
 
     this.pids.push(child.pid)
 
-    this._destructible.addDestructor([ 'child', index ], child, 'kill')
+    this._destructible.destruct.wait(child, 'kill')
 
     this._children.array[index] = child
 
