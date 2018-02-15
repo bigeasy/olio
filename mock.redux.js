@@ -43,7 +43,7 @@ Mock.prototype.createReceiver = cadence(function (async, olio, message, sender) 
     var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
 
     var destructible = new Destructible([ 'receiver', message.from  ])
-    olio._destructible.addDestructor([ 'receiver', message.from ], destructible, 'destroy')
+    olio._destructible.destruct.wait(destructible, 'destroy')
 
     sender.read.shifter().pump(receiver.write, 'enqueue')
     receiver.read.shifter().pump(sender.write, 'enqueue')
@@ -57,7 +57,7 @@ Mock.prototype.createSender = cadence(function (async, olio, sender, message, fa
     source.read.shifter().pump(sink.write, 'enqueue')
     sender.receivers[index] = { receiver: source }
     var wait = async()
-    olio._destructible.addDestructor([ 'conduit', message.argv, index ], function () {
+    olio._destructible.destruct.wait(function () {
         wait()
     })
 })

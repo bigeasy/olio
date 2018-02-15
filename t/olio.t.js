@@ -48,14 +48,14 @@ function prove (async, okay) {
                 to: { index: 0, argv: [ 'program', 'that' ] },
                 from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
-            destructible.addDestructor('socket', socket, 'destroy')
+            destructible.destruct.wait(socket, 'destroy')
             olio._factory.createReceiver(olio, message, socket, destructible.monitor('create', true))
         })
 
         server = http.createServer(function () {})
         server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
 
-        destructible.addDestructor('listen', server, 'close')
+        destructible.destruct.wait(server, 'close')
 
         server.listen('t/socket', async())
     }, function () {
@@ -99,7 +99,7 @@ function prove (async, okay) {
         })
 
         olio.listen(destructible.monitor('olio'))
-        destructible.addDestructor('olio', olio, 'destroy')
+        destructible.destruct.wait(olio, 'destroy')
 
         cadence(function (async) {
             async(function () {

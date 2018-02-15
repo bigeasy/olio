@@ -19,7 +19,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var shuttle = Shuttle.shuttle(program, logger)
 
     program.on('shutdown', destructible.destroy.bind(destructible))
-    destructible.addDestructor('shuttle', shuttle, 'close')
+    destructible.destruct.wait(shuttle, 'close')
 
     var Olio = require('..')
     var olio = new Olio(program, function (constructor) {
@@ -31,7 +31,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         }
     })
 
-    destructible.addDestructor('olio', olio, 'destroy')
+    destructible.destruct.wait(olio, 'destroy')
 
     olio.listen(async())
 

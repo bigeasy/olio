@@ -84,7 +84,7 @@ function Server (process, argv, descendent) {
     this._process = process
     this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
-    this._destructible.addDestructor('shutdown', this, '_shutdown')
+    this._destructible.destruct.wait(this, '_shutdown')
     this._descendent = descendent
     this._pids = []
     this._descendent.on('olio:message', Descend(this._descendent, this._pids))

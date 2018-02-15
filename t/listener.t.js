@@ -48,7 +48,7 @@ function prove (async, okay) {
             var server = http.createServer(listener.reactor.middleware)
             server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
 
-            destructible.addDestructor('listen', server, 'close')
+            destructible.destruct.wait(server, 'close')
 
             server.listen(socketPath, async())
         }, function () {

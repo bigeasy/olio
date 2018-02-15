@@ -45,7 +45,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var logger = require('prolific.logger').createLogger('olio.http')
     var Shuttle = require('prolific.shuttle')
     var shuttle = Shuttle.shuttle(program, logger)
-    destructible.addDestructor('shuttle', shuttle, 'close')
+    destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
@@ -60,7 +60,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
         Signal.first(destructible.completed, olio.ready, async())
 
-        destructible.addDestructor('olio', olio, 'destroy')
+        destructible.destruct.wait(olio, 'destroy')
         olio.listen(destructible.monitor('olio'))
     }, function () {
         var http = require('http')
@@ -69,8 +69,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
         var server = http.createServer(reactor.middleware)
         async(function () {
-            destructible.addDestructor('connection', cluster.worker, 'disconnect')
-            destructible.addDestructor('server', server, 'close')
+            destructible.destruct.wait(cluster.worker, 'disconnect')
+            destructible.destruct.wait(server, 'close')
 
             server.listen(8080, async())
         }, function () {

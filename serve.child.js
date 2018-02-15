@@ -26,7 +26,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     program.on('shutdown', destructible.destroy.bind(destructible))
 
-    destructible.addDestructor('descendent', descendent, 'destroy')
+    destructible.destruct.wait(descendent, 'destroy')
 
     var Server = require('./server')
     var server = new Server(program, program.argv, descendent)
@@ -36,7 +36,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     async([function () {
         destructible.destroy()
     }], function () {
-        destructible.addDestructor('server', server, 'destroy')
+        destructible.destruct.wait(server, 'destroy')
 
         server.listen(destructible.monitor('children'))
 

@@ -29,7 +29,7 @@ function prove (async, okay) {
     var Destructible = require('destructible')
     var destructible = new Destructible(1000, 'mock')
 
-    destructible.addDestructor('olio', olio, 'destroy')
+    destructible.destruct.wait(olio, 'destroy')
 
     destructible.completed.wait(async())
 

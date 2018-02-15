@@ -9,6 +9,8 @@ var http = require('http')
 var Downgrader = require('downgrader')
 var delta = require('delta')
 var interrupt = require('interrupt').createInterrupter('olio')
+var coalesce = require('extant')
+var noop = require('nop')
 
 function SocketFactory () {
 }
@@ -17,13 +19,13 @@ SocketFactory.prototype.createReceiver = cadence(function (async, olio, message,
     var receiver = olio._receiver.call(null, message.argv)
 
     var destructible = new Destructible([ 'receiver', message.from  ])
-    olio._destructible.addDestructor([ 'receiver', message.from ], destructible, 'destroy')
+    olio._destructible.destruct.wait(destructible, 'destroy')
 
     async(function () {
         var conduit = new Conduit(socket, socket, receiver)
         conduit.ready.wait(async())
-        destructible.addDestructor('conduit', conduit, 'destroy')
-        destructible.addDestructor('socket', socket, 'destroy')
+        destructible.destruct.wait(conduit, 'destroy')
+        destructible.destruct.wait(socket, 'destroy')
         conduit.listen(null, olio._destructible.monitor([ 'receiver', message.from ]))
     }, function () {
         socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
@@ -36,7 +38,7 @@ SocketFactory.prototype.createSender = cadence(function (async, olio, sender, me
     var receiver = sender.builder.call(null, message.argv, index, message.count)
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
-    olio._destructible.addDestructor([ 'readable', message.argv, index ], readable, 'destroy')
+    var cookie = olio._destructible.destruct.wait(readable, 'destroy')
     async(function () {
         var request = http.request({
             socketPath: message.socketPath,
@@ -60,13 +62,13 @@ SocketFactory.prototype.createSender = cadence(function (async, olio, sender, me
             interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
             socket.unpipe(through)
 
-            olio._destructible.invokeDestructor([ 'readable', message.argv, index ])
+            coalesce(olio._destructible.destruct.cancel(cookie), noop)()
             readable.destroy()
 
             var conduit  = new Conduit(socket, socket, receiver)
 
-            olio._destructible.addDestructor([ 'conduit', message.argv, index ], conduit, 'destroy')
-            olio._destructible.addDestructor([ 'socket', message.argv, index ], socket, 'destroy')
+            olio._destructible.destruct.wait(conduit, 'destroy')
+            olio._destructible.destruct.wait(socket, 'destroy')
             sender.receivers[index] = { conduit: conduit, receiver: receiver }
             conduit.listen(null, async())
             ready.unlatch()

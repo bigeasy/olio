@@ -68,7 +68,7 @@ function Olio (ee, configurator) {
     this._ready(this._destructible.monitor('ready', true))
 
     var descendent = new Descendent(ee)
-    this._destructible.addDestructor('descendent', descendent, 'destroy')
+    this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
 
     this._factory = new SocketFactory
