@@ -42,8 +42,7 @@ Mock.prototype.sibling = function (argv, count, factory) {
 Mock.prototype.createReceiver = cadence(function (async, olio, message, sender) {
     var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
 
-    var destructible = new Destructible([ 'receiver', message.from  ])
-    olio._destructible.destruct.wait(destructible, 'destroy')
+    var destructible = this._destructible.destructible([ 'receiver', message.from  ])
 
     sender.read.shifter().pump(receiver.write, 'enqueue')
     receiver.read.shifter().pump(sender.write, 'enqueue')
