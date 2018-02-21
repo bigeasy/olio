@@ -84,7 +84,7 @@ Olio.prototype.count = function (path, index) {
     return this._map.get(path).count
 }
 
-Olio.prototype._message = function (path, message, handle) {
+Olio.prototype._dispatch = cadence(function (async, message, handle) {
     switch (message.method) {
     case 'factory':
         this._factory = handle
@@ -111,6 +111,10 @@ Olio.prototype._message = function (path, message, handle) {
         this._shutdown.call()
         break
     }
+})
+
+Olio.prototype._message = function (path, message, handle) {
+    this._dispatch(message, handle, this._destructible.monitor([ 'dispatch', message ], true))
 }
 
 Olio.prototype._ready = cadence(function (async) {
