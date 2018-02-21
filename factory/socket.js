@@ -32,13 +32,12 @@ SocketFactory.prototype.createReceiver = cadence(function (async, olio, message,
     })
 })
 
-SocketFactory.prototype.createSender = cadence(function (async, olio, sender, message, handle, index) {
-    var ready = new Signal
-    olio._latches.push(ready)
+SocketFactory.prototype.createSender = cadence(function (async, from, sender, message, handle, index, initializer) {
+    console.log(arguments)
     var receiver = sender.builder.call(null, message.argv, index, message.count)
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
-    var cookie = olio._destructible.destruct.wait(readable, 'destroy')
+    var cookie = initializer.destructor(readable, 'destroy')
     async(function () {
         var request = http.request({
             socketPath: message.socketPath,
@@ -46,8 +45,8 @@ SocketFactory.prototype.createSender = cadence(function (async, olio, sender, me
             headers: Downgrader.headers({
                 'x-olio-to-index': index,
                 'x-olio-to-argv': JSON.stringify(message.argv),
-                'x-olio-from-index': olio._index,
-                'x-olio-from-argv': JSON.stringify(olio._argv)
+                'x-olio-from-index': from.index,
+                'x-olio-from-argv': JSON.stringify(from.argv)
             })
         })
         delta(async()).ee(request).on('upgrade')
@@ -62,16 +61,16 @@ SocketFactory.prototype.createSender = cadence(function (async, olio, sender, me
             interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
             socket.unpipe(through)
 
-            coalesce(olio._destructible.destruct.cancel(cookie), noop)()
+            coalesce(initializer.cancel(cookie), noop)()
             readable.destroy()
 
             var conduit  = new Conduit(socket, socket, receiver)
 
-            olio._destructible.destruct.wait(conduit, 'destroy')
-            olio._destructible.destruct.wait(socket, 'destroy')
+            initializer.destructor(conduit, 'destroy')
+            initializer.destructor(socket, 'destroy')
             sender.receivers[index] = { conduit: conduit, receiver: receiver }
             conduit.listen(null, async())
-            ready.unlatch()
+            initializer.ready()
         })
     })
 })

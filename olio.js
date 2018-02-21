@@ -84,6 +84,8 @@ Olio.prototype.count = function (path, index) {
     return this._map.get(path).count
 }
 
+// TODO Maybe use cubbyhole to index by a particular name or, rather, argument path?
+// TODO Looks like two flavors of "ready."
 Olio.prototype._dispatch = cadence(function (async, message, handle) {
     switch (message.method) {
     case 'factory':
@@ -98,13 +100,26 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._factory.createReceiver(this, message, handle, this._destructible.monitor([ 'connect', message ], true))
         break
     case 'created':
-        var sender = this._map.get(message.argv)
+        var sender = this._map.get(message.argv), i = 0
         if (sender != null) {
             sender.count = message.count
-            for (var i = 0; i < message.count; i++) {
-                this._factory.createSender(this, sender, message, handle, i, this._destructible.monitor([ 'sender', message.argv, i ]))
-            }
-            sender.ready.unlatch()
+            var ready = new Signal
+            this._latches.push(ready)
+            async(function () {
+                var loop = async(function () {
+                    if (i == message.count) {
+                        return [ loop.break ]
+                    }
+                    this._destructible.monitor([ 'sender', message.argv, i ], this._factory, 'createSender', {
+                        argv: this._argv,
+                        index: this._index,
+                    }, sender, message, handle, i, async())
+                    i++
+                })()
+            }, function () {
+                ready.unlatch()
+                sender.ready.unlatch()
+            })
         }
         break
     case 'shutdown':
