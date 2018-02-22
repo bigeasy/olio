@@ -33,7 +33,6 @@ SocketFactory.prototype.createReceiver = cadence(function (async, olio, message,
 })
 
 SocketFactory.prototype.createSender = cadence(function (async, from, sender, message, handle, index, initializer) {
-    console.log(arguments)
     var receiver = sender.builder.call(null, message.argv, index, message.count)
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
