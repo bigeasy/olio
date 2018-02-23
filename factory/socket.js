@@ -18,8 +18,7 @@ function SocketFactory () {
 SocketFactory.prototype.createReceiver = cadence(function (async, olio, message, socket) {
     var receiver = olio._receiver.call(null, message.argv)
 
-    var destructible = new Destructible([ 'receiver', message.from  ])
-    olio._destructible.destruct.wait(destructible, 'destroy')
+    var destructible = olio._destructible.destructible([ 'receiver', message.from  ])
 
     async(function () {
         var conduit = new Conduit(socket, socket, receiver)
