@@ -35,6 +35,7 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
     var receiver = sender.builder.call(null, message.argv, index, message.count)
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
+    var destructible = initializer.destructible([ 'sender', message.argv, message.count ])
     var cookie = initializer.destructor(readable, 'destroy')
     async(function () {
         var request = http.request({
@@ -67,7 +68,8 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
             initializer.destructor(conduit, 'destroy')
             initializer.destructor(socket, 'destroy')
             sender.receivers[index] = { conduit: conduit, receiver: receiver }
-            conduit.listen(null, async())
+            conduit.listen(null, destructible.monitor('conduit'))
+            destructible.completed.wait(async())
             initializer.ready()
         })
     })
