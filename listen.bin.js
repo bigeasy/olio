@@ -34,7 +34,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     var Shuttle = require('prolific.shuttle')
     var shuttle = Shuttle.shuttle(program, logger)
-    destructible.addDestructor('shuttle', shuttle, 'close')
+    destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
@@ -46,11 +46,11 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var Listener = require('./listener')
 
         var descendent = new Descendent(process)
-        destructible.addDestructor('descendent', descendent, 'destroy')
+        destructible.destruct.wait(descendent, 'destroy')
 
         var listener = new Listener(descendent, program.properties.socket)
 
-        destructible.addDestructor('listener', listener, 'destroy')
+        destructible.destruct.wait(listener, 'destroy')
         listener.listen(destructible.monitor([ 'listener' ]))
 
         var downgrader = new Downgrader
@@ -59,7 +59,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var server = http.createServer(listener.reactor.middleware)
         server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
 
-        destructible.addDestructor('listen', server, 'close')
+        destructible.destruct.wait(server, 'close')
 
         async(function () {
             server.listen(program.properties.socket, async())

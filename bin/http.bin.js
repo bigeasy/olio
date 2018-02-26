@@ -45,7 +45,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     console.log('start shuttle')
     var shuttle = Shuttle.shuttle(program, logger)
     console.log('shuttling')
-    destructible.addDestructor('shuttle', shuttle, 'close')
+    destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
@@ -63,7 +63,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
         Signal.first(destructible.completed, olio.ready, async())
 
-        destructible.addDestructor('olio', olio, 'destroy')
+        destructible.destruct.wait(olio, 'destroy')
         olio.listen(destructible.monitor('olio'))
     }, function () {
         var http = require('http')
@@ -72,7 +72,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
         var server = http.createServer(reactor.middleware)
         async(function () {
-            destructible.addDestructor('server', server, 'close')
+            destructible.destruct.wait(server, 'close')
 
             server.listen(8080, async())
         }, function () {
