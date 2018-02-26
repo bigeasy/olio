@@ -36,7 +36,7 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
     var destructible = initializer.destructible([ 'sender', message.argv, message.count ])
-    var cookie = initializer.destructor(readable, 'destroy')
+    var cookie = destructible.destruct.wait(readable, 'destroy')
     async(function () {
         var request = http.request({
             socketPath: message.socketPath,
@@ -60,13 +60,13 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
             interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
             socket.unpipe(through)
 
-            coalesce(initializer.cancel(cookie), noop)()
+            coalesce(destructible.destruct.cancel(cookie), noop)()
             readable.destroy()
 
             var conduit  = new Conduit(socket, socket, receiver)
 
-            initializer.destructor(conduit, 'destroy')
-            initializer.destructor(socket, 'destroy')
+            destructible.destruct.wait(conduit, 'destroy')
+            destructible.destruct.wait(socket, 'destroy')
             sender.receivers[index] = { conduit: conduit, receiver: receiver }
             conduit.listen(null, destructible.monitor('conduit'))
             destructible.completed.wait(async())
