@@ -49,14 +49,12 @@ Mock.prototype.createReceiver = cadence(function (async, olio, message, sender) 
     var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
 })
 
-Mock.prototype.createSender = cadence(function (async, from, sender, message, factory, index, initializer) {
+Mock.prototype.createSender = cadence(function (async, from, sender, message, factory, index, destructible) {
     var sink = factory(index, sender.count)
     var source = sender.builder.call(null, message.argv, index, message.count)
     sink.read.shifter().pump(source.write, 'enqueue')
     source.read.shifter().pump(sink.write, 'enqueue')
     sender.receivers[index] = { receiver: source }
-    initializer.destructor(async())
-    initializer.ready()
 })
 
 module.exports = Mock

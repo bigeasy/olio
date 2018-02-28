@@ -15,13 +15,12 @@ function prove (async, okay) {
 
     destructible.completed.wait(async())
 
-    destructible.monitor('test', cadence(function (async, initializer) {
-        initializer.ready()
+    destructible.monitor('test', cadence(function (async, destructible) {
         async(function () {
             destructible.destruct.wait(listener, 'destroy')
-            destructible.monitor([ 'listener' ], function (initializer, callback) {
-                listener.listen(callback)
-                initializer.ready()
+            destructible.monitor([ 'listener' ], function (destructible, callback) {
+                listener.listen(destructible.monitor('listener'))
+                callback()
             }, async())
         }, function () {
             listener.index(async())
@@ -60,6 +59,7 @@ function prove (async, okay) {
                 setTimeout(async(), 1000)
             }, function () {
                 console.log('done')
+                destructible.destroy()
             })
         })
     }), async())
