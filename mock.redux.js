@@ -44,16 +44,16 @@ Mock.prototype.createReceiver = cadence(function (async, olio, message, sender) 
 
     var destructible = this._destructible.destructible([ 'receiver', message.from  ])
 
-    sender.read.shifter().pump(receiver.write, 'enqueue')
-    receiver.read.shifter().pump(sender.write, 'enqueue')
+    sender.read.shifter().pumpify(receiver.write)
+    receiver.read.shifter().pumpify(sender.write)
     var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
 })
 
 Mock.prototype.createSender = cadence(function (async, from, sender, message, factory, index, destructible) {
     var sink = factory(index, sender.count)
     var source = sender.builder.call(null, message.argv, index, message.count)
-    sink.read.shifter().pump(source.write, 'enqueue')
-    source.read.shifter().pump(sink.write, 'enqueue')
+    sink.read.shifter().pumpify(source.write)
+    source.read.shifter().pumpify(sink.write)
     sender.receivers[index] = { receiver: source }
 })
 

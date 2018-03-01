@@ -21,12 +21,12 @@ SocketFactory.prototype.createReceiver = cadence(function (async, olio, message,
     var destructible = olio._destructible.destructible([ 'receiver', message.from  ])
 
     async(function () {
+        destructible.monitor([ 'receiver', 'stack', message.from ], receiver, 'stack', async())
+    }, function () {
         var conduit = new Conduit(socket, socket, receiver)
-        conduit.ready.wait(async())
         destructible.destruct.wait(conduit, 'destroy')
         destructible.destruct.wait(socket, 'destroy')
         conduit.listen(null, olio._destructible.monitor([ 'receiver', message.from ]))
-    }, function () {
         socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
     })
 })
@@ -37,6 +37,8 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
     var readable = new Staccato.Readable(through)
     var cookie = destructible.destruct.wait(readable, 'destroy')
     async(function () {
+        destructible.monitor([ 'receiver', 'stack', message.from ], receiver, 'stack', async())
+    }, function () {
         var request = http.request({
             socketPath: message.socketPath,
             url: 'http://olio',
