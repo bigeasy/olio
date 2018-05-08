@@ -29,7 +29,7 @@
                             "downgrader":                   "0.1.x",
                             "extant":                       "1.0.x",
                             "hash.fnv":                     "1.0.x",
-                            "interrupt":                    "5.0.x",
+                            "interrupt":                    "6.2.x",
                             "keyify":                       "0.0.x",
                             "nop":                          "1.0.x",
                             "operation":                    "1.6.x",
