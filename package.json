@@ -41,7 +41,7 @@
     "devDependencies":
     {
                             "prolific.logger":              "6.0.x",
-                            "prolific.resolver":            "5.0.x",
+                            "prolific.resolver":            "6.0.x",
                             "prolific.shuttle":             "18.0.x",
                             "proof":                        "3.0.x"
     },
