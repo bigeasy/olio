@@ -22,18 +22,17 @@ require('arguable')(module, require('cadence')(function (async, program) {
     destructible.destruct.wait(shuttle, 'close')
 
     var Olio = require('..')
-    var olio = new Olio(program, function (constructor) {
-        constructor.receiver = function (destructible, argv, callback) {
-            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
-                console.log(envelope)
-                return [ 1 ]
-            }), callback)
-        }
+
+    async(function () {
+        destructible.monitor('olio', Olio, program, function (constructor) {
+            constructor.receiver = function (destructible, argv, callback) {
+                destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                    console.log(envelope)
+                    return [ 1 ]
+                }), callback)
+            }
+        }, async())
+    }, function (olio) {
+        logger.info('started', { hello: 'world', pid: program.pid })
     })
-
-    destructible.destruct.wait(olio, 'destroy')
-
-    olio.listen(async())
-
-    logger.info('started', { hello: 'world', pid: program.pid })
 }))

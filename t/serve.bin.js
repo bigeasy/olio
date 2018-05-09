@@ -52,17 +52,12 @@ require('arguable')(module, require('cadence')(function (async, program) {
     async([function () {
         destructible.destroy()
     }], function () {
-        var olio = new Olio(program, function (constructor) {
+        destructible.monitor('olio', Olio, program, function (constructor) {
             constructor.sender([ './t/run.bin.js' ], function (destructible, argv, index, count, callback) {
                 destructible.monitor('caller', Caller, callback)
             })
-        })
-
-        Signal.first(destructible.completed, olio.ready, async())
-
-        destructible.destruct.wait(olio, 'destroy')
-        olio.listen(destructible.monitor('olio'))
-    }, function () {
+        }, async())
+    }, function (olio) {
         var http = require('http')
         var cluster = require('cluster')
         var delta = require('delta')

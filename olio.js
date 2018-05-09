@@ -46,7 +46,7 @@ Constructor.prototype.sender = function (argv, Receiver) {
     this._olio._map.push(argv, { count: null, Receiver: Receiver, receivers: [], ready: ready  })
 }
 
-function Olio (ee, configurator) {
+function Olio (destructible, ee, configurator) {
     this._senders = { array: [], map: {} }
     this._map = new Map
     this._latches = []
@@ -154,4 +154,13 @@ Olio.prototype.listen = function (callback) {
     this._destructible.completed.wait(callback)
 }
 
-module.exports = Olio
+module.exports = cadence(function (async, destructible, ee, configurator) {
+    var olio = new Olio(destructible, ee, configurator)
+    destructible.destruct.wait(olio, 'destroy')
+    olio.listen(destructible.monitor('olio'))
+    async(function () {
+        olio.ready.wait(async())
+    }, function () {
+        return [ olio ]
+    })
+})

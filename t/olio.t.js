@@ -30,6 +30,12 @@ function prove (async, okay) {
         }
     }
 
+    var SocketFactory = require('../factory/socket')
+    var factory = new SocketFactory
+    var Receiver = function (destructible, argv, callback) {
+        destructible.monitor('procedure', Procedure, function () {}, callback)
+    }
+
     var olio, server
     async(function () {
         var downgrader = new Downgrader
@@ -49,7 +55,7 @@ function prove (async, okay) {
                 from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
             destructible.destruct.wait(socket, 'destroy')
-            destructible.monitor('create', olio._factory, 'createReceiver', olio._Receiver, message, socket, null)
+            destructible.monitor('create', factory, 'createReceiver', Receiver, message, socket, null)
         })
 
         server = http.createServer(function () {})
@@ -65,65 +71,64 @@ function prove (async, okay) {
 
         var descendent = new Descendent(program)
 
-        olio = new Olio(program, function (configure) {
-            configure.receiver = function (destructible, argv, callback) {
-                destructible.monitor('procedure', Procedure, function () {}, callback)
-            }
-            configure.sender([ 'program', 'that' ], function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
-            })
-        })
-
-        program.emit('message', {
-            module: 'descendent',
-            name: 'olio:message',
-            to: [],
-            path: [],
-            body: {
-                method: 'initialize',
-                argv: [ 'program', 'this' ],
-                index: 2
-            }
-        })
-        program.emit('message', {
-            module: 'descendent',
-            name: 'olio:message',
-            to: [],
-            path: [],
-            body: {
-                method: 'created',
-                argv: [ 'program', 'that' ],
-                socketPath: 't/socket',
-                count: 1
-            }
-        })
-
-        olio.listen(destructible.monitor('olio'))
-        destructible.destruct.wait(olio, 'destroy')
-
-        cadence(function (async) {
-            async(function () {
-                olio.ready.wait(async())
-            }, function () {
-                okay(true, 'ready')
-                okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
-                okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
-                okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
-                program.emit('message', {
-                    module: 'descendent',
-                    name: 'olio:message',
-                    to: [],
-                    path: [],
-                    body: {
-                        method: 'shutdown'
-                    }
+        async(function () {
+            destructible.monitor('olio', Olio, program, function (configure) {
+                configure.receiver = function (destructible, argv, callback) {
+                    destructible.monitor('procedure', Procedure, function () {}, callback)
+                }
+                configure.sender([ 'program', 'that' ], function (destructible, argv, index, count, callback) {
+                    destructible.monitor('caller', Caller, callback)
                 })
-                destructible.destroy()
+            }, async())
+
+            program.emit('message', {
+                module: 'descendent',
+                name: 'olio:message',
+                to: [],
+                path: [],
+                body: {
+                    method: 'initialize',
+                    argv: [ 'program', 'this' ],
+                    index: 2
+                }
             })
-        })(destructible.monitor('tests', true))
+            program.emit('message', {
+                module: 'descendent',
+                name: 'olio:message',
+                to: [],
+                path: [],
+                body: {
+                    method: 'created',
+                    argv: [ 'program', 'that' ],
+                    socketPath: 't/socket',
+                    count: 1
+                }
+            })
+        }, function (olio) {
+            cadence(function (async) {
+                async(function () {
+                    olio.ready.wait(async())
+                }, function () {
+                    okay(true, 'ready')
+                    okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
+                    okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
+                    okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
+                    program.emit('message', {
+                        module: 'descendent',
+                        name: 'olio:message',
+                        to: [],
+                        path: [],
+                        body: {
+                            method: 'shutdown'
+                        }
+                    })
+                    destructible.destroy()
+                })
+            })(destructible.monitor('tests', true))
 
 
-        okay(Olio, 'require')
-        destructible.completed.wait(async())
+            okay(Olio, 'require')
+            destructible.completed.wait(async())
+        })
     })
 }
