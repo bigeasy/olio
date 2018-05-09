@@ -114,7 +114,8 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                         argv: this._argv,
                         index: this._index,
                     }, sender, message, handle, i, async())
-                    i++
+                }, function (receiver) {
+                    sender.receivers[i++] = receiver
                 })()
             }, function () {
                 ready.unlatch()

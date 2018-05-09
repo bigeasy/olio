@@ -64,7 +64,6 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
             async(function () {
                 destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
             }, function (conduit) {
-                sender.receivers[index] = receiver
                 destructible.destruct.wait(function () { receiver.inbox.push(null) })
             })
         })
