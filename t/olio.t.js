@@ -49,7 +49,7 @@ function prove (async, okay) {
                 from: { index: 2, argv: [ 'program', 'this' ] }
             }, 'headers')
             destructible.destruct.wait(socket, 'destroy')
-            olio._factory.createReceiver(olio, message, socket, destructible.monitor('create', true))
+            destructible.monitor('create', olio._factory, 'createReceiver', olio, message, socket, null)
         })
 
         server = http.createServer(function () {})
@@ -66,11 +66,11 @@ function prove (async, okay) {
         var descendent = new Descendent(program)
 
         olio = new Olio(program, function (configure) {
-            configure.receiver = function () {
-                return new Procedure(function () {})
+            configure.receiver = function (destructible, argv, callback) {
+                destructible.monitor('procedure', Procedure, function () {}, callback)
             }
-            configure.sender([ 'program', 'that' ], function () {
-                return new Caller
+            configure.sender([ 'program', 'that' ], function (destructible, argv, index, count, callback) {
+                destructible.monitor('caller', Caller, callback)
             })
         })
 

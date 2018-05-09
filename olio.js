@@ -97,7 +97,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._initialized.unlatch()
         break
     case 'connect':
-        this._factory.createReceiver(this, message, handle, this._destructible.monitor([ 'connect', message ], true))
+        this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this, message, handle, async())
         break
     case 'created':
         var sender = this._map.get(message.argv), i = 0
@@ -110,7 +110,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                     if (i == message.count) {
                         return [ loop.break ]
                     }
-                    this._destructible.monitor([ 'sender', message.argv, i ], this._factory, 'createSender', {
+                    this._destructible.monitor([ 'created', message.argv, i ], this._factory, 'createSender', {
                         argv: this._argv,
                         index: this._index,
                     }, sender, message, handle, i, async())

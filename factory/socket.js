@@ -15,30 +15,24 @@ var noop = require('nop')
 function SocketFactory () {
 }
 
-SocketFactory.prototype.createReceiver = cadence(function (async, olio, message, socket) {
-    var receiver = olio._receiver.call(null, message.argv)
-
-    var destructible = olio._destructible.destructible([ 'receiver', message.from  ])
-
+SocketFactory.prototype.createReceiver = cadence(function (async, destructible, olio, message, socket) {
     async(function () {
-        destructible.monitor([ 'receiver', 'stack', message.from ], receiver, 'stack', async())
-    }, function () {
-        var conduit = new Conduit(socket, socket, receiver)
-        destructible.destruct.wait(conduit, 'destroy')
+        destructible.monitor('receiver', olio._receiver, message.argv, async())
+    }, function (receiver) {
+        destructible.destruct.wait(function () { receiver.inbox.push(null) })
         destructible.destruct.wait(socket, 'destroy')
-        conduit.listen(null, olio._destructible.monitor([ 'receiver', message.from ]))
+        destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
+    }, function () {
         socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
     })
 })
 
-SocketFactory.prototype.createSender = cadence(function (async, from, sender, message, handle, index, destructible) {
-    var receiver = sender.builder.call(null, message.argv, index, message.count)
+SocketFactory.prototype.createSender = cadence(function (async, destructible, from, sender, message, handle, index) {
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
     var cookie = destructible.destruct.wait(readable, 'destroy')
+
     async(function () {
-        destructible.monitor([ 'receiver', 'stack', message.from ], receiver, 'stack', async())
-    }, function () {
         var request = http.request({
             socketPath: message.socketPath,
             url: 'http://olio',
@@ -52,6 +46,7 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
         delta(async()).ee(request).on('upgrade')
         request.end()
     }, function (request, socket, head) {
+        destructible.destruct.wait(socket, 'destroy')
         async(function () {
             readable.read(4, async())
             through.write(head)
@@ -63,13 +58,16 @@ SocketFactory.prototype.createSender = cadence(function (async, from, sender, me
 
             coalesce(destructible.destruct.cancel(cookie), noop)()
             readable.destroy()
-
-            var conduit  = new Conduit(socket, socket, receiver)
-
-            destructible.destruct.wait(conduit, 'destroy')
-            destructible.destruct.wait(socket, 'destroy')
-            sender.receivers[index] = { conduit: conduit, receiver: receiver }
-            conduit.listen(null, destructible.monitor('conduit'))
+        }, function () {
+            destructible.monitor('receiver', sender.builder, message.argv, index, message.count, async())
+        }, function (receiver) {
+            async(function () {
+                destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
+            }, function (conduit) {
+                // TODO Where is `conduit` used?
+                sender.receivers[index] = { conduit: conduit, receiver: receiver }
+                destructible.destruct.wait(function () { receiver.inbox.push(null) })
+            })
         })
     })
 })

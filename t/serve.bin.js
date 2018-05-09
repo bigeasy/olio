@@ -53,8 +53,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
         destructible.destroy()
     }], function () {
         var olio = new Olio(program, function (constructor) {
-            constructor.sender([ './t/run.bin.js' ], function (index) {
-                return new Caller
+            constructor.sender([ './t/run.bin.js' ], function (destructible, argv, index, count, callback) {
+                destructible.monitor('caller', Caller, callback)
             })
         })
 

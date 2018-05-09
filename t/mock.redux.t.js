@@ -10,21 +10,20 @@ function prove (async, okay) {
     var Olio = require('../olio')
     var mock = new Mock(ee)
     var olio = new Olio(ee, function (configuration) {
-        configuration.receiver = function () {
-            return new Procedure(function (envelope, callback) { callback(null, 0) })
+        configuration.receiver = function (destructible, argv, callback) {
+            destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
         }
-        configuration.sender([ 'program', 'command' ], function () {
-            return new Caller
+        configuration.sender([ 'program', 'command' ], function (destructible, argv, index, count, callback) {
+            destructible.monitor('caller', Caller, callback)
         })
     })
     mock.initialize([ 'program', 'self' ], 0)
-    mock.sibling([ 'program', 'command' ], 1, function () {
-        return new Procedure(cadence(function (async, envelope) { return [ 1 ] }))
+    mock.sibling([ 'program', 'command' ], 1, function (destructible, index, count, callback) {
+        destructible.monitor('procedure', Procedure, cadence(function (async, envelope) { return [ 1 ] }), callback)
     })
     mock.sibling([ 'program', 'ignored' ], 1, function () {
         throw new Error('error')
     })
-    var sender = mock.sender([ 'program', 'client' ], 0, new Caller)
 
     var Destructible = require('destructible')
     var destructible = new Destructible(1000, 'mock')
@@ -37,14 +36,20 @@ function prove (async, okay) {
 
     cadence(function (async) {
         async(function () {
-            olio.ready.wait(async())
-        }, function () {
-            sender.invoke({}, async())
-        }, function (result) {
-            okay(result, 0, 'receiver')
-            olio.sender([ 'program', 'command' ], 0).invoke({}, async())
-        }, function (result) {
-            okay(result, 1, 'sender')
+            destructible.monitor('caller', Caller, async())
+        }, function (caller) {
+            destructible.destruct.wait(function () { caller.inbox.push(null) })
+            mock.sender([ 'program', 'client' ], 0, caller)
+            async(function () {
+                olio.ready.wait(async())
+            }, function () {
+                caller.invoke({}, async())
+            }, function (result) {
+                okay(result, 0, 'receiver')
+                olio.sender([ 'program', 'command' ], 0).invoke({}, async())
+            }, function (result) {
+                okay(result, 1, 'sender')
+            })
         })
     })(destructible.monitor('test'))
 }

@@ -39,22 +39,30 @@ Mock.prototype.sibling = function (argv, count, factory) {
     }, factory)
 }
 
-Mock.prototype.createReceiver = cadence(function (async, olio, message, sender) {
-    var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
-
-    var destructible = this._destructible.destructible([ 'receiver', message.from  ])
-
-    sender.read.shifter().pumpify(receiver.write)
-    receiver.read.shifter().pumpify(sender.write)
-    var receiver = olio._receiver.call(null, message.from.argv, message.from.index)
+Mock.prototype.createReceiver = cadence(function (async, destructible, olio, message, sender) {
+    async(function () {
+        destructible.monitor('receiver', olio._receiver, message.argv, async())
+    }, function (receiver) {
+        destructible.destruct.wait(function () { receiver.inbox.push(null) })
+        sender.outbox.pump(receiver.inbox)
+        receiver.outbox.pump(sender.inbox)
+    })
 })
 
-Mock.prototype.createSender = cadence(function (async, from, sender, message, factory, index, destructible) {
-    var sink = factory(index, sender.count)
-    var source = sender.builder.call(null, message.argv, index, message.count)
-    sink.read.shifter().pumpify(source.write)
-    source.read.shifter().pumpify(sink.write)
-    sender.receivers[index] = { receiver: source }
+Mock.prototype.createSender = cadence(function (async, destructible, from, sender, message, factory, index) {
+    async(function () {
+        destructible.monitor('sibling', factory, index, sender.count, async())
+    }, function (sibling) {
+        destructible.destruct.wait(function () { sibling.inbox.push(null) })
+        async(function () {
+            destructible.monitor('receiver', sender.builder, message.argv, index, message.count, async())
+        }, function (receiver) {
+            receiver.outbox.pump(sibling.inbox)
+            destructible.destruct.wait(function () { receiver.inbox.push(null) })
+            sibling.outbox.pump(receiver.inbox)
+            sender.receivers[index] = { receiver: receiver }
+        })
+    })
 })
 
 module.exports = Mock

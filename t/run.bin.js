@@ -23,11 +23,11 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     var Olio = require('..')
     var olio = new Olio(program, function (constructor) {
-        constructor.receiver = function () {
-            return new Procedure(cadence(function (async, envelope) {
-                    console.log(envelope)
-                    return [ 1 ]
-            }))
+        constructor.receiver = function (destructible, argv, callback) {
+            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                console.log(envelope)
+                return [ 1 ]
+            }), callback)
         }
     })
 
