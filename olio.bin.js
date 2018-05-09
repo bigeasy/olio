@@ -7,9 +7,7 @@
         --help              display this message
     ___ . ___
  */
-require('arguable')(module, {
-    properties: { prefix: [] }
-}, require('cadence')(function (async, program) {
+require('arguable')(module, require('cadence')(function (async, program) {
     var path = require('path')
     var argv = program.argv.slice()
     var socket = argv.shift()
@@ -23,7 +21,7 @@ require('arguable')(module, {
         stderr: program.stderr,
         events: program,
         send: program.send,
-        properties: { socket: socket, prefix: program.prefix }
+        attributes: { socket: socket, prefix: program.attribute.prefix }
     }, async())
     child.ready.wait(program.ready, 'unlatch')
-}))
+}), { prefix: [] })
