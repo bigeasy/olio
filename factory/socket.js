@@ -15,9 +15,9 @@ var noop = require('nop')
 function SocketFactory () {
 }
 
-SocketFactory.prototype.createReceiver = cadence(function (async, destructible, olio, message, socket) {
+SocketFactory.prototype.createReceiver = cadence(function (async, destructible, Receiver, message, socket) {
     async(function () {
-        destructible.monitor('receiver', olio._receiver, message.argv, async())
+        destructible.monitor('receiver', Receiver, message.argv, async())
     }, function (receiver) {
         destructible.destruct.wait(function () { receiver.inbox.push(null) })
         destructible.destruct.wait(socket, 'destroy')

@@ -39,9 +39,9 @@ Mock.prototype.sibling = function (argv, count, factory) {
     }, factory)
 }
 
-Mock.prototype.createReceiver = cadence(function (async, destructible, olio, message, sender) {
+Mock.prototype.createReceiver = cadence(function (async, destructible, Receiver, message, sender) {
     async(function () {
-        destructible.monitor('receiver', olio._receiver, message.argv, async())
+        destructible.monitor('receiver', Receiver, message.argv, async())
     }, function (receiver) {
         destructible.destruct.wait(function () { receiver.inbox.push(null) })
         sender.outbox.pump(receiver.inbox)

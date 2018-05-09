@@ -58,7 +58,7 @@ function Olio (ee, configurator) {
     var constructor = new Constructor(this)
     configurator(constructor)
 
-    this._receiver = constructor.receiver
+    this._Receiver = constructor.receiver
     this._shutdown = coalesce(constructor.shutdown, noop)
 
     this._destructible = new Destructible(750, 'olio')
@@ -97,7 +97,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._initialized.unlatch()
         break
     case 'connect':
-        this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this, message, handle, async())
+        this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this._Receiver, message, handle, async())
         break
     case 'created':
         var sender = this._map.get(message.argv), i = 0
