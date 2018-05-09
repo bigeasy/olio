@@ -40,10 +40,10 @@ function Constructor (olio) {
     this._olio = olio
 }
 
-Constructor.prototype.sender = function (argv, builder) {
+Constructor.prototype.sender = function (argv, Receiver) {
     var ready = new Signal
     this._olio._latches.push(ready)
-    this._olio._map.push(argv, { count: null, builder: builder, receivers: [], ready: ready  })
+    this._olio._map.push(argv, { count: null, Receiver: Receiver, receivers: [], ready: ready  })
 }
 
 function Olio (ee, configurator) {
@@ -113,7 +113,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                     this._destructible.monitor([ 'created', message.argv, i ], this._factory, 'createSender', {
                         argv: this._argv,
                         index: this._index,
-                    }, sender, message, handle, i, async())
+                    }, sender.Receiver, message, handle, i, sender.count, async())
                 }, function (receiver) {
                     sender.receivers[i++] = receiver
                 })()
