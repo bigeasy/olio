@@ -77,7 +77,7 @@ function Olio (ee, configurator) {
 Olio.prototype.sender = function (path, index) {
     var sender = this._map.get(path)
     index = indexify(index, sender.count)
-    return sender.receivers[index].receiver
+    return sender.receivers[index]
 }
 
 Olio.prototype.count = function (path, index) {

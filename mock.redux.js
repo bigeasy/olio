@@ -60,7 +60,7 @@ Mock.prototype.createSender = cadence(function (async, destructible, from, sende
             receiver.outbox.pump(sibling.inbox)
             destructible.destruct.wait(function () { receiver.inbox.push(null) })
             sibling.outbox.pump(receiver.inbox)
-            sender.receivers[index] = { receiver: receiver }
+            sender.receivers[index] = receiver
         })
     })
 })
