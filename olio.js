@@ -70,6 +70,7 @@ function Olio (destructible, ee, configurator) {
     var descendent = new Descendent(ee)
     this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
+    descendent.across('olio:mock', {})
 
     this._factory = new SocketFactory
 }

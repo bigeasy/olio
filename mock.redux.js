@@ -1,5 +1,4 @@
 var http = require('http')
-var Destructible = require('destructible')
 var cadence = require('cadence')
 var Signal = require('signal')
 var util = require('util')
@@ -8,8 +7,8 @@ var Descendent = require('descendent')
 
 function Mock (ee) {
     this._descendent = new Descendent(ee)
-    this._destructible = new Destructible(5000, 'olio/mock')
-    this.ready = new Signal
+    var ready = this.ready = new Signal
+    this._descendent.on('olio:mock', function () { ready.unlatch() })
 }
 
 Mock.prototype.initialize = function (argv, index) {
