@@ -6,7 +6,7 @@ function prove (async, okay) {
     var cadence = require('cadence')
     var events = require('events')
     var ee = new events.EventEmitter
-    var Mock = require('../mock.redux')
+    var Mock = require('../mock')
     var Olio = require('../olio')
     var mock = new Mock(ee)
     var Destructible = require('destructible')
