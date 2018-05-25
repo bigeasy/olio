@@ -106,7 +106,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
             sender.count = message.count
             var ready = new Signal
             this._latches.push(ready)
-            async(function () {
+            async([function () {
                 var loop = async(function () {
                     if (i == message.count) {
                         return [ loop.break ]
@@ -118,7 +118,10 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                 }, function (receiver) {
                     sender.receivers[i++] = receiver
                 })()
-            }, function () {
+            }, function (error) {
+                ready.unlatch(error)
+                sender.ready.unlatch(error)
+            }], function () {
                 ready.unlatch()
                 sender.ready.unlatch()
             })
