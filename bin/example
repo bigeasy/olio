@@ -1,10 +1,3 @@
-rm ./socket
-
-olio ./socket listen &
-olio=$!
-
-olio ./socket run --workers 8 ./bin/echo.bin.js
-
-olio ./socket serve --workers 8 ./bin/http.bin.js
-
-wait $olio
+node olio.bin.js ./socket listen \
+    "$(node olio.bin.js ./socket run --workers 2 ./bin/echo.bin.js)" \
+    "$(node olio.bin.js ./socket serve --workers 2 ./bin/http.bin.js)"

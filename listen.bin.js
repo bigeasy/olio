@@ -61,10 +61,23 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
         destructible.destruct.wait(server, 'close')
 
+        // Passing sockets around makes it hard for us to ensure that we are
+        // going to destroy them. They could be in a pipe on the way down to a
+        // child that exits before getting the message. I've not seen evidence
+        // that delivery is guaranteed. When I leave a listener outside of my
+        // Descendent module to see if I can catch the straggling message, I
+        // don't see it and we exit with an exception thrown from within
+        // Node.js, assertion failures from within the C++. We `unref` here to
+        // surrender any socket handles in the process of being passed to
+        // children.
+        //
+        // We should always have a child of some kind so we don't have to worry
+        // about this unref'ed server causing us to exit early.
+        server.unref()
+
         async(function () {
             server.listen(program.attribute.socket, async())
         }, function () {
-            delta(destructible.monitor([ 'server' ])).ee(server).on('close')
             listener.children(children)
             program.ready.unlatch()
         })

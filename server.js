@@ -98,7 +98,7 @@ Server.prototype.destroy = function () {
 Server.prototype._shutdown = function () {
     this._descendent.emit('olio:message', [], { to: null, method: 'shutdown' })
     for (var id in cluster.workers) {
-        cluster.workers[id].disconnect()
+        cluster.workers[id].kill()
     }
 }
 

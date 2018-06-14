@@ -15,13 +15,11 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var reactor = new Reactor({
         echo: cadence(function (async, request, index) {
             async(function () {
-                console.log(+index)
                 olio.sender([ './bin/echo.bin.js' ], +index).invoke({
                     url: request.url,
                     body: request.body
                 }, async())
             }, function (response) {
-                console.log(response)
                 return response
             })
         }),
@@ -42,38 +40,27 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     var logger = require('prolific.logger').createLogger('olio.http')
     var Shuttle = require('prolific.shuttle')
-    console.log('start shuttle')
     var shuttle = Shuttle.shuttle(program, logger)
-    console.log('shuttling')
     destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
-    var Signal = require('signal')
-
     async([function () {
         destructible.destroy()
     }], function () {
-        var olio = new Olio(program, function (constructor) {
+        destructible.monitor('olio', Olio, program, function (constructor) {
             constructor.middleware = reactor.middleware
-            constructor.sender([ './bin/echo.bin.js' ], function (index) {
-                return new Caller
-            })
-        })
-
-        Signal.first(destructible.completed, olio.ready, async())
-
-        destructible.destruct.wait(olio, 'destroy')
-        olio.listen(destructible.monitor('olio'))
+            constructor.sender([ './bin/echo.bin.js' ], cadence(function (async, destructible) {
+                destructible.monitor('caller', Caller, async())
+            }))
+        }, async())
     }, function () {
         var http = require('http')
         var cluster = require('cluster')
         var delta = require('delta')
-
         var server = http.createServer(reactor.middleware)
         async(function () {
             destructible.destruct.wait(server, 'close')
-
             server.listen(8080, async())
         }, function () {
             delta(destructible.monitor('http')).ee(server).on('close')

@@ -38,6 +38,9 @@ Runner.prototype.destroy = function () {
     this._destructible.destroy()
 }
 
+// Somewhere note that ordinary children are not run using cluster, so the
+// disconnect confustion only applies to our sandboxed `server.bin.js` program
+// that does run a cluster.
 Runner.prototype._run = cadence(function (async, index) {
     var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), { stdio: [ 0, 1, 2, 'ipc' ] })
 
