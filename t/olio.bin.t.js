@@ -17,7 +17,7 @@ function prove (async, okay) {
 
     var program
     async(function () {
-        program = bin([ 't/socket', 'listen' ], {}, async())
+        program = bin([ 'listen' ], {}, async())
         async(function () {
             program.ready.wait(async())
         }, function () {

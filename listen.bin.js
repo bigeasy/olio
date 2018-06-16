@@ -40,6 +40,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     var children = program.argv.map(JSON.parse.bind(JSON))
 
+    program.required('socket')
+
     async([function () {
         destructible.destroy()
     }], function () {
@@ -48,7 +50,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var descendent = new Descendent(process)
         destructible.destruct.wait(descendent, 'destroy')
 
-        var listener = new Listener(descendent, program.attribute.socket)
+        var listener = new Listener(descendent, program.ultimate.socket)
 
         destructible.destruct.wait(listener, 'destroy')
         listener.listen(destructible.monitor([ 'listener' ]))
@@ -76,7 +78,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         server.unref()
 
         async(function () {
-            server.listen(program.attribute.socket, async())
+            server.listen(program.ultimate.socket, async())
         }, function () {
             listener.children(children)
             program.ready.unlatch()
