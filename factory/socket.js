@@ -23,7 +23,7 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
         destructible.destruct.wait(socket, 'destroy')
         destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
     }, function () {
-        socket.write(new Buffer([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
+        socket.write(Buffer.from([ 0xaa, 0xaa, 0xaa, 0xaa ]), async())
     })
 })
 
