@@ -16,8 +16,6 @@
     ___ . ___
  */
 require('arguable')(module, require('cadence')(function (async, program) {
-    var Operation = require('operation/variadic')
-
     var Destructible = require('destructible')
     var destructible = new Destructible(3000, 'olio.serve')
 

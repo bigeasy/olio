@@ -3,7 +3,7 @@ var assert = require('assert')
 var events = require('events')
 
 // Contextualized callbacks and event handlers.
-var Operation = require('operation/variadic')
+var Operation = require('operation')
 
 // An evented semaphore.
 var Signal = require('signal')

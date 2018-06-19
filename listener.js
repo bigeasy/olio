@@ -14,8 +14,6 @@ var Keyify = require('keyify')
 
 var Descendent = require('descendent')
 
-var Operation = require('operation/variadic')
-
 // Exceptions that you can catch by type.
 var interrupt = require('interrupt').createInterrupter('subordinate')
 

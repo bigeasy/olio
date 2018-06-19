@@ -7,7 +7,7 @@ function prove (async, okay) {
     var delta = require('delta')
     var cadence = require('cadence')
 
-    var Operation = require('operation/variadic')
+    var Operation = require('operation')
 
     var Destructible = require('destructible')
     var destructible = new Destructible(1000, 'olio.t')

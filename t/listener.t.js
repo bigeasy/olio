@@ -35,7 +35,7 @@ function prove (async, okay) {
                 body: 'Olio Listener API\n'
             }, 'index')
             var Downgrader = require('downgrader')
-            var Operation = require('operation/variadic')
+            var Operation = require('operation')
             var http = require('http')
 
             var descendent = new Descendent(process)

@@ -34,9 +34,6 @@ var Destructible = require('destructible')
 // Exceptions that you can catch by type.
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
-// Contextualized callbacks and event handlers.
-var Operation = require('operation/variadic')
-
 var Monitor = require('./monitor')
 var Descend = require('./descend')
 var Search = require('./search')

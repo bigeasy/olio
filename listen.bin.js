@@ -20,7 +20,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var Downgrader = require('downgrader')
 
     // Contextualized callbacks and event handlers.
-    var Operation = require('operation/variadic')
+    var Operation = require('operation')
 
     var http = require('http')
     var delta = require('delta')
