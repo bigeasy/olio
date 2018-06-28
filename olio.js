@@ -104,6 +104,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         var sender = this._map.get(message.argv), i = 0
         if (sender != null) {
             sender.count = message.count
+            // Duplicate ready is probably wrong.
             var ready = new Signal
             this._latches.push(ready)
             async([function () {
@@ -119,6 +120,10 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                     sender.receivers[i++] = receiver
                 })()
             }, function (error) {
+                // We don't throw here, but we should. We're swallowing errors
+                // that ought to be reported by destructible. The error is
+                // emerging from ready. Also, we are not preventing additional
+                // messages after the initial error.
                 ready.unlatch(error)
                 sender.ready.unlatch(error)
             }], function () {
@@ -138,14 +143,16 @@ Olio.prototype._message = function (path, message, handle) {
 }
 
 Olio.prototype._ready = cadence(function (async) {
-    async(function () {
+    async([function () {
         var loop = async(function () {
             if (this._latches.length == 0) {
                 return [ loop.break ]
             }
             this._latches.shift().wait(async())
         })()
-    }, function () {
+    }, function (error) {
+        this.ready.unlatch(error)
+    }], function () {
         this.ready.unlatch()
     })
 })
