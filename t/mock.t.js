@@ -40,6 +40,7 @@ function prove (async, okay) {
                 olio.sender([ 'program', 'command' ], 0).invoke({}, async())
             }, function (result) {
                 okay(result, 1, 'sender')
+                destructible.destroy()
             })
         })
     })
