@@ -67,6 +67,7 @@ function Olio (destructible, ee, configurator) {
 
     this._ready(this._destructible.monitor('ready', true))
 
+    // Any error causes messages to get cut, we do not get `_message`.
     var descendent = new Descendent(ee)
     this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
@@ -138,10 +139,34 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
     }
 })
 
+// Any error causes messages to get cut.
 Olio.prototype._message = function (path, message, handle) {
     this._dispatch(message, handle, this._destructible.monitor([ 'dispatch', message ], true))
 }
 
+// TODO You're working through this right now.
+//
+// If one of our sender creators raises an error, we are ready with the error.
+// Our destructible will gather up any other waiting initialzers, so that we
+// will still get a full bouquet of errors through the destructible. We're
+// turnign the corner here, you see, with an initialization stack that is
+// waiting on the Olio constructor and multiple senders. Ready is not waiting on
+// receivers, it waiting for all senders to be ready. Thus, we go forward when
+// we have all our senders. We can still error building a receiver, though.
+// (Let's put this in our unit tests.)
+//
+// Ordered thoughts.
+//
+// * We are waiting for all our senders to be ready because we cannot use the
+// Olio until all the senders are ready.
+// * Waiting on receivers is probably a function of having a countdow latch
+// elsewhere that is waiting for incoming signals. Not a use case I've
+// encountered yet though.
+// * An error initializing a sender will cause us to be ready, but we report
+// ready by passing the error.
+// * Shutdown is meaningless.
+
+//
 Olio.prototype._ready = cadence(function (async) {
     async([function () {
         var loop = async(function () {

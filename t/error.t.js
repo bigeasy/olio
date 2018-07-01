@@ -24,6 +24,10 @@ function prove (async, okay) {
         mock.sibling([ 'program', 'command' ], 1, function (destructible, index, count, callback) {
             destructible.monitor('procedure', Procedure, cadence(function (async, envelope) { return [ 1 ] }), callback)
         })
+        mock.sibling([ 'program', 'ignored' ], 1, function (destructible, index, count, callback) {
+            callback(new Error('no'))
+        })
+        console.log('here')
     }, function (error) {
         okay(error.message, 'failure', 'initialization failure')
     }])
