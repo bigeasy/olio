@@ -93,7 +93,6 @@ Server.prototype.destroy = function () {
 
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
-    this._descendent.emit('olio:message', [], { to: null, method: 'shutdown' })
     for (var id in cluster.workers) {
         cluster.workers[id].kill()
     }

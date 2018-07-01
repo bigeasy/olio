@@ -59,7 +59,6 @@ function Olio (destructible, ee, configurator) {
     configurator(constructor)
 
     this._Receiver = constructor.receiver
-    this._shutdown = coalesce(constructor.shutdown, noop)
 
     this._destructible = new Destructible(750, 'olio')
     this._destructible.markDestroyed(this)
@@ -133,9 +132,6 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
             })
         }
         break
-    case 'shutdown':
-        this._shutdown.call()
-        break
     }
 })
 
@@ -164,7 +160,6 @@ Olio.prototype._message = function (path, message, handle) {
 // encountered yet though.
 // * An error initializing a sender will cause us to be ready, but we report
 // ready by passing the error.
-// * Shutdown is meaningless.
 
 //
 Olio.prototype._ready = cadence(function (async) {
