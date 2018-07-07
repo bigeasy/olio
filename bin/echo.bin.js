@@ -30,7 +30,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
                 async(function () {
                     destructible.monitor('destructible', Procedure, cadence(function (async, envelope) {
                         console.log(envelope)
-                        return [ 1 ]
+                        return [ {} ]
                     }), async())
                 }, function (procedure) {
                     return [ procedure ]

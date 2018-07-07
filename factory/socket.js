@@ -63,8 +63,15 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
         }, function (receiver) {
             async(function () {
                 destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
-            }, function (conduit) {
+            }, function () {
+                // Do we do this or do we register an end to pumping instead? It
+                // would depend on how we feal about ending a Conduit. I do
+                // believe it pushed out a `null` to indicate that the stream
+                // has closed. A Window would look for this and wait for
+                // restart. The Window needs to be closed explicity.
                 destructible.destruct.wait(function () { receiver.inbox.push(null) })
+            }, function() {
+                return [ receiver ]
             })
         })
     })
