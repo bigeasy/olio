@@ -83,6 +83,7 @@ function prove (async, okay) {
 
             program.emit('message', {
                 module: 'descendent',
+                method: 'route',
                 name: 'olio:message',
                 to: [],
                 path: [],
@@ -94,6 +95,7 @@ function prove (async, okay) {
             })
             program.emit('message', {
                 module: 'descendent',
+                method: 'route',
                 name: 'olio:message',
                 to: [],
                 path: [],

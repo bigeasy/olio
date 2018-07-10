@@ -50,7 +50,7 @@ Listener.prototype.socket = function (request, socket) {
             argv: JSON.parse(request.headers['x-olio-from-argv'])
         }
     }
-    this._children[Keyify.stringify(message.to.argv)].descend.call(null, [], message, socket)
+    this._children[Keyify.stringify(message.to.argv)].descend.call(null, message, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
@@ -67,20 +67,24 @@ Listener.prototype._created = function (count, argv, pids) {
     for (var key in this._children) {
         var sibling = this._children[key]
         if (keyified != key) {
-            sibling.descend.call(null, [], {
+            sibling.descend.call(null, {
+                body: {
+                    method: 'created',
+                    socketPath: this._socketPath,
+                    to: null,
+                    count: count,
+                    argv: argv
+                }
+            })
+        }
+        child.descend.call(null, {
+            body: {
                 method: 'created',
                 socketPath: this._socketPath,
                 to: null,
-                count: count,
-                argv: argv
-            })
-        }
-        child.descend.call(null, [], {
-            method: 'created',
-            socketPath: this._socketPath,
-            to: null,
-            count: sibling.count,
-            argv: sibling.argv
+                count: sibling.count,
+                argv: sibling.argv
+            }
         })
     }
 }

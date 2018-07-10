@@ -136,8 +136,8 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
 })
 
 // Any error causes messages to get cut.
-Olio.prototype._message = function (path, message, handle) {
-    this._dispatch(message, handle, this._destructible.monitor([ 'dispatch', message ], true))
+Olio.prototype._message = function (message, handle) {
+    this._dispatch(message.body, handle, this._destructible.monitor([ 'dispatch', message.body ], true))
 }
 
 // TODO You're working through this right now.
