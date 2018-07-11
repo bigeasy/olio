@@ -100,6 +100,15 @@ Listener.prototype._registered = function (message) {
                 index: index
             })
         }, this)
+        child.descend.call(null, {
+            body: {
+                method: 'created',
+                socketPath: this._socketPath,
+                to: null,
+                count: child.count,
+                argv: child.argv
+            }
+        })
     }
 }
 
@@ -111,15 +120,17 @@ Listener.prototype._ready = function (message) {
     }
     for (var key in this._children) {
         var sibling = this._children[key]
-        sibling.descend.call(null, {
-            body: {
-                method: 'created',
-                socketPath: this._socketPath,
-                to: null,
-                count: child.count,
-                argv: child.argv
-            }
-        })
+        if (key != keyified) {
+            sibling.descend.call(null, {
+                body: {
+                    method: 'created',
+                    socketPath: this._socketPath,
+                    to: null,
+                    count: child.count,
+                    argv: child.argv
+                }
+            })
+        }
     }
 }
 
