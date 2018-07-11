@@ -36,6 +36,7 @@ function Listener (descendent, socketPath) {
     this._children = {}
 
     this._process = process
+    this._process.env.OLIO_ROOT_PROCESS_PID = process.pid
 
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
