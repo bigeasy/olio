@@ -174,8 +174,7 @@ Olio.prototype._ready = cadence(function (async, descendent) {
     }, function (error) {
         this.ready.unlatch(error)
     }], function () {
-        console.log('i am ready')
-        descendent.up(0, 'olio:ready', {})
+        descendent.up(+coalesce(process.env.OLIO_ROOT_PROCESS_PID, 0), 'olio:ready', {})
         this.ready.unlatch()
     })
 })
