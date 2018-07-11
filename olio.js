@@ -69,7 +69,7 @@ function Olio (destructible, ee, configurator) {
     this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
-    descendent.up(coalesce(process.env.OLIO_ROOT_PROCESS_PID, 0), 'olio:registered', {})
+    descendent.up(+coalesce(process.env.OLIO_ROOT_PROCESS_PID, 0), 'olio:registered', {})
     this._ready(descendent, this._destructible.monitor('ready', true))
 
     this._factory = new SocketFactory
