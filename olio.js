@@ -102,7 +102,6 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         break
     case 'created':
         var sender = this._map.get(message.argv), i = 0
-        console.log(message, this._argv, !! sender)
         if (sender != null) {
             sender.count = message.count
             // Duplicate ready is probably wrong.
