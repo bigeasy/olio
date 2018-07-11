@@ -64,13 +64,13 @@ function Olio (destructible, ee, configurator) {
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
-    this._ready(this._destructible.monitor('ready', true))
-
     // Any error causes messages to get cut, we do not get `_message`.
     var descendent = new Descendent(ee)
     this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
+    descendent.up(0, 'olio:registered', {})
+    this._ready(descendent, this._destructible.monitor('ready', true))
 
     this._factory = new SocketFactory
 }
@@ -102,6 +102,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         break
     case 'created':
         var sender = this._map.get(message.argv), i = 0
+        console.log(message, this._argv, !! sender)
         if (sender != null) {
             sender.count = message.count
             // Duplicate ready is probably wrong.
@@ -162,7 +163,7 @@ Olio.prototype._message = function (message, handle) {
 // ready by passing the error.
 
 //
-Olio.prototype._ready = cadence(function (async) {
+Olio.prototype._ready = cadence(function (async, descendent) {
     async([function () {
         var loop = async(function () {
             if (this._latches.length == 0) {
@@ -173,6 +174,8 @@ Olio.prototype._ready = cadence(function (async) {
     }, function (error) {
         this.ready.unlatch(error)
     }], function () {
+        console.log('i am ready')
+        descendent.up(0, 'olio:ready', {})
         this.ready.unlatch()
     })
 })

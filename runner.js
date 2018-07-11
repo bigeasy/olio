@@ -47,12 +47,7 @@ Runner.prototype._run = cadence(function (async, index) {
 
     this._children.array[index] = child
 
-    this._descendent.addChild(child, { child: child, index: index })
-    this._descendent.down([ child.pid ], 'olio:message', {
-        method: 'initialize',
-        argv: this._children.argv,
-        index: index
-    })
+    this._descendent.addChild(child, { argv: this._children.argv, index: index })
 
     Monitor(interrupt, this, child, async())
 })

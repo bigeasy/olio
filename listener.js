@@ -20,6 +20,8 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 var Monitor = require('./monitor')
 var Descend = require('./descend')
 
+var Operation = require('operation')
+
 function Listener (descendent, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
@@ -27,8 +29,11 @@ function Listener (descendent, socketPath) {
 
     this._descendent = descendent
 
+    descendent.on('olio:registered', this._registered.bind(this))
+    descendent.on('olio:ready', this._ready.bind(this))
+
     this._socketPath = socketPath
-    this._children = []
+    this._children = {}
 
     this._process = process
 
@@ -59,31 +64,59 @@ Listener.prototype.index = cadence(function (async) {
 
 Listener.prototype._created = function (count, argv, pids) {
     var keyified = Keyify.stringify(argv)
-    var child = this._children[keyified] = {
+    this._children[keyified] = {
         count: count,
+        registered: 0,
+        ready: 0,
         argv: argv,
+        pids: pids,
+        paths: [],
+        // TODO WHy closuer?
         descend: Descend(this._descendent, pids)
+    }
+}
+
+Listener.prototype._registered = function (message) {
+    var keyified = Keyify.stringify(message.cookie.argv)
+    var child = this._children[keyified]
+    child.registered++
+    child.paths[message.cookie.index] = message.path
+    if (child.registered != child.count) {
+        return
+    }
+    for (var keyified in this._children) {
+        var child = this._children[keyified]
+        if (child.registered != child.count) {
+            return
+        }
+    }
+    for (var keyified in this._children) {
+        child = this._children[keyified]
+        child.paths.forEach(function (path, index) {
+            this._descendent.down(path, 'olio:message', {
+                method: 'initialize',
+                argv: child.argv,
+                index: index
+            })
+        }, this)
+    }
+}
+
+Listener.prototype._ready = function (message) {
+    var keyified = Keyify.stringify(message.cookie.argv)
+    var child = this._children[keyified]
+    if (++child.ready != child.count) {
+        return
     }
     for (var key in this._children) {
         var sibling = this._children[key]
-        if (keyified != key) {
-            sibling.descend.call(null, {
-                body: {
-                    method: 'created',
-                    socketPath: this._socketPath,
-                    to: null,
-                    count: count,
-                    argv: argv
-                }
-            })
-        }
-        child.descend.call(null, {
+        sibling.descend.call(null, {
             body: {
                 method: 'created',
                 socketPath: this._socketPath,
                 to: null,
-                count: sibling.count,
-                argv: sibling.argv
+                count: child.count,
+                argv: child.argv
             }
         })
     }

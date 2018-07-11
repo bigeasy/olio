@@ -101,12 +101,7 @@ Server.prototype._shutdown = function () {
 Server.prototype.run = function (count, environment) {
     for (var i = 0, I = coalesce(count, 1); i < I; i++) {
         var child = cluster.fork(environment(i))
-        this._descendent.addChild(child.process, null)
-        this._descendent.down([ child.process.pid ], 'olio:message', {
-            method: 'initialize',
-            argv: this._argv,
-            index: i
-        })
+        this._descendent.addChild(child.process, { argv: this._argv, index: i })
         this._pids.push(child.process.pid)
         Monitor(interrupt, this, child, this._destructible.monitor([ 'child', i ]))
     }
