@@ -56,7 +56,9 @@ Listener.prototype.socket = function (request, socket) {
             argv: JSON.parse(request.headers['x-olio-from-argv'])
         }
     }
-    this._children[Keyify.stringify(message.to.argv)].descend.call(null, message, socket)
+    this._children[Keyify.stringify(message.to.argv)].descend.call(null, {
+        body: message
+    }, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
