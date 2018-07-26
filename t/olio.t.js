@@ -30,7 +30,7 @@ function prove (async, okay) {
         }
     }
 
-    var SocketFactory = require('../factory/socket')
+    var SocketFactory = require('../socketeer')
     var factory = new SocketFactory
     var Receiver = function (destructible, argv, callback) {
         destructible.monitor('procedure', Procedure, function () {}, callback)

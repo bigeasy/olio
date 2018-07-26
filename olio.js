@@ -33,7 +33,7 @@ var Map = require('./map')
 var indexify = require('./indexify')
 
 // Pipe construction around UNIX domain sockets.
-var SocketFactory = require('./factory/socket')
+var SocketFactory = require('./socketeer')
 
 // Olio configurator object.
 function Constructor (olio) {
