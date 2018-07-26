@@ -1,0 +1,8 @@
+/.*
+/*.md
+/*.sh
+/bin
+/coverage
+/docs
+/node_modules
+/t
