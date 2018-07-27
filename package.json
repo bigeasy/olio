@@ -25,7 +25,7 @@
                             "conduit":                      "2.10.x",
                             "delta":                        "1.4.x",
                             "descendent":                   "0.2.x",
-                            "destructible":                 "0.31.x",
+                            "destructible":                 "0.32.x",
                             "downgrader":                   "0.1.x",
                             "extant":                       "1.0.x",
                             "hash.fnv":                     "1.0.x",
