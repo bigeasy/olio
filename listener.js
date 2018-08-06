@@ -82,7 +82,7 @@ Listener.prototype._created = function (count, name, argv, pids) {
 Listener.prototype._registered = function (message) {
     var child = this._children[message.cookie.name]
     child.registered++
-    child.paths[message.cookie.index] = message.path
+    child.paths[message.cookie.index] = message.from
     if (child.registered != child.count) {
         return
     }
