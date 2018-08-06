@@ -22,25 +22,25 @@ Mock.prototype.initialize = function (argv, index) {
     })
 }
 
-Mock.prototype.sender = function (argv, index, sender) {
+Mock.prototype.sender = function (name, index, sender) {
     this._descendent.across('olio:message', {
         method: 'connect',
-        from: { argv: argv, index: index }
+        from: { name: name, index: index }
     }, sender)
     return sender
 }
 
-Mock.prototype.sibling = function (argv, count, factory) {
+Mock.prototype.sibling = function (name, count, factory) {
     this._descendent.across('olio:message', {
         method: 'created',
-        argv: argv,
+        name: name,
         count: count
     }, factory)
 }
 
 Mock.prototype.createReceiver = cadence(function (async, destructible, Receiver, message, sender) {
     async(function () {
-        destructible.monitor('receiver', Receiver, message.argv, async())
+        destructible.monitor('receiver', Receiver, message.from, async())
     }, function (receiver) {
         destructible.destruct.wait(function () { receiver.inbox.push(null) })
         sender.outbox.pump(receiver.inbox)

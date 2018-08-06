@@ -17,7 +17,7 @@ function SocketFactory () {
 
 SocketFactory.prototype.createReceiver = cadence(function (async, destructible, Receiver, message, socket) {
     async(function () {
-        destructible.monitor('receiver', Receiver, message.argv, async())
+        destructible.monitor('receiver', Receiver, message.from, message.to, async())
     }, function (receiver) {
         destructible.destruct.wait(function () { receiver.inbox.push(null) })
         destructible.destruct.wait(socket, 'destroy')
@@ -38,9 +38,9 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
             url: 'http://olio',
             headers: Downgrader.headers({
                 'x-olio-to-index': index,
-                'x-olio-to-argv': JSON.stringify(message.argv),
+                'x-olio-to-name': message.name,
                 'x-olio-from-index': from.index,
-                'x-olio-from-argv': JSON.stringify(from.argv)
+                'x-olio-from-name': from.name
             })
         })
         delta(async()).ee(request).on('upgrade')

@@ -26,9 +26,6 @@ var Destructible = require('destructible')
 // Route messages through a process hierarchy using Node.js IPC.
 var Descendent = require('descendent')
 
-// Associate command lines used to start children with child information.
-var Map = require('./map')
-
 // Convert key material into an index into a table.
 var indexify = require('./indexify')
 
@@ -40,15 +37,15 @@ function Constructor (olio) {
     this._olio = olio
 }
 
-Constructor.prototype.sender = function (argv, Receiver) {
+Constructor.prototype.sender = function (name, Receiver) {
     var ready = new Signal
     this._olio._latches.push(ready)
-    this._olio._map.push(argv, { count: null, Receiver: Receiver, receivers: [], ready: ready  })
+    this._olio._map[name] = { count: null, Receiver: Receiver, receivers: [], ready: ready  }
 }
 
 function Olio (destructible, ee, configurator) {
     this._senders = { array: [], map: {} }
-    this._map = new Map
+    this._map = {}
     this._latches = []
 
     this.ready = new Signal
@@ -75,14 +72,14 @@ function Olio (destructible, ee, configurator) {
     this._factory = new SocketFactory
 }
 
-Olio.prototype.sender = function (path, index) {
-    var sender = this._map.get(path)
+Olio.prototype.sender = function (name, index) {
+    var sender = this._map[name]
     index = indexify(index, sender.count)
     return sender.receivers[index]
 }
 
 Olio.prototype.count = function (path, index) {
-    return this._map.get(path).count
+    return this._map[path].count
 }
 
 // TODO Maybe use cubbyhole to index by a particular name or, rather, argument path?
@@ -93,15 +90,17 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._factory = handle
         break
     case 'initialize':
+        this._name = message.name
         this._argv = message.argv
         this._index = message.index
         this._initialized.unlatch()
         break
     case 'connect':
+        // TODO This is also swallowing errors somehow.
         this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this._Receiver, message, handle, async())
         break
     case 'created':
-        var sender = this._map.get(message.argv), i = 0
+        var sender = this._map[message.name], i = 0
         if (sender != null) {
             sender.count = message.count
             // Duplicate ready is probably wrong.
@@ -114,6 +113,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                     }
                     this._destructible.monitor([ 'created', message.argv, i ], this._factory, 'createSender', {
                         argv: this._argv,
+                        name: this._name,
                         index: this._index,
                     }, sender.Receiver, message, handle, i, sender.count, async())
                 }, function (receiver) {

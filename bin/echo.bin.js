@@ -23,21 +23,23 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     destructible.completed.wait(async())
 
-    var Olio = require('..')
-    async(function () {
-        destructible.monitor('olio', Olio, program, function (constructor) {
-            constructor.receiver = cadence(function (async, destructible) {
-                async(function () {
-                    destructible.monitor('destructible', Procedure, cadence(function (async, envelope) {
-                        console.log(envelope)
-                        return [ {} ]
-                    }), async())
-                }, function (procedure) {
-                    return [ procedure ]
+    cadence(function (async) {
+        var Olio = require('..')
+        async(function () {
+            destructible.monitor('olio', Olio, program, function (constructor) {
+                constructor.receiver = cadence(function (async, destructible) {
+                    async(function () {
+                        destructible.monitor('destructible', Procedure, cadence(function (async, envelope) {
+                            console.log(envelope)
+                            return [ {} ]
+                        }), async())
+                    }, function (procedure) {
+                        return [ procedure ]
+                    })
                 })
-            })
-        }, async())
-    }, function () {
-        logger.info('started', { hello: 'world', pid: program.pid })
-    })
+            }, async())
+        }, function () {
+            logger.info('started', { hello: 'world', pid: program.pid })
+        })
+    })(destructible.monitor('initialize', true))
 }))

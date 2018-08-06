@@ -5,11 +5,11 @@ function prove (async, okay) {
 
     var program
     async(function () {
-        program = bin([ '--workers', '3', 'node', 'child.js' ], {}, async())
+        program = bin([ '--name', 'steve', '--workers', '3', 'node', 'child.js' ], {}, async())
     }, function () {
         okay(JSON.parse(program.stdout.read().toString()), {
             method: 'serve',
-            parameters: { workers: '3' },
+            parameters: { name: 'steve', workers: '3' },
             argv: [ 'node', 'child.js' ]
         }, 'json')
     })

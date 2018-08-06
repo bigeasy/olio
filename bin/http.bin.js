@@ -28,7 +28,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         destructible.destroy()
     }], function () {
         destructible.monitor('olio', Olio, program, function (constructor) {
-            constructor.sender([ './bin/echo.bin.js' ], cadence(function (async, destructible) {
+            constructor.sender('echo', cadence(function (async, destructible) {
                 destructible.monitor('caller', Caller, async())
             }))
         }, async())
@@ -36,7 +36,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var reactor = new Reactor({
             echo: cadence(function (async, request, index) {
                 async(function () {
-                    olio.sender([ './bin/echo.bin.js' ], +index).invoke({
+                    olio.sender('echo', +index).invoke({
                         url: request.url,
                         body: request.body
                     }, async())

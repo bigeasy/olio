@@ -52,8 +52,8 @@ function prove (async, okay) {
             server.listen(socketPath, async())
         }, function () {
             listener.children([
-                {"method":"run","parameters":{"workers":"2"},"argv":["./t/run.bin.js" ]},
-                {"method":"serve","parameters":{"workers":"1"},"argv":["./t/serve.bin.js" ]}
+                {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
+                {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
             ])
             async(function () {
                 setTimeout(async(), 1000)

@@ -16,15 +16,15 @@ function prove (async, okay) {
             configuration.receiver = function (destructible, argv, callback) {
                 destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
             }
-            configuration.sender([ 'program', 'command' ], function (destructible, argv, index, count, callback) {
+            configuration.sender('command', function (destructible, argv, index, count, callback) {
                 destructible.monitor('caller', Caller, callback)
             })
         }, async())
-        mock.initialize([ 'program', 'self' ], 0)
-        mock.sibling([ 'program', 'command' ], 1, function (destructible, index, count, callback) {
+        mock.initialize('self', 0)
+        mock.sibling('command', 1, function (destructible, index, count, callback) {
             destructible.monitor('procedure', Procedure, cadence(function (async, envelope) { return [ 1 ] }), callback)
         })
-        mock.sibling([ 'program', 'ignored' ], 1, function () {
+        mock.sibling('ignored', 1, function () {
             throw new Error('error')
         })
     }, function (olio) {
@@ -32,12 +32,12 @@ function prove (async, okay) {
             destructible.monitor('caller', Caller, async())
         }, function (caller) {
             destructible.destruct.wait(function () { caller.inbox.push(null) })
-            mock.sender([ 'program', 'client' ], 0, caller)
+            mock.sender('client', 0, caller)
             async(function () {
                 caller.invoke({}, async())
             }, function (result) {
                 okay(result, 0, 'receiver')
-                olio.sender([ 'program', 'command' ], 0).invoke({}, async())
+                olio.sender('command', 0).invoke({}, async())
             }, function (result) {
                 okay(result, 1, 'sender')
                 destructible.destroy()

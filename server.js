@@ -73,17 +73,23 @@ var Search = require('./search')
 // it is generated internally.
 
 //
-function Server (process, argv, descendent) {
+function Server (process, name, argv, descendent) {
     var fs = require('fs')
     var command = Search(argv[0], process.env.PATH)
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
+    this._name = name
     this._argv = argv
     this._process = process
+    // TODO Construct using nested Desetructible.
     this._destructible = new Destructible(2000, 'olio/server')
     this._destructible.markDestroyed(this)
     this._destructible.destruct.wait(this, '_shutdown')
     this._descendent = descendent
     this._pids = []
+    // TODO Why isn't descendent doing this itself? Oh, right, because it
+    // doesn't get the child paths until later, or we didn't add full paths
+    // until later, and we didn't add registered until just now, so this
+    // probably is unnecessary.
     this._descendent.on('olio:message', Descend(this._descendent, this._pids))
 }
 
@@ -101,7 +107,7 @@ Server.prototype._shutdown = function () {
 Server.prototype.run = function (count, environment) {
     for (var i = 0, I = coalesce(count, 1); i < I; i++) {
         var child = cluster.fork(environment(i))
-        this._descendent.addChild(child.process, { argv: this._argv, index: i })
+        this._descendent.addChild(child.process, { name: this._name, argv: this._argv, index: i })
         this._pids.push(child.process.pid)
         Monitor(interrupt, this, child, this._destructible.monitor([ 'child', i ]))
     }

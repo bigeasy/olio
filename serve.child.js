@@ -6,6 +6,7 @@
     usage: olio <socket> [command] <args>
 
         --help              display this message
+        --name    <string>  name of service
         --workers <string>  socket
 
     ___ $ ___ en_US ___
@@ -27,7 +28,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     destructible.destruct.wait(descendent, 'destroy')
 
     var Server = require('./server')
-    var server = new Server(program, program.argv, descendent)
+    var server = new Server(program, program.ultimate.name, program.argv, descendent)
 
     destructible.completed.wait(async())
 

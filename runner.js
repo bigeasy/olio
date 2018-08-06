@@ -19,12 +19,14 @@ var Monitor = require('./monitor')
 
 function Runner (options) {
     var argv = options.argv.slice()
+    this._name = options.name
     this._children = {
         argv: argv,
         count: coalesce(options.workers, 1),
         array: []
     }
     this.pids = []
+    // TODO Isn't this the default timeout?
     this._destructible = new Destructible(1000, 'olio/runner')
     this._destructible.markDestroyed(this)
     this._process = options.process
@@ -47,7 +49,7 @@ Runner.prototype._run = cadence(function (async, index) {
 
     this._children.array[index] = child
 
-    this._descendent.addChild(child, { argv: this._children.argv, index: index })
+    this._descendent.addChild(child, { name: this._name, argv: this._children.argv, index: index })
 
     Monitor(interrupt, this, child, async())
 })

@@ -32,7 +32,7 @@ function prove (async, okay) {
 
     var SocketFactory = require('../socketeer')
     var factory = new SocketFactory
-    var Receiver = function (destructible, argv, callback) {
+    var Receiver = function (destructible, from, to, callback) {
         destructible.monitor('procedure', Procedure, function () {}, callback)
     }
 
@@ -43,16 +43,16 @@ function prove (async, okay) {
             var message = {
                 to: {
                     index: +request.headers['x-olio-to-index'],
-                    argv: JSON.parse(request.headers['x-olio-to-argv']),
+                    name: request.headers['x-olio-to-name']
                 },
                 from: {
                     index: +request.headers['x-olio-from-index'],
-                    argv: JSON.parse(request.headers['x-olio-from-argv'])
+                    name: request.headers['x-olio-from-name']
                 }
             }
             okay(message, {
-                to: { index: 0, argv: [ 'program', 'that' ] },
-                from: { index: 2, argv: [ 'program', 'this' ] }
+                to: { index: 0, name: 'that' },
+                from: { index: 2, name: 'this' }
             }, 'headers')
             destructible.destruct.wait(socket, 'destroy')
             destructible.monitor('create', factory, 'createReceiver', Receiver, message, socket, null)
@@ -73,10 +73,10 @@ function prove (async, okay) {
 
         async(function () {
             destructible.monitor('olio', Olio, program, function (configure) {
-                configure.receiver = function (destructible, argv, callback) {
+                configure.receiver = function (destructible, from, to, callback) {
                     destructible.monitor('procedure', Procedure, function () {}, callback)
                 }
-                configure.sender([ 'program', 'that' ], function (destructible, argv, index, count, callback) {
+                configure.sender('that', function (destructible, argv, index, count, callback) {
                     destructible.monitor('caller', Caller, callback)
                 })
             }, async())
@@ -89,6 +89,7 @@ function prove (async, okay) {
                 path: [],
                 body: {
                     method: 'initialize',
+                    name: 'this',
                     argv: [ 'program', 'this' ],
                     index: 2
                 }
@@ -101,6 +102,7 @@ function prove (async, okay) {
                 path: [],
                 body: {
                     method: 'created',
+                    name: 'that',
                     argv: [ 'program', 'that' ],
                     socketPath: 't/socket',
                     count: 1
@@ -112,9 +114,9 @@ function prove (async, okay) {
                     olio.ready.wait(async())
                 }, function () {
                     okay(true, 'ready')
-                    okay(!!olio.sender([ 'program', 'that' ], 0), 'receiver')
-                    okay(!!olio.sender([ 'program', 'that' ], 'x'), 'receiver hash')
-                    okay(olio.count([ 'program', 'that' ]), 1, 'receiver count')
+                    okay(!!olio.sender('that', 0), 'receiver')
+                    okay(!!olio.sender('that', 'x'), 'receiver hash')
+                    okay(olio.count('that'), 1, 'receiver count')
                     program.emit('message', {
                         module: 'descendent',
                         name: 'olio:message',

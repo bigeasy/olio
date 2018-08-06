@@ -1,3 +1,5 @@
+rm -f ./socket
+echo "start"
 node olio.bin.js listen --socket ./socket \
-    "$(node olio.bin.js run --workers 2 ./bin/echo.bin.js)" \
-    "$(node olio.bin.js serve --workers 2 ./bin/http.bin.js)"
+    "$(node olio.bin.js run --name echo --workers 1 ./bin/echo.bin.js)" \
+    "$(node olio.bin.js serve --name http --workers 1 ./bin/http.bin.js)"

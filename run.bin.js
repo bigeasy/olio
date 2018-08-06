@@ -6,6 +6,7 @@
     usage: olio <socket> [command] <args>
 
         --help              display this message
+        --name    <string>  name of service
         --workers <string>  socket
 
     ___ $ ___ en_US ___
@@ -16,6 +17,7 @@
     ___ . ___
  */
 require('arguable')(module, require('cadence')(function (async, program) {
+    program.required('name')
     program.stdout.write(JSON.stringify({
         method: 'run',
         parameters: program.ultimate,

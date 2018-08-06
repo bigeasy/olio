@@ -29,6 +29,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var logger = require('prolific.logger').createLogger('olio')
 
     var Destructible = require('destructible')
+    // TODO This ought to be configurable.
     var destructible = new Destructible(5000, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
 

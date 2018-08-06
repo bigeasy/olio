@@ -25,7 +25,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
 
     async(function () {
         destructible.monitor('olio', Olio, program, function (constructor) {
-            constructor.receiver = function (destructible, argv, callback) {
+            constructor.receiver = function (destructible, to, from, callback) {
                 destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
                     console.log(envelope)
                     return [ 1 ]

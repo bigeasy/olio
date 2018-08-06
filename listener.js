@@ -22,6 +22,7 @@ var Descend = require('./descend')
 
 var Operation = require('operation')
 
+// TODO Use nested destructible pattern.
 function Listener (descendent, socketPath) {
     this._destructible = new Destructible(4000, 'olio/listener')
     this._destructible.markDestroyed(this)
@@ -36,6 +37,7 @@ function Listener (descendent, socketPath) {
     this._children = {}
 
     this._process = process
+    // TODO Rename `OLIO_SUPERVISOR_PROCESS_ID`.
     this._process.env.OLIO_ROOT_PROCESS_PID = process.pid
 
     this.reactor = new Reactor(this, function (dispatcher) {
@@ -48,15 +50,15 @@ Listener.prototype.socket = function (request, socket) {
         module: 'olio',
         method: 'connect',
         to: {
-            index: +request.headers['x-olio-to-index'],
-            argv: JSON.parse(request.headers['x-olio-to-argv'])
+            name: request.headers['x-olio-to-name'],
+            index: +request.headers['x-olio-to-index']
         },
         from: {
-            index: +request.headers['x-olio-from-index'],
-            argv: JSON.parse(request.headers['x-olio-from-argv'])
+            name: request.headers['x-olio-from-name'],
+            index: +request.headers['x-olio-from-index']
         }
     }
-    this._children[Keyify.stringify(message.to.argv)].descend.call(null, {
+    this._children[message.to.name].descend.call(null, {
         body: message
     }, socket)
 }
@@ -65,69 +67,71 @@ Listener.prototype.index = cadence(function (async) {
     return [ 200, { 'content-type': 'text/plain' }, 'Olio Listener API\n' ]
 })
 
-Listener.prototype._created = function (count, argv, pids) {
-    var keyified = Keyify.stringify(argv)
-    this._children[keyified] = {
+Listener.prototype._created = function (count, name, argv, pids) {
+    this._children[name] = {
         count: count,
         registered: 0,
         ready: 0,
         argv: argv,
         pids: pids,
         paths: [],
-        // TODO WHy closuer?
+        // TODO Why closure?
         descend: Descend(this._descendent, pids)
     }
 }
 
 Listener.prototype._registered = function (message) {
-    var keyified = Keyify.stringify(message.cookie.argv)
-    var child = this._children[keyified]
+    var child = this._children[message.cookie.name]
     child.registered++
     child.paths[message.cookie.index] = message.path
     if (child.registered != child.count) {
         return
     }
-    for (var keyified in this._children) {
-        var child = this._children[keyified]
+    for (var name in this._children) {
+        var child = this._children[name]
         if (child.registered != child.count) {
             return
         }
     }
-    for (var keyified in this._children) {
-        child = this._children[keyified]
+    for (var name in this._children) {
+        child = this._children[name]
         child.paths.forEach(function (path, index) {
+            // TODO Shouldn't count go down now with initialization?
             this._descendent.down(path, 'olio:message', {
                 method: 'initialize',
+                name: name,
                 argv: child.argv,
                 index: index
             })
         }, this)
+        // TODO Remove and use descendent directly.
         child.descend.call(null, {
             body: {
                 method: 'created',
                 socketPath: this._socketPath,
                 to: null,
-                count: child.count,
-                argv: child.argv
+                argv: child.argv,
+                name: name,
+                count: child.count
             }
         })
     }
 }
 
 Listener.prototype._ready = function (message) {
-    var keyified = Keyify.stringify(message.cookie.argv)
-    var child = this._children[keyified]
+    var child = this._children[message.cookie.name]
     if (++child.ready != child.count) {
         return
     }
-    for (var key in this._children) {
-        var sibling = this._children[key]
-        if (key != keyified) {
+    for (var name in this._children) {
+        var sibling = this._children[name]
+        if (name != message.cookie.name) {
             sibling.descend.call(null, {
                 body: {
                     method: 'created',
                     socketPath: this._socketPath,
                     to: null,
+                    name: message.cookie.name,
                     count: child.count,
                     argv: child.argv
                 }
@@ -146,10 +150,11 @@ Listener.prototype.children = function (children) {
         case 'serve':
             var child = spawn('node', [
                 path.join(__dirname, 'serve.child.js'),
+                '--name', body.parameters.name,
                 '--workers', body.parameters.workers
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
             this._descendent.addChild(child, null)
-            this._created(+body.parameters.workers, body.argv, [ child.pid ])
+            this._created(+body.parameters.workers, body.parameters.name, body.argv, [ child.pid ])
             this._destructible.destruct.wait(child, 'kill')
             Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
@@ -158,11 +163,12 @@ Listener.prototype.children = function (children) {
                 descendent: this._descendent,
                 process: process,
                 workers: body.parameters.workers,
+                name: body.parameters.name,
                 argv: body.argv
             })
             this._destructible.destruct.wait(runner, 'destroy')
             runner.run(this._destructible.monitor([ 'run', body.argv ]))
-            this._created(+body.parameters.workers, body.argv, runner.pids)
+            this._created(+body.parameters.workers, body.parameters.name, body.argv, runner.pids)
             break
         }
     }, this)
