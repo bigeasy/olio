@@ -67,7 +67,7 @@ function Olio (destructible, ee, configurator) {
     this._destructible.destruct.wait(descendent, 'destroy')
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
-    descendent.up(+coalesce(process.env.OLIO_ROOT_PROCESS_PID, 0), 'olio:registered', {})
+    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
     this._unlatch(descendent, this._destructible.monitor('ready', true))
 
     this._factory = new SocketFactory
@@ -174,7 +174,7 @@ Olio.prototype._unlatch = cadence(function (async, descendent) {
     }, function (error) {
         this.ready.unlatch(error)
     }], function () {
-        descendent.up(+coalesce(process.env.OLIO_ROOT_PROCESS_PID, 0), 'olio:ready', {})
+        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
         this.ready.unlatch()
     })
 })

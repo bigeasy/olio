@@ -37,8 +37,7 @@ function Listener (descendent, socketPath) {
     this._children = {}
 
     this._process = process
-    // TODO Rename `OLIO_SUPERVISOR_PROCESS_ID`.
-    this._process.env.OLIO_ROOT_PROCESS_PID = process.pid
+    this._process.env.OLIO_SUPERVISOR_PROCESS_ID = process.pid
 
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
