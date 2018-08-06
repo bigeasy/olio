@@ -14,7 +14,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var Reactor = require('reactor')
 
     var Destructible = require('destructible')
-    var destructible = new Destructible(900, './bin/http.bin.js')
+    var destructible = new Destructible(250, './bin/http.bin.js')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var logger = require('prolific.logger').createLogger('olio.http')

@@ -44,6 +44,11 @@ Constructor.prototype.sender = function (name, Receiver) {
 }
 
 function Olio (destructible, ee, configurator) {
+    this._destructible = destructible
+    this._destructible.markDestroyed(this)
+
+    this.destroyed = false
+
     this._senders = { array: [], map: {} }
     this._map = {}
     this._latches = []
@@ -56,10 +61,6 @@ function Olio (destructible, ee, configurator) {
     configurator(constructor)
 
     this._Receiver = constructor.receiver
-
-    this._destructible = new Destructible(750, 'olio')
-    this._destructible.markDestroyed(this)
-    this.destroyed = false
 
     // Any error causes messages to get cut, we do not get `_message`.
     var descendent = new Descendent(ee)
@@ -178,18 +179,8 @@ Olio.prototype._ready = cadence(function (async, descendent) {
     })
 })
 
-Olio.prototype.destroy = function () {
-    this._destructible.destroy()
-}
-
-Olio.prototype.listen = function (callback) {
-    this._destructible.completed.wait(callback)
-}
-
 module.exports = cadence(function (async, destructible, ee, configurator) {
     var olio = new Olio(destructible, ee, configurator)
-    destructible.destruct.wait(olio, 'destroy')
-    olio.listen(destructible.monitor('olio'))
     async(function () {
         olio.ready.wait(async())
     }, function () {
