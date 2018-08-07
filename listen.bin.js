@@ -5,8 +5,14 @@
 
     usage: olio <socket> [command] <args>
 
-        --help              display this message
-        --socket <string>   socket
+        --help
+            display this message
+
+        --kill  <number>
+            number of milliseconds to wait before declaring child processess hung
+
+        --socket <string>
+            path for UNIX domain socket server
 
     ___ $ ___ en_US ___
 
@@ -28,9 +34,13 @@ require('arguable')(module, function (program, callback) {
     var Descendent = require('descendent')
     var logger = require('prolific.logger').createLogger('olio')
 
+    var coalesce = require('extant')
+
+    var kill = +coalesce(program.ultimate.kill, 5000)
+    program.assert(kill, 'kill must be an integer')
+
     var Destructible = require('destructible')
-    // TODO This ought to be configurable.
-    var destructible = new Destructible(5000, 'olio/listen.bin')
+    var destructible = new Destructible(kill, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var Shuttle = require('prolific.shuttle')
