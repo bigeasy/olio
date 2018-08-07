@@ -15,7 +15,7 @@
 
     ___ . ___
  */
-require('arguable')(module, require('cadence')(function (async, program) {
+require('arguable')(module, function (program, callback) {
     // Convert an HTTP request into a raw socket.
     var Downgrader = require('downgrader')
 
@@ -37,54 +37,51 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var shuttle = Shuttle.shuttle(program, logger)
     destructible.destruct.wait(shuttle, 'close')
 
-    destructible.completed.wait(async())
+    destructible.completed.wait(callback)
 
     var children = program.argv.map(JSON.parse.bind(JSON))
 
     program.required('socket')
 
-    async([function () {
-        destructible.destroy()
-    }], function () {
-        var Listener = require('./listener')
+    var descendent = new Descendent(process)
+    destructible.destruct.wait(descendent, 'destroy')
 
-        var descendent = new Descendent(process)
-        destructible.destruct.wait(descendent, 'destroy')
+    var cadence = require('cadence')
 
-        var listener = new Listener(descendent, program.ultimate.socket)
+    var Listener = require('./listener')
 
-        destructible.destruct.wait(listener, 'destroy')
-        listener.listen(destructible.monitor([ 'listener' ]))
+    cadence(function (async) {
+        async(function  () {
+            destructible.monitor('listener', Listener, descendent, program.ultimate.socket, async())
+        }, function (listener) {
+            var downgrader = new Downgrader
+            downgrader.on('socket', Operation([ listener, 'socket' ]))
 
-        var downgrader = new Downgrader
-        downgrader.on('socket', Operation([ listener, 'socket' ]))
+            var server = http.createServer(listener.reactor.middleware)
+            server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
 
-        var server = http.createServer(listener.reactor.middleware)
-        server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+            destructible.destruct.wait(server, 'close')
 
-        destructible.destruct.wait(server, 'close')
+            // Passing sockets around makes it hard for us to ensure that we are
+            // going to destroy them. They could be in a pipe on the way down to a
+            // child that exits before getting the message. I've not seen evidence
+            // that delivery is guaranteed. When I leave a listener outside of my
+            // Descendent module to see if I can catch the straggling message, I
+            // don't see it and we exit with an exception thrown from within
+            // Node.js, assertion failures from within the C++. We `unref` here to
+            // surrender any socket handles in the process of being passed to
+            // children.
+            //
+            // We should always have a child of some kind so we don't have to worry
+            // about this unref'ed server causing us to exit early.
+            server.unref()
 
-        // Passing sockets around makes it hard for us to ensure that we are
-        // going to destroy them. They could be in a pipe on the way down to a
-        // child that exits before getting the message. I've not seen evidence
-        // that delivery is guaranteed. When I leave a listener outside of my
-        // Descendent module to see if I can catch the straggling message, I
-        // don't see it and we exit with an exception thrown from within
-        // Node.js, assertion failures from within the C++. We `unref` here to
-        // surrender any socket handles in the process of being passed to
-        // children.
-        //
-        // We should always have a child of some kind so we don't have to worry
-        // about this unref'ed server causing us to exit early.
-        server.unref()
-
-        async(function () {
-            server.listen(program.ultimate.socket, async())
-        }, function () {
-            listener.children(children)
-            program.ready.unlatch()
+            async(function () {
+                server.listen(program.ultimate.socket, async())
+            }, function () {
+                listener.children(children)
+                program.ready.unlatch()
+            })
         })
-    }, function () {
-        destructible.completed.wait(async())
-    })
-}))
+    })(destructible.monitor('initialize', true))
+})

@@ -2,7 +2,6 @@ require('proof')(1, require('cadence')(prove))
 
 function prove (async, okay) {
     var Olio = require('..')
-    okay(Olio, 'require')
 
     var bin = require('../olio.bin')
     var fs = require('fs')
@@ -17,11 +16,13 @@ function prove (async, okay) {
 
     var program
     async(function () {
-        program = bin([ 'listen' ], {}, async())
+        program = bin([ 'listen', '--socket', 't/socket' ], {}, async())
         async(function () {
             program.ready.wait(async())
         }, function () {
             program.emit('SIGINT')
         })
+    }, function () {
+        okay(true, 'done')
     })
 }

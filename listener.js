@@ -22,9 +22,8 @@ var Descend = require('./descend')
 
 var Operation = require('operation')
 
-// TODO Use nested destructible pattern.
-function Listener (descendent, socketPath) {
-    this._destructible = new Destructible(4000, 'olio/listener')
+function Listener (destructible, descendent, socketPath) {
+    this._destructible = destructible
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
@@ -139,10 +138,6 @@ Listener.prototype._ready = function (message) {
     }
 }
 
-Listener.prototype.listen = function (callback) {
-    this._destructible.completed.wait(callback)
-}
-
 Listener.prototype.children = function (children) {
     children.forEach(function (body) {
         switch (body.method) {
@@ -173,8 +168,6 @@ Listener.prototype.children = function (children) {
     }, this)
 }
 
-Listener.prototype.destroy = function () {
-    this._destructible.destroy()
+module.exports = function (destructible, descendent, socketPath, callback) {
+    callback(null, new Listener(destructible, descendent, socketPath))
 }
-
-module.exports = Listener

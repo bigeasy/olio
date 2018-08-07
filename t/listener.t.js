@@ -1,66 +1,66 @@
-require('proof')(2, require('cadence')(prove))
+require('proof')(1, prove)
 
-function prove (async, okay) {
+function prove (okay, callback) {
     var path = require('path')
+
     var Listener = require('../listener')
-    var cadence = require('cadence')
+
     var Descendent = require('descendent')
     var descendent = new Descendent(process)
+
     var socketPath = path.join(__dirname, 'socket')
-    var listener = new Listener(descendent, socketPath)
-    okay(listener, 'constructor')
 
     var Destructible = require('destructible')
-    var destructible = new Destructible(1000, 'destructible')
+    var destructible = new Destructible('destructible')
 
-    destructible.completed.wait(async())
+    destructible.completed.wait(callback)
 
-    destructible.monitor('test', cadence(function (async, destructible) {
+    var cadence = require('cadence')
+
+    cadence(function (async) {
         async(function () {
-            destructible.destruct.wait(listener, 'destroy')
-            destructible.monitor([ 'listener' ], function (destructible, callback) {
-                listener.listen(destructible.monitor('listener'))
-                callback()
-            }, async())
-        }, function () {
-            listener.index(async())
-        }, function (statusCode, headers, body) {
-            okay({
-                statusCode: statusCode,
-                headers: headers,
-                body: body
-            }, {
-                statusCode: 200,
-                headers: { 'content-type': 'text/plain' },
-                body: 'Olio Listener API\n'
-            }, 'index')
-            var Downgrader = require('downgrader')
-            var Operation = require('operation')
-            var http = require('http')
-
-            var descendent = new Descendent(process)
-            destructible.destruct.wait(descendent, 'destroy')
-
-            var downgrader = new Downgrader
-            downgrader.on('socket', Operation([ listener, 'socket' ]))
-
-            var server = http.createServer(listener.reactor.middleware)
-            server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
-
-            destructible.destruct.wait(server, 'close')
-
-            server.listen(socketPath, async())
-        }, function () {
-            listener.children([
-                {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
-                {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
-            ])
+            destructible.monitor('listener', Listener, descendent, socketPath, async())
+        }, function (listener) {
             async(function () {
-                setTimeout(async(), 1000)
+                listener.index(async())
+            }, function (statusCode, headers, body) {
+                okay({
+                    statusCode: statusCode,
+                    headers: headers,
+                    body: body
+                }, {
+                    statusCode: 200,
+                    headers: { 'content-type': 'text/plain' },
+                    body: 'Olio Listener API\n'
+                }, 'index')
+                var Downgrader = require('downgrader')
+                var Operation = require('operation')
+                var http = require('http')
+
+                var descendent = new Descendent(process)
+                destructible.destruct.wait(descendent, 'destroy')
+
+                var downgrader = new Downgrader
+                downgrader.on('socket', Operation([ listener, 'socket' ]))
+
+                var server = http.createServer(listener.reactor.middleware)
+                server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+
+                destructible.destruct.wait(server, 'close')
+
+                server.listen(socketPath, async())
             }, function () {
-                console.log('done')
-                destructible.destroy()
+                listener.children([
+                    {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
+                    {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
+                ])
+                async(function () {
+                    setTimeout(async(), 1000)
+                }, function () {
+                    console.log('done')
+                    destructible.destroy()
+                })
             })
         })
-    }), async())
+    })(destructible.monitor('test'))
 }
