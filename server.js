@@ -35,7 +35,6 @@ var Destructible = require('destructible')
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
-var Descend = require('./descend')
 var Search = require('./search')
 
 function Server (process, name, argv, descendent) {
@@ -51,11 +50,6 @@ function Server (process, name, argv, descendent) {
     this._destructible.destruct.wait(this, '_shutdown')
     this._descendent = descendent
     this._pids = []
-    // TODO Why isn't descendent doing this itself? Oh, right, because it
-    // doesn't get the child paths until later, or we didn't add full paths
-    // until later, and we didn't add registered until just now, so this
-    // probably is unnecessary.
-    this._descendent.on('olio:message', Descend(this._descendent, this._pids))
 }
 
 Server.prototype.destroy = function () {

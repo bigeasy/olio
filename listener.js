@@ -18,7 +18,6 @@ var Descendent = require('descendent')
 var interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
-var Descend = require('./descend')
 
 var Operation = require('operation')
 
@@ -56,9 +55,8 @@ Listener.prototype.socket = function (request, socket) {
             index: +request.headers['x-olio-from-index']
         }
     }
-    this._children[message.to.name].descend.call(null, {
-        body: message
-    }, socket)
+    var path = this._children[message.to.name].paths[message.to.index]
+    this._descendent.down(path, 'olio:message', message, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
@@ -72,9 +70,7 @@ Listener.prototype._created = function (count, name, argv, pids) {
         ready: 0,
         argv: argv,
         pids: pids,
-        paths: [],
-        // TODO Why closure?
-        descend: Descend(this._descendent, pids)
+        paths: []
     }
 }
 
@@ -102,17 +98,15 @@ Listener.prototype._registered = function (message) {
                 index: index
             })
         }, this)
-        // TODO Remove and use descendent directly.
-        child.descend.call(null, {
-            body: {
+        child.paths.forEach(function (path, index) {
+            this._descendent.down(path, 'olio:message', {
                 method: 'created',
                 socketPath: this._socketPath,
-                to: null,
                 argv: child.argv,
                 name: name,
                 count: child.count
-            }
-        })
+            })
+        }, this)
     }
 }
 
@@ -124,16 +118,15 @@ Listener.prototype._ready = function (message) {
     for (var name in this._children) {
         var sibling = this._children[name]
         if (name != message.cookie.name) {
-            sibling.descend.call(null, {
-                body: {
+            sibling.paths.forEach(function (path, index) {
+                this._descendent.down(path, 'olio:message', {
                     method: 'created',
                     socketPath: this._socketPath,
-                    to: null,
                     name: message.cookie.name,
                     count: child.count,
                     argv: child.argv
-                }
-            })
+                })
+            }, this)
         }
     }
 }
