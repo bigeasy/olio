@@ -89,7 +89,8 @@ require('arguable')(module, function (program, callback) {
             async(function () {
                 server.listen(program.ultimate.socket, async())
             }, function () {
-                listener.children(children)
+                listener.children(children, async())
+            }, function () {
                 program.ready.unlatch()
             })
         })

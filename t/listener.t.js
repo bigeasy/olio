@@ -53,7 +53,8 @@ function prove (okay, callback) {
                 listener.children([
                     {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
                     {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
-                ])
+                ], async())
+            }, function () {
                 async(function () {
                     setTimeout(async(), 1000)
                 }, function () {

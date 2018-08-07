@@ -138,8 +138,8 @@ Listener.prototype._ready = function (message) {
     }
 }
 
-Listener.prototype.children = function (children) {
-    children.forEach(function (body) {
+Listener.prototype.children = cadence(function (async, children) {
+    async.forEach(function (body) {
         switch (body.method) {
         case 'serve':
             var child = spawn('node', [
@@ -153,20 +153,21 @@ Listener.prototype.children = function (children) {
             Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
         case 'run':
-            var runner = new Runner({
-                descendent: this._descendent,
-                process: process,
-                workers: body.parameters.workers,
-                name: body.parameters.name,
-                argv: body.argv
+            async(function () {
+                this._destructible.monitor([ 'run', body.parameters.name ], Runner, {
+                    descendent: this._descendent,
+                    process: process,
+                    workers: body.parameters.workers,
+                    name: body.parameters.name,
+                    argv: body.argv
+                }, async())
+            }, function (runner) {
+                this._created(+body.parameters.workers, body.parameters.name, body.argv, runner.pids)
             })
-            this._destructible.destruct.wait(runner, 'destroy')
-            runner.run(this._destructible.monitor([ 'run', body.argv ]))
-            this._created(+body.parameters.workers, body.parameters.name, body.argv, runner.pids)
             break
         }
-    }, this)
-}
+    })(children)
+})
 
 module.exports = function (destructible, descendent, socketPath, callback) {
     callback(null, new Listener(destructible, descendent, socketPath))

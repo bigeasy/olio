@@ -17,7 +17,9 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
 
-function Runner (options) {
+function Runner (destructible, options) {
+    this.destroyed = false
+    destructible.markDestroyed(this)
     var argv = options.argv.slice()
     this._name = options.name
     this._children = {
@@ -26,26 +28,22 @@ function Runner (options) {
         array: []
     }
     this.pids = []
-    // TODO Isn't this the default timeout?
-    this._destructible = new Destructible(1000, 'olio/runner')
-    this._destructible.markDestroyed(this)
     this._process = options.process
     this._descendent = options.descendent
-}
-
-Runner.prototype.destroy = function () {
-    this._destructible.destroy()
+    for (var i = 0; i < this._children.count; i++) {
+        this._run(destructible, i, destructible.monitor([ 'child', i ]))
+    }
 }
 
 // Somewhere note that ordinary children are not run using cluster, so the
 // disconnect confustion only applies to our sandboxed `server.bin.js` program
 // that does run a cluster.
-Runner.prototype._run = cadence(function (async, index) {
+Runner.prototype._run = cadence(function (async, destructible, index) {
     var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), { stdio: [ 0, 1, 2, 'ipc' ] })
 
     this.pids.push(child.pid)
 
-    this._destructible.destruct.wait(child, 'kill')
+    destructible.destruct.wait(child, 'kill')
 
     this._children.array[index] = child
 
@@ -54,11 +52,6 @@ Runner.prototype._run = cadence(function (async, index) {
     Monitor(interrupt, this, child, async())
 })
 
-Runner.prototype.run = cadence(function (async) {
-    for (var i = 0; i < this._children.count; i++) {
-        this._run(i, this._destructible.monitor([ 'child', i ]))
-    }
-    this._destructible.completed.wait(async())
-})
-
-module.exports = Runner
+module.exports = function (destructible, options, callback) {
+    callback(null, new Runner(destructible, options))
+}
