@@ -11,7 +11,7 @@
 // performant as Node.js can be on Windows. Windows is slow about passing
 // handles, so you shouldn't roll your own handle passing strategy. It would
 // only work for TCP/TLS anyway. You can't pass the TCP handles of an HTTP
-// server around and no your are not going to implement HTTP parsing.
+// server around and no you're are not going to implement HTTP parsing.
 
 // From the Node.js API.
 var path = require('path')
@@ -38,41 +38,6 @@ var Monitor = require('./monitor')
 var Descend = require('./descend')
 var Search = require('./search')
 
-// TODO Move this since I've generalized.
-//
-// Create a listener that will launch the router executable specfied by the
-// `argv` option.
-//
-// The Node.js Cluster module spreads the TCP connections to a port across
-// multiple workers. The router is the child process that shares the work of
-// responding to parituclar sockets or HTTP requests.
-//
-// Subordinate implements a worker pinning where
-//
-// We let the Cluster module distribute he work using its load balancing
-// strategy. The router will inspect the request for a key, hash the key, and
-// then send it to the correct worker based on the hashed key value.
-//
-// That describes hashed operation which is what's brining this project to
-// life. Other modes operation suggest themselves, but I'm not using them quite
-// yet.
-//
-// The `secret` option is used to indicate that a request has
-// been routed and is supposed to go to a specific worker. The when a request
-// comes in from outside the application the router that receives it will chose
-// a worker based on a hash of the key value. It then forwards the request
-// through a long-lived multiplexed connection to the worker at the hashed
-// index.
-//
-// If you want to directly specify a worker by index you would specify the index
-// in a request header along with the secret to indicate that you know what
-// you're doing.
-//
-// For inter-process communication between trusted processes the secret may be
-// generated externally and passed into the subordinate executable. Otherwise,
-// it is generated internally.
-
-//
 function Server (process, name, argv, descendent) {
     var fs = require('fs')
     var command = Search(argv[0], process.env.PATH)
