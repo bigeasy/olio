@@ -38,12 +38,7 @@ require('arguable')(module, function (program, callback) {
         async(function () {
             destructible.monitor('server', Server, program, program.ultimate.name, program.argv, descendent, async())
         }, function (server) {
-            server.run(program.ultimate.workers, function (index) {
-                var env = JSON.parse(JSON.stringify(program.env))
-                // TODO Unnecessary because of cookies.
-                env.OLIO_WORKER_INDEX = index
-                return env
-            })
+            server.run(program.ultimate.workers)
         }, function () {
             program.ready.unlatch()
         })
