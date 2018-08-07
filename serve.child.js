@@ -16,8 +16,9 @@
 
     ___ . ___
  */
-require('arguable')(module, require('cadence')(function (async, program) {
+require('arguable')(module, function (program, callback) {
     var Destructible = require('destructible')
+    // TODO Make this configurable, default to parent less 250 milliseconds.
     var destructible = new Destructible(3000, 'olio.serve')
 
     var Descendent = require('descendent')
@@ -28,24 +29,23 @@ require('arguable')(module, require('cadence')(function (async, program) {
     destructible.destruct.wait(descendent, 'destroy')
 
     var Server = require('./server')
-    var server = new Server(program, program.ultimate.name, program.argv, descendent)
 
-    destructible.completed.wait(async())
+    destructible.completed.wait(callback)
 
-    async([function () {
-        destructible.destroy()
-    }], function () {
-        destructible.destruct.wait(server, 'destroy')
+    var cadence = require('cadence')
 
-        server.listen(destructible.monitor('children'))
-
-        server.run(program.ultimate.workers, function (index) {
-            var env = JSON.parse(JSON.stringify(program.env))
-            env.OLIO_WORKER_INDEX = index
-            return env
+    cadence(function (async) {
+        async(function () {
+            destructible.monitor('server', Server, program, program.ultimate.name, program.argv, descendent, async())
+        }, function (server) {
+            server.run(program.ultimate.workers, function (index) {
+                var env = JSON.parse(JSON.stringify(program.env))
+                // TODO Unnecessary because of cookies.
+                env.OLIO_WORKER_INDEX = index
+                return env
+            })
+        }, function () {
+            program.ready.unlatch()
         })
-    }, function () {
-        program.ready.unlatch()
-        destructible.completed.wait(async())
-    })
-}))
+    })(destructible.monitor('initialize', true))
+})

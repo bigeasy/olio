@@ -37,27 +37,22 @@ var interrupt = require('interrupt').createInterrupter('subordinate')
 var Monitor = require('./monitor')
 var Search = require('./search')
 
-function Server (process, name, argv, descendent) {
-    var fs = require('fs')
+function Server (destructible, process, name, argv, descendent) {
     var command = Search(argv[0], process.env.PATH)
     cluster.setupMaster({ exec: command, args: argv.slice(1) })
     this._name = name
     this._argv = argv
     this._process = process
-    // TODO Construct using nested Desetructible.
-    this._destructible = new Destructible(2000, 'olio/server')
+    this._destructible = destructible
     this._destructible.markDestroyed(this)
     this._destructible.destruct.wait(this, '_shutdown')
     this._descendent = descendent
     this._pids = []
 }
 
-Server.prototype.destroy = function () {
-    this._destructible.destroy()
-}
-
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
+    // TODO Can't I just call `child.kill`?
     for (var id in cluster.workers) {
         cluster.workers[id].kill()
     }
@@ -72,9 +67,6 @@ Server.prototype.run = function (count, environment) {
     }
 }
 
-
-Server.prototype.listen = function (callback) {
-    this._destructible.completed.wait(callback)
+module.exports = function (destructible, process, name, argv, descendent, callback) {
+    callback(null, new Server(destructible, process, name, argv, descendent))
 }
-
-module.exports = Server
