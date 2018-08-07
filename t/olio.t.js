@@ -1,4 +1,4 @@
-require('proof')(6, require('cadence')(prove))
+require('proof')(7, require('cadence')(prove))
 
 function prove (async, okay) {
     var Downgrader = require('downgrader')
@@ -103,6 +103,7 @@ function prove (async, okay) {
                 body: {
                     method: 'created',
                     name: 'that',
+                    paths: [[ 0, 1 ]],
                     argv: [ 'program', 'that' ],
                     socketPath: 't/socket',
                     count: 1
@@ -116,6 +117,7 @@ function prove (async, okay) {
                     okay(true, 'ready')
                     okay(!!olio.sender('that', 0), 'receiver')
                     okay(!!olio.sender('that', 'x'), 'receiver hash')
+                    okay(olio.path('that', 0), [ 0, 1 ], 'path')
                     okay(olio.count('that'), 1, 'receiver count')
                     program.emit('message', {
                         module: 'descendent',

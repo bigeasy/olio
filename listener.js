@@ -104,6 +104,7 @@ Listener.prototype._registered = function (message) {
                 socketPath: this._socketPath,
                 argv: child.argv,
                 name: name,
+                paths: child.paths,
                 count: child.count
             })
         }, this)

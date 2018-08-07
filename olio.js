@@ -73,6 +73,12 @@ function Olio (destructible, ee, configurator) {
     this._factory = new SocketFactory
 }
 
+Olio.prototype.path = function (name, index) {
+    var sender = this._map[name]
+    index = indexify(index, sender.count)
+    return sender.paths[index]
+}
+
 Olio.prototype.sender = function (name, index) {
     var sender = this._map[name]
     index = indexify(index, sender.count)
@@ -102,7 +108,13 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         break
     case 'created':
         var sender = this._map[message.name], i = 0
-        if (sender != null) {
+        if (sender == null) {
+            this._map[message.name] = {
+                paths: message.paths,
+                count: message.count
+            }
+        } else {
+            sender.paths = message.paths
             sender.count = message.count
             // Duplicate ready is probably wrong.
             var ready = new Signal
