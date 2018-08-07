@@ -43,6 +43,22 @@ Constructor.prototype.sender = function (name, Receiver) {
     this._olio._map[name] = { count: null, Receiver: Receiver, receivers: [], ready: ready  }
 }
 
+// TODO Something like this.
+/*
+function Sibling (receivers, paths, count) {
+    this.processes = []
+    for (var i = 0; i < count; i++) {
+        this.processes.push({ sender: receivers[i], path: paths[i], index: i })
+    }
+    this.count = count
+}
+
+Sibling.prototype.hash = function (key) {
+    var buffer = Buffer.from(Keyify.serialize(key))
+    return this.processes[fnv(0, buffer, 0, buffer.length) % this.count]
+}
+*/
+
 function Olio (destructible, ee, configurator) {
     this._destructible = destructible
     this._destructible.markDestroyed(this)
