@@ -13,7 +13,7 @@ function prove (async, okay) {
     var destructible = new Destructible('t/mock.t.js')
     async(function () {
         destructible.monitor('olio', Olio, ee, function (configuration) {
-            configuration.receiver = function (destructible, argv, callback) {
+            configuration.receiver = function (destructible, from, to, callback) {
                 destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
             }
             configuration.sender('command', function (destructible, argv, index, count, callback) {
