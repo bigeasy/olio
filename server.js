@@ -53,15 +53,14 @@ function Server (destructible, process, name, argv, descendent) {
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
     // TODO Can't I just call `child.kill`?
-    // TODO If so, then get rid of this and move it all into `serve.child.js`.
     for (var id in cluster.workers) {
         cluster.workers[id].kill()
     }
 }
 
-Server.prototype.run = function (count) {
+Server.prototype.run = function (count, environment) {
     for (var i = 0, I = coalesce(count, 1); i < I; i++) {
-        var child = cluster.fork()
+        var child = cluster.fork(environment(i))
         this._descendent.addChild(child.process, { name: this._name, argv: this._argv, index: i })
         this._pids.push(child.process.pid)
         Monitor(Interrupt, this, child, this._destructible.monitor([ 'child', i ]))
