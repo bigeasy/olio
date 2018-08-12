@@ -1,4 +1,4 @@
-require('proof')(2, require('cadence')(prove))
+require('proof')(1, require('cadence')(prove))
 
 function prove (async, okay) {
     var Procedure = require('conduit/procedure')
