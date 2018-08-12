@@ -32,7 +32,7 @@ var Signal = require('signal')
 var Destructible = require('destructible')
 
 // Exceptions that you can catch by type.
-var interrupt = require('interrupt').createInterrupter('subordinate')
+var Interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
 var Search = require('./search')
@@ -64,7 +64,7 @@ Server.prototype.run = function (count) {
         var child = cluster.fork()
         this._descendent.addChild(child.process, { name: this._name, argv: this._argv, index: i })
         this._pids.push(child.process.pid)
-        Monitor(interrupt, this, child, this._destructible.monitor([ 'child', i ]))
+        Monitor(Interrupt, this, child, this._destructible.monitor([ 'child', i ]))
     }
 }
 

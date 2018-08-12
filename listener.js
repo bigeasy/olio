@@ -15,7 +15,7 @@ var Keyify = require('keyify')
 var Descendent = require('descendent')
 
 // Exceptions that you can catch by type.
-var interrupt = require('interrupt').createInterrupter('subordinate')
+var Interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
 
@@ -144,7 +144,7 @@ Listener.prototype.children = cadence(function (async, children) {
             this._descendent.addChild(child, null)
             this._created(+body.parameters.workers, body.parameters.name, body.argv, [ child.pid ])
             this._destructible.destruct.wait(child, 'kill')
-            Monitor(interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
+            Monitor(Interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
         case 'run':
             async(function () {

@@ -13,7 +13,7 @@ var children = require('child_process')
 var Destructible = require('destructible')
 
 // Exceptions that you can catch by type.
-var interrupt = require('interrupt').createInterrupter('subordinate')
+var Interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
 
@@ -49,7 +49,7 @@ Runner.prototype._run = cadence(function (async, destructible, index) {
 
     this._descendent.addChild(child, { name: this._name, argv: this._children.argv, index: index })
 
-    Monitor(interrupt, this, child, async())
+    Monitor(Interrupt, this, child, async())
 })
 
 module.exports = function (destructible, options, callback) {

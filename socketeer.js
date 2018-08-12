@@ -8,7 +8,7 @@ var Staccato = require('staccato')
 var http = require('http')
 var Downgrader = require('downgrader')
 var delta = require('delta')
-var interrupt = require('interrupt').createInterrupter('olio')
+var Interrupt = require('interrupt').createInterrupter('olio')
 var coalesce = require('extant')
 var noop = require('nop')
 
@@ -52,8 +52,8 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
             through.write(head)
             socket.pipe(through)
         }, function (buffer) {
-            interrupt.assert(buffer != null && buffer.length == 4, 'closed before start')
-            interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
+            Interrupt.assert(buffer != null && buffer.length == 4, 'closed before start')
+            Interrupt.assert(buffer.toString('hex'), 'aaaaaaaa', 'failed to start middleware')
             socket.unpipe(through)
 
             coalesce(destructible.destruct.cancel(cookie), noop)()
