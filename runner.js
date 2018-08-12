@@ -39,7 +39,9 @@ function Runner (destructible, options) {
 // disconnect confustion only applies to our sandboxed `server.bin.js` program
 // that does run a cluster.
 Runner.prototype._run = cadence(function (async, destructible, index) {
-    var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), { stdio: [ 0, 1, 2, 'ipc' ] })
+    var env = JSON.parse(JSON.stringify(process.env))
+    env.OLIO_WORKER_INDEX = index
+    var child = children.spawn(this._children.argv[0], this._children.argv.slice(1), { env: env, stdio: [ 0, 1, 2, 'ipc' ] })
 
     this.pids.push(child.pid)
 
