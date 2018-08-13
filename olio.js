@@ -32,6 +32,8 @@ var indexify = require('./indexify')
 // Pipe construction around UNIX domain sockets.
 var SocketFactory = require('./socketeer')
 
+var Interrupt = require('interrupt').createInterrupter('olio')
+
 // Olio configurator object.
 function Constructor (olio) {
     this._olio = olio
@@ -40,6 +42,7 @@ function Constructor (olio) {
 Constructor.prototype.sender = function (name, Receiver) {
     var ready = new Signal
     this._olio._latches.push(ready)
+    this._olio._destructible.destruct.wait(ready, 'unlatch')
     this._olio._map[name] = { count: null, Receiver: Receiver, receivers: [], ready: ready  }
 }
 
@@ -61,7 +64,7 @@ Sibling.prototype.hash = function (key) {
 
 function Olio (destructible, ee, configurator) {
     this._destructible = destructible
-    this._destructible.markDestroyed(this)
+    this._destructible.destruct.wait(this, function () { this.destroyed = true })
 
     this.destroyed = false
 
@@ -72,6 +75,7 @@ function Olio (destructible, ee, configurator) {
     this.ready = new Signal
 
     this._latches.push(this._initialized = new Signal)
+    destructible.destruct.wait(this._initialized, 'unlatch')
 
     var constructor = new Constructor(this)
     configurator(constructor)
@@ -132,9 +136,6 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         } else {
             sender.paths = message.paths
             sender.count = message.count
-            // Duplicate ready is probably wrong.
-            var ready = new Signal
-            this._latches.push(ready)
             async([function () {
                 var loop = async(function () {
                     if (i == message.count) {
@@ -149,14 +150,13 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                     sender.receivers[i++] = receiver
                 })()
             }, function (error) {
-                // We don't throw here, but we should. We're swallowing errors
-                // that ought to be reported by destructible. The error is
-                // emerging from ready. Also, we are not preventing additional
-                // messages after the initial error.
-                ready.unlatch(error)
-                sender.ready.unlatch(error)
+                var ready = new Signal
+                ready.label = 'dirg'
+                this._latches.push(ready)
+                this._destructible.destruct.wait(ready, 'unlatch')
+                sender.ready.unlatch()
+                throw error
             }], function () {
-                ready.unlatch()
                 sender.ready.unlatch()
             })
         }
@@ -166,7 +166,7 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
 
 // Any error causes messages to get cut.
 Olio.prototype._message = function (message, handle) {
-    this._dispatch(message.body, handle, this._destructible.monitor([ 'dispatch', message.body ], true))
+    this._dispatch(message.body, handle, this._destructible.monitor([ 'message', message.body ], true))
 }
 
 // TODO You're working through this right now.
@@ -192,16 +192,14 @@ Olio.prototype._message = function (message, handle) {
 
 //
 Olio.prototype._unlatch = cadence(function (async, descendent) {
-    async([function () {
+    async(function () {
         var loop = async(function () {
             if (this._latches.length == 0) {
                 return [ loop.break ]
             }
             this._latches.shift().wait(async())
         })()
-    }, function (error) {
-        this.ready.unlatch(error)
-    }], function () {
+    }, function () {
         descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
         this.ready.unlatch()
     })
@@ -212,6 +210,12 @@ module.exports = cadence(function (async, destructible, ee, configurator) {
     async(function () {
         olio.ready.wait(async())
     }, function () {
+        // TODO This makes `unready` in Destructible seem dubious. No, it's not.
+        // The unready error will trigger if `destroy` is called before we are
+        // ready. Likely we will wreck initialization with a destroyed
+        // Destructible. Come back and think hard, but for now it seems that we
+        // are going to have this marked destroyed.
+        Interrupt.assert(!destructible.destroyed, 'destroyed')
         return [ olio ]
     })
 })

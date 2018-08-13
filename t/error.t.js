@@ -24,9 +24,8 @@ function prove (async, okay) {
         mock.sibling('ignored', 1, function (destructible, index, count, callback) {
             callback(new Error('no'))
         })
-        console.log('here')
     }, function (error) {
-        okay(error.message, 'failure', 'initialization failure')
+        okay(/^olio#destroyed$/m.test(error.message), 'initialization failure')
         destructible.destroy()
     }])
 }
