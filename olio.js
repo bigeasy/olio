@@ -151,7 +151,6 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
                 })()
             }, function (error) {
                 var ready = new Signal
-                ready.label = 'dirg'
                 this._latches.push(ready)
                 this._destructible.destruct.wait(ready, 'unlatch')
                 sender.ready.unlatch()
