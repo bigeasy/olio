@@ -23,7 +23,6 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
         destructible.destruct.wait(socket, 'destroy')
         destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
     }, function (conduit) {
-        console.log('pushing', conduit.receiver.outbox)
         conduit.receiver.outbox.push({ module: 'olio', method: 'connect' })
     })
 })
@@ -51,22 +50,19 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
         async(function () {
             destructible.monitor('receiver', Receiver, message.argv, index, message.count, async())
         }, function (receiver) {
-                    console.log('sipping')
             var sip = {
                 outbox: receiver.outbox,
                 inbox: new Procession
             }
             var shifter = sip.inbox.shifter()
-                    console.log('sipping')
             async(function () {
                 destructible.monitor('conduit', Conduit, socket, socket, sip, head, async())
             }, function (conduit) {
-                console.log('>>', shifter.shift())
+                var header = shifter.shift()
+                Interrupt.assert(header.module == 'conduit' && header.method == 'connect', 'bad.header')
                 async(function () {
-                    console.log('waiting')
                     shifter.dequeue(async())
                 }, function (header) {
-                    console.log('HEADER --', header)
                     Interrupt.assert(header.module == 'olio' && header.method == 'connect', 'failed to start middleware')
                     Interrupt.assert(shifter.shift() == null, 'unexpected traffic on connect')
                     conduit.receiver = receiver
