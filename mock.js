@@ -3,19 +3,18 @@ var cadence = require('cadence')
 var Signal = require('signal')
 var util = require('util')
 var events = require('events')
-var Descendent = require('descendent')
+var descendent = require('foremost')('descendent')
 
 function Mock (ee) {
-    this._descendent = new Descendent(ee)
     var ready = this.ready = new Signal
-    this._descendent.on('olio:mock', function () { ready.unlatch() })
+    descendent.on('olio:mock', function () { ready.unlatch() })
 }
 
 Mock.prototype.initialize = function (argv, index) {
-    this._descendent.across('olio:message', {
+    descendent.across('olio:message', {
         method: 'factory'
     }, this)
-    this._descendent.across('olio:message', {
+    descendent.across('olio:message', {
         method: 'initialize',
         argv: argv,
         index: index
@@ -23,7 +22,7 @@ Mock.prototype.initialize = function (argv, index) {
 }
 
 Mock.prototype.sender = function (name, index, sender) {
-    this._descendent.across('olio:message', {
+    descendent.across('olio:message', {
         method: 'connect',
         from: { name: name, index: index }
     }, sender)
@@ -31,7 +30,7 @@ Mock.prototype.sender = function (name, index, sender) {
 }
 
 Mock.prototype.sibling = function (name, count, factory) {
-    this._descendent.across('olio:message', {
+    descendent.across('olio:message', {
         method: 'created',
         name: name,
         count: count

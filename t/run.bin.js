@@ -15,8 +15,8 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var cadence = require('cadence')
 
     var logger = require('prolific.logger').createLogger('olio.echo')
-    var Shuttle = require('prolific.shuttle')
-    var shuttle = Shuttle.shuttle(program, logger)
+    var shuttle = require('foremost')('prolific.shuttle')
+    shuttle.start(logger)
 
     program.on('shutdown', destructible.destroy.bind(destructible))
     destructible.destruct.wait(shuttle, 'close')

@@ -5,9 +5,6 @@ function prove (okay, callback) {
 
     var Listener = require('../listener')
 
-    var Descendent = require('descendent')
-    var descendent = new Descendent(process)
-
     var socketPath = path.join(__dirname, 'socket')
 
     var Destructible = require('destructible')
@@ -19,7 +16,7 @@ function prove (okay, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('listener', Listener, descendent, socketPath, async())
+            destructible.monitor('listener', Listener, socketPath, async())
         }, function (listener) {
             async(function () {
                 listener.index(async())
@@ -36,9 +33,6 @@ function prove (okay, callback) {
                 var Downgrader = require('downgrader')
                 var Operation = require('operation')
                 var http = require('http')
-
-                var descendent = new Descendent(process)
-                destructible.destruct.wait(descendent, 'destroy')
 
                 var downgrader = new Downgrader
                 downgrader.on('socket', Operation([ listener, 'socket' ]))

@@ -20,7 +20,7 @@ function prove (async, okay) {
     var bin = require('../olio.bin')
     var fs = require('fs')
 
-    var Descendent = require('descendent')
+    var descendent = require('foremost')('descendent')
 
     try {
         fs.unlinkSync('t/socket')
@@ -68,8 +68,10 @@ function prove (async, okay) {
         var events = require('events')
         var program = new events.EventEmitter
         program.pid = 0
+        program.env = { DESCENDENT_PROCESS_PATH: '0' }
 
-        var descendent = new Descendent(program)
+        descendent.process = program
+        descendent.increment()
 
         async(function () {
             destructible.monitor('olio', Olio, program, function (configure) {
