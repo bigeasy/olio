@@ -37,7 +37,7 @@
                             "prolific.shuttle":             "20.7.x",
                             "reactor":                      "10.5.x",
                             "signal":                       "4.0.x",
-                            "staccato":                     "6.2.x"
+                            "staccato":                     "6.3.x"
     },
     "devDependencies":
     {
