@@ -9,8 +9,6 @@ var Reactor = require('reactor')
 var Runner = require('./runner')
 var spawn = require('child_process').spawn
 
-var Keyify = require('keyify')
-
 var descendent = require('foremost')('descendent')
 
 // Exceptions that you can catch by type.
