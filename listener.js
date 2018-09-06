@@ -9,7 +9,6 @@ var Reactor = require('reactor')
 var Runner = require('./runner')
 var spawn = require('child_process').spawn
 
-var Destructible = require('destructible')
 var Keyify = require('keyify')
 
 var descendent = require('foremost')('descendent')
