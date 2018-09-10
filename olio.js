@@ -24,7 +24,7 @@ var Keyify = require('keyify')
 var Destructible = require('destructible')
 
 // Route messages through a process hierarchy using Node.js IPC.
-var Descendent = require('descendent')
+var descendent = require('foremost')('descendent')
 
 // Convert key material into an index into a table.
 var indexify = require('./indexify')
@@ -83,8 +83,8 @@ function Olio (destructible, ee, configurator) {
     this._Receiver = constructor.receiver
 
     // Any error causes messages to get cut, we do not get `_message`.
-    var descendent = new Descendent(ee)
-    this._destructible.destruct.wait(descendent, 'destroy')
+    descendent.increment()
+    destructible.destruct.wait(descendent, 'decrement')
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
     descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})

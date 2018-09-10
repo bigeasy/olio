@@ -9,10 +9,7 @@ var Reactor = require('reactor')
 var Runner = require('./runner')
 var spawn = require('child_process').spawn
 
-var Destructible = require('destructible')
-var Keyify = require('keyify')
-
-var Descendent = require('descendent')
+var descendent = require('foremost')('descendent')
 
 // Exceptions that you can catch by type.
 var Interrupt = require('interrupt').createInterrupter('subordinate')
@@ -21,12 +18,13 @@ var Monitor = require('./monitor')
 
 var Operation = require('operation')
 
-function Listener (destructible, descendent, socketPath) {
+function Listener (destructible, socketPath) {
     this._destructible = destructible
     this._destructible.markDestroyed(this)
     this.destroyed = false
 
-    this._descendent = descendent
+    descendent.increment()
+    destructible.completed.wait(descendent, 'decrement')
 
     descendent.on('olio:registered', this._registered.bind(this))
     descendent.on('olio:ready', this._ready.bind(this))
@@ -56,7 +54,7 @@ Listener.prototype.socket = function (request, socket) {
         }
     }
     var path = this._children[message.to.name].paths[message.to.index]
-    this._descendent.down(path, 'olio:message', message, socket)
+    descendent.down(path, 'olio:message', message, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
@@ -91,7 +89,7 @@ Listener.prototype._registered = function (message) {
         child = this._children[name]
         child.paths.forEach(function (path, index) {
             // TODO Shouldn't count go down now with initialization?
-            this._descendent.down(path, 'olio:message', {
+            descendent.down(path, 'olio:message', {
                 method: 'initialize',
                 name: name,
                 argv: child.argv,
@@ -99,7 +97,7 @@ Listener.prototype._registered = function (message) {
             })
         }, this)
         child.paths.forEach(function (path, index) {
-            this._descendent.down(path, 'olio:message', {
+            descendent.down(path, 'olio:message', {
                 method: 'created',
                 socketPath: this._socketPath,
                 argv: child.argv,
@@ -120,7 +118,7 @@ Listener.prototype._ready = function (message) {
         var sibling = this._children[name]
         if (name != message.cookie.name) {
             sibling.paths.forEach(function (path, index) {
-                this._descendent.down(path, 'olio:message', {
+                descendent.down(path, 'olio:message', {
                     method: 'created',
                     socketPath: this._socketPath,
                     name: message.cookie.name,
@@ -141,7 +139,7 @@ Listener.prototype.children = cadence(function (async, children) {
                 '--name', body.parameters.name,
                 '--workers', body.parameters.workers
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
-            this._descendent.addChild(child, null)
+            descendent.addChild(child, null)
             this._created(+body.parameters.workers, body.parameters.name, body.argv, [ child.pid ])
             this._destructible.destruct.wait(child, 'kill')
             Monitor(Interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
@@ -149,7 +147,6 @@ Listener.prototype.children = cadence(function (async, children) {
         case 'run':
             async(function () {
                 this._destructible.monitor([ 'run', body.parameters.name ], Runner, {
-                    descendent: this._descendent,
                     process: process,
                     workers: body.parameters.workers,
                     name: body.parameters.name,
@@ -163,6 +160,6 @@ Listener.prototype.children = cadence(function (async, children) {
     })(children)
 })
 
-module.exports = function (destructible, descendent, socketPath, callback) {
-    callback(null, new Listener(destructible, descendent, socketPath))
+module.exports = function (destructible, socketPath, callback) {
+    callback(null, new Listener(destructible, socketPath))
 }

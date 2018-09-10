@@ -31,7 +31,6 @@ require('arguable')(module, function (program, callback) {
     var http = require('http')
     var delta = require('delta')
 
-    var Descendent = require('descendent')
     var logger = require('prolific.logger').createLogger('olio')
 
     var coalesce = require('extant')
@@ -43,8 +42,8 @@ require('arguable')(module, function (program, callback) {
     var destructible = new Destructible(kill, 'olio/listen.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
-    var Shuttle = require('prolific.shuttle')
-    var shuttle = Shuttle.shuttle(program, logger)
+    var shuttle = require('foremost')('prolific.shuttle')
+    shuttle.start(logger)
     destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(callback)
@@ -53,16 +52,13 @@ require('arguable')(module, function (program, callback) {
 
     program.required('socket')
 
-    var descendent = new Descendent(process)
-    destructible.destruct.wait(descendent, 'destroy')
-
     var cadence = require('cadence')
 
     var Listener = require('./listener')
 
     cadence(function (async) {
         async(function  () {
-            destructible.monitor('listener', Listener, descendent, program.ultimate.socket, async())
+            destructible.monitor('listener', Listener, program.ultimate.socket, async())
         }, function (listener) {
             var downgrader = new Downgrader
             downgrader.on('socket', Operation([ listener, 'socket' ]))

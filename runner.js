@@ -15,6 +15,8 @@ var Destructible = require('destructible')
 // Exceptions that you can catch by type.
 var Interrupt = require('interrupt').createInterrupter('subordinate')
 
+var descendent = require('foremost')('descendent')
+
 var Monitor = require('./monitor')
 
 function Runner (destructible, options) {
@@ -29,7 +31,6 @@ function Runner (destructible, options) {
     }
     this.pids = []
     this._process = options.process
-    this._descendent = options.descendent
     for (var i = 0; i < this._children.count; i++) {
         this._run(destructible, i, destructible.monitor([ 'child', i ]))
     }
@@ -49,7 +50,7 @@ Runner.prototype._run = cadence(function (async, destructible, index) {
 
     this._children.array[index] = child
 
-    this._descendent.addChild(child, { name: this._name, argv: this._children.argv, index: index })
+    descendent.addChild(child, { name: this._name, argv: this._children.argv, index: index })
 
     Monitor(Interrupt, this, child, async())
 })

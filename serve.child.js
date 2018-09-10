@@ -21,16 +21,15 @@ require('arguable')(module, function (program, callback) {
     // TODO Make this configurable, default to parent less 250 milliseconds.
     var destructible = new Destructible(3000, 'olio.serve')
 
-    var Descendent = require('descendent')
-    var descendent = new Descendent(program)
+    var descendent = require('foremost')('descendent')
+    descendent.increment()
 
     program.on('shutdown', destructible.destroy.bind(destructible))
 
-    destructible.destruct.wait(descendent, 'destroy')
-
     var Server = require('./server')
 
-    destructible.completed.wait(callback)
+   destructible.completed.wait(callback)
+   destructible.completed.wait(descendent, 'decrement')
 
     var cadence = require('cadence')
 
