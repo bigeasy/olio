@@ -6,6 +6,7 @@ var events = require('events')
 var descendent = require('foremost')('descendent')
 
 function Mock (ee) {
+    this._pid = 0
     var ready = this.ready = new Signal
     descendent.on('olio:mock', function () { ready.unlatch() })
 }
@@ -30,9 +31,16 @@ Mock.prototype.sender = function (name, index, sender) {
 }
 
 Mock.prototype.sibling = function (name, count, factory) {
+    var paths = []
+    for (var i = 0; i < count; i++) {
+        paths[i] = [ 0, ++this._pid ]
+    }
     descendent.across('olio:message', {
         method: 'created',
+        paths: paths,
         name: name,
+        argv: [],
+        socketPath: null,
         count: count
     }, factory)
 }

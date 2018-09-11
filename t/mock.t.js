@@ -12,13 +12,8 @@ function prove (async, okay) {
     var Destructible = require('destructible')
     var destructible = new Destructible('t/mock.t.js')
     async(function () {
-        destructible.monitor('olio', Olio, ee, function (configuration) {
-            configuration.receiver = function (destructible, from, to, callback) {
-                destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
-            }
-            configuration.sender('command', function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
-            })
+        destructible.monitor('olio', Olio, ee, function (destructible, from, to, callback) {
+            destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
         }, async())
         mock.initialize('self', 0)
         mock.sibling('command', 1, function (destructible, index, count, callback) {
@@ -29,15 +24,19 @@ function prove (async, okay) {
         })
     }, function (olio) {
         async(function () {
-            destructible.monitor('caller', Caller, async())
-        }, function (caller) {
-            destructible.destruct.wait(function () { caller.inbox.push(null) })
-            mock.sender('client', 0, caller)
+            olio.sender('command', function (destructible, argv, index, count, callback) {
+                destructible.monitor('caller', Caller, callback)
+            }, async())
+        }, function (sender) {
             async(function () {
+                destructible.monitor('caller', Caller, async())
+            }, function (caller) {
+                destructible.destruct.wait(function () { caller.inbox.push(null) })
+                mock.sender('client', 0, caller)
                 caller.invoke({}, async())
             }, function (result) {
                 okay(result, 0, 'receiver')
-                olio.sender('command', 0).invoke({}, async())
+                sender.processes[0].sender.invoke({}, async())
             }, function (result) {
                 okay(result, 1, 'sender')
                 destructible.destroy()

@@ -51,24 +51,26 @@ require('arguable')(module, require('cadence')(function (async, program) {
     async([function () {
         destructible.destroy()
     }], function () {
-        destructible.monitor('olio', Olio, program, function (constructor) {
-            constructor.sender('run', function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
-            })
-        }, async())
+        destructible.monitor('olio', Olio, program, async())
     }, function (olio) {
-        var http = require('http')
-        var cluster = require('cluster')
-        var delta = require('delta')
-
-        var server = http.createServer(reactor.middleware)
         async(function () {
-            destructible.destruct.wait(cluster.worker, 'disconnect')
-            destructible.destruct.wait(server, 'close')
+            olio.sender('run', function (destructible, argv, index, count, callback) {
+                destructible.monitor('caller', Caller, callback)
+            }, async())
+        }, function (sender) {
+            var http = require('http')
+            var cluster = require('cluster')
+            var delta = require('delta')
 
-            server.listen(8080, async())
-        }, function () {
-            delta(destructible.monitor('http')).ee(server).on('close')
+            var server = http.createServer(reactor.middleware)
+            async(function () {
+                destructible.destruct.wait(cluster.worker, 'disconnect')
+                destructible.destruct.wait(server, 'close')
+
+                server.listen(8080, async())
+            }, function () {
+                delta(destructible.monitor('http')).ee(server).on('close')
+            })
         })
     }, function () {
         logger.info('started', { http: true })

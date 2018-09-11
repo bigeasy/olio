@@ -23,6 +23,7 @@
                             "arguable":                     "6.8.x",
                             "cadence":                      "1.0.x",
                             "conduit":                      "2.11.x",
+                            "cubbyhole":                    "1.0.x",
                             "delta":                        "1.4.x",
                             "descendent":                   "0.9.x",
                             "destructible":                 "0.33.x",

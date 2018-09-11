@@ -122,6 +122,7 @@ Listener.prototype._ready = function (message) {
                     method: 'created',
                     socketPath: this._socketPath,
                     name: message.cookie.name,
+                    paths: child.paths,
                     count: child.count,
                     argv: child.argv
                 })

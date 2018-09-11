@@ -26,29 +26,16 @@ var Destructible = require('destructible')
 // Route messages through a process hierarchy using Node.js IPC.
 var descendent = require('foremost')('descendent')
 
-// Convert key material into an index into a table.
-var indexify = require('./indexify')
-
 // Pipe construction around UNIX domain sockets.
 var SocketFactory = require('./socketeer')
 
+var Cubbyhole = require('cubbyhole')
+
+var fnv = require('hash.fnv')
+
 var Interrupt = require('interrupt').createInterrupter('olio')
 
-// Olio configurator object.
-function Constructor (olio) {
-    this._olio = olio
-}
-
-Constructor.prototype.sender = function (name, Receiver) {
-    var ready = new Signal
-    this._olio._latches.push(ready)
-    this._olio._destructible.destruct.wait(ready, 'unlatch')
-    this._olio._map[name] = { count: null, Receiver: Receiver, receivers: [], ready: ready  }
-}
-
-// TODO Something like this.
-/*
-function Sibling (receivers, paths, count) {
+function Sender (receivers, paths, count) {
     this.processes = []
     for (var i = 0; i < count; i++) {
         this.processes.push({ sender: receivers[i], path: paths[i], index: i })
@@ -56,31 +43,22 @@ function Sibling (receivers, paths, count) {
     this.count = count
 }
 
-Sibling.prototype.hash = function (key) {
-    var buffer = Buffer.from(Keyify.serialize(key))
+Sender.prototype.hash = function (key) {
+    var buffer = Buffer.from(Keyify.stringify(key))
     return this.processes[fnv(0, buffer, 0, buffer.length) % this.count]
 }
-*/
 
-function Olio (destructible, ee, configurator) {
+function Olio (destructible, ee, initialized, Receiver) {
     this._destructible = destructible
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
 
     this.destroyed = false
 
-    this._senders = { array: [], map: {} }
-    this._map = {}
-    this._latches = []
+    this._Receiver = Receiver
 
-    this.ready = new Signal
+    this._initialized = initialized
 
-    this._latches.push(this._initialized = new Signal)
-    destructible.destruct.wait(this._initialized, 'unlatch')
-
-    var constructor = new Constructor(this)
-    configurator(constructor)
-
-    this._Receiver = constructor.receiver
+    this._siblings = new Cubbyhole
 
     // Any error causes messages to get cut, we do not get `_message`.
     descendent.increment()
@@ -88,26 +66,38 @@ function Olio (destructible, ee, configurator) {
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
     descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
-    this._unlatch(descendent, this._destructible.monitor('ready', true))
 
     this._factory = new SocketFactory
 }
 
-Olio.prototype.path = function (name, index) {
-    var sender = this._map[name]
-    index = indexify(index, sender.count)
-    return sender.paths[index]
-}
+Olio.prototype.sibling = cadence(function (async, name) {
+    this._siblings.wait(name, async())
+})
 
-Olio.prototype.sender = function (name, index) {
-    var sender = this._map[name]
-    index = indexify(index, sender.count)
-    return sender.receivers[index]
-}
-
-Olio.prototype.count = function (path, index) {
-    return this._map[path].count
-}
+Olio.prototype.sender = cadence(function (async, name, Receiver) {
+    async(function () {
+        this.sibling(name, async())
+    }, function (sibling) {
+        var i = 0, receivers = []
+        async(function () {
+            var loop = async(function () {
+                if (i == sibling.count) {
+                    return [ loop.break ]
+                }
+                // TODO `message.name` instead.
+                this._destructible.monitor([ 'created', sibling.name, i ], this._factory, 'createSender', {
+                    argv: this._argv,
+                    name: this._name,
+                    index: this._index,
+                }, Receiver, sibling, sibling.handle, i, sibling.count, async())
+            }, function (receiver) {
+                receivers[i++] = receiver
+            })()
+        }, function () {
+            return new Sender(receivers, sibling.paths, sibling.count)
+        })
+    })
+})
 
 // TODO Maybe use cubbyhole to index by a particular name or, rather, argument path?
 // TODO Looks like two flavors of "ready."
@@ -127,38 +117,14 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this._Receiver, message, handle, async())
         break
     case 'created':
-        var sender = this._map[message.name], i = 0
-        if (sender == null) {
-            this._map[message.name] = {
-                paths: message.paths,
-                count: message.count
-            }
-        } else {
-            sender.paths = message.paths
-            sender.count = message.count
-            async([function () {
-                var loop = async(function () {
-                    if (i == message.count) {
-                        return [ loop.break ]
-                    }
-                    this._destructible.monitor([ 'created', message.argv, i ], this._factory, 'createSender', {
-                        argv: this._argv,
-                        name: this._name,
-                        index: this._index,
-                    }, sender.Receiver, message, handle, i, sender.count, async())
-                }, function (receiver) {
-                    sender.receivers[i++] = receiver
-                })()
-            }, function (error) {
-                var ready = new Signal
-                this._latches.push(ready)
-                this._destructible.destruct.wait(ready, 'unlatch')
-                sender.ready.unlatch()
-                throw error
-            }], function () {
-                sender.ready.unlatch()
-            })
-        }
+        this._siblings.set(message.name, null, {
+            name: message.name,
+            paths: message.paths,
+            count: message.count,
+            argv: message.argv,
+            socketPath: message.socketPath,
+            handle: coalesce(handle)
+        })
         break
     }
 })
@@ -190,25 +156,16 @@ Olio.prototype._message = function (message, handle) {
 // ready by passing the error.
 
 //
-Olio.prototype._unlatch = cadence(function (async, descendent) {
-    async(function () {
-        var loop = async(function () {
-            if (this._latches.length == 0) {
-                return [ loop.break ]
-            }
-            this._latches.shift().wait(async())
-        })()
-    }, function () {
-        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
-        this.ready.unlatch()
-    })
-})
 
-module.exports = cadence(function (async, destructible, ee, configurator) {
-    var olio = new Olio(destructible, ee, configurator)
+module.exports = cadence(function (async, destructible, ee, Receiver) {
+    var initialized = new Signal
+    var olio = new Olio(destructible, ee, initialized, coalesce(Receiver))
     async(function () {
-        olio.ready.wait(async())
+        initialized.wait(async())
     }, function () {
+        // TODO Now `ready` doens't seem necessary because everything happens on
+        // initialization.
+        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
         // TODO This makes `unready` in Destructible seem dubious. No, it's not.
         // The unready error will trigger if `destroy` is called before we are
         // ready. Likely we will wreck initialization with a destroyed

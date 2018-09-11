@@ -1,6 +1,6 @@
-require('proof')(7, require('cadence')(prove))
+require('proof')(5, prove)
 
-function prove (async, okay) {
+function prove (okay, callback) {
     var Downgrader = require('downgrader')
 
     var http = require('http')
@@ -36,91 +36,88 @@ function prove (async, okay) {
         destructible.monitor('procedure', Procedure, function () {}, callback)
     }
 
-    var olio, server
-    async(function () {
-        var downgrader = new Downgrader
-        downgrader.on('socket', function (request, socket) {
-            var message = {
-                to: {
-                    index: +request.headers['x-olio-to-index'],
-                    name: request.headers['x-olio-to-name']
-                },
-                from: {
-                    index: +request.headers['x-olio-from-index'],
-                    name: request.headers['x-olio-from-name']
-                }
-            }
-            okay(message, {
-                to: { index: 0, name: 'that' },
-                from: { index: 2, name: 'this' }
-            }, 'headers')
-            destructible.destruct.wait(socket, 'destroy')
-            destructible.monitor('create', factory, 'createReceiver', Receiver, message, socket, null)
-        })
+    destructible.completed.wait(callback)
 
-        server = http.createServer(function () {})
-        server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
-
-        destructible.destruct.wait(server, 'close')
-
-        server.listen('t/socket', async())
-    }, function () {
-        var events = require('events')
-        var program = new events.EventEmitter
-        program.pid = 0
-        program.env = { DESCENDENT_PROCESS_PATH: '0' }
-
-        descendent.process = program
-        descendent.increment()
-
+    cadence(function (async) {
+        var olio, server
         async(function () {
-            destructible.monitor('olio', Olio, program, function (configure) {
-                configure.receiver = function (destructible, from, to, callback) {
-                    destructible.monitor('procedure', Procedure, function () {}, callback)
+            var downgrader = new Downgrader
+            downgrader.on('socket', function (request, socket) {
+                var message = {
+                    to: {
+                        index: +request.headers['x-olio-to-index'],
+                        name: request.headers['x-olio-to-name']
+                    },
+                    from: {
+                        index: +request.headers['x-olio-from-index'],
+                        name: request.headers['x-olio-from-name']
+                    }
                 }
-                configure.sender('that', function (destructible, argv, index, count, callback) {
-                    destructible.monitor('caller', Caller, callback)
-                })
-            }, async())
+                okay(message, {
+                    to: { index: 0, name: 'that' },
+                    from: { index: 2, name: 'this' }
+                }, 'headers')
+                destructible.destruct.wait(socket, 'destroy')
+                destructible.monitor('create', factory, 'createReceiver', Receiver, message, socket, null)
+            })
 
-            program.emit('message', {
-                module: 'descendent',
-                method: 'route',
-                name: 'olio:message',
-                to: [],
-                path: [],
-                body: {
-                    method: 'initialize',
-                    name: 'this',
-                    argv: [ 'program', 'this' ],
-                    index: 2
-                }
-            })
-            program.emit('message', {
-                module: 'descendent',
-                method: 'route',
-                name: 'olio:message',
-                to: [],
-                path: [],
-                body: {
-                    method: 'created',
-                    name: 'that',
-                    paths: [[ 0, 1 ]],
-                    argv: [ 'program', 'that' ],
-                    socketPath: 't/socket',
-                    count: 1
-                }
-            })
-        }, function (olio) {
-            cadence(function (async) {
+            server = http.createServer(function () {})
+            server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+
+            destructible.destruct.wait(server, 'close')
+
+            server.listen('t/socket', async())
+        }, function () {
+            var events = require('events')
+            var program = new events.EventEmitter
+            program.pid = 0
+            program.env = { DESCENDENT_PROCESS_PATH: '0' }
+
+            descendent.process = program
+            descendent.increment()
+
+            async(function () {
+                destructible.monitor('olio', Olio, program, function (destructible, from, to, callback) {
+                    destructible.monitor('procedure', Procedure, function () {}, callback)
+                }, async())
+
+                program.emit('message', {
+                    module: 'descendent',
+                    method: 'route',
+                    name: 'olio:message',
+                    to: [],
+                    path: [],
+                    body: {
+                        method: 'initialize',
+                        name: 'this',
+                        argv: [ 'program', 'this' ],
+                        index: 2
+                    }
+                })
+                program.emit('message', {
+                    module: 'descendent',
+                    method: 'route',
+                    name: 'olio:message',
+                    to: [],
+                    path: [],
+                    body: {
+                        method: 'created',
+                        name: 'that',
+                        paths: [[ 0, 1 ]],
+                        argv: [ 'program', 'that' ],
+                        socketPath: 't/socket',
+                        count: 1
+                    }
+                })
+            }, function (olio) {
                 async(function () {
-                    olio.ready.wait(async())
-                }, function () {
-                    okay(true, 'ready')
-                    okay(!!olio.sender('that', 0), 'receiver')
-                    okay(!!olio.sender('that', 'x'), 'receiver hash')
-                    okay(olio.path('that', 0), [ 0, 1 ], 'path')
-                    okay(olio.count('that'), 1, 'receiver count')
+                    olio.sender('that', function (destructible, argv, index, count, callback) {
+                        destructible.monitor('caller', Caller, callback)
+                    }, async())
+                }, function (sender) {
+                    okay(sender.processes[0].path, [ 0, 1 ], 'path')
+                    okay(sender.count, 1, 'receiver count')
+                    okay(sender.hash('x').index, 0, 'hash')
                     program.emit('message', {
                         module: 'descendent',
                         name: 'olio:message',
@@ -130,13 +127,9 @@ function prove (async, okay) {
                             method: 'shutdown'
                         }
                     })
-                    destructible.destroy()
                 })
-            })(destructible.monitor('tests', true))
-
-
-            okay(Olio, 'require')
-            destructible.completed.wait(async())
+                okay(Olio, 'require')
+            })
         })
-    })
+    })(destructible.monitor('test'))
 }
