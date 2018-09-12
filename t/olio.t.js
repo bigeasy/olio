@@ -1,4 +1,4 @@
-require('proof')(5, prove)
+require('proof')(4, prove)
 
 function prove (okay, callback) {
     var Downgrader = require('downgrader')
@@ -32,9 +32,14 @@ function prove (okay, callback) {
 
     var SocketFactory = require('../socketeer')
     var factory = new SocketFactory
-    var Receiver = function (destructible, from, to, callback) {
-        destructible.monitor('procedure', Procedure, function () {}, callback)
-    }
+    var Receiver = cadence(function (async, destructible) {
+        async(function () {
+            destructible.monitor('procedure', Procedure, function () {}, async())
+        }, function (procedure) {
+            destructible.destruct.wait(function () { procedure.outbox.push(null) })
+            return procedure
+        })
+    })
 
     destructible.completed.wait(callback)
 
@@ -57,7 +62,6 @@ function prove (okay, callback) {
                     to: { index: 0, name: 'that' },
                     from: { index: 2, name: 'this' }
                 }, 'headers')
-                destructible.destruct.wait(socket, 'destroy')
                 destructible.monitor('create', factory, 'createReceiver', Receiver, message, socket, null)
             })
 
@@ -118,17 +122,8 @@ function prove (okay, callback) {
                     okay(sender.processes[0].path, [ 0, 1 ], 'path')
                     okay(sender.count, 1, 'receiver count')
                     okay(sender.hash('x').index, 0, 'hash')
-                    program.emit('message', {
-                        module: 'descendent',
-                        name: 'olio:message',
-                        to: [],
-                        path: [],
-                        body: {
-                            method: 'shutdown'
-                        }
-                    })
+                    sender.processes[0].sender.outbox.push(null)
                 })
-                okay(Olio, 'require')
             })
         })
     })(destructible.monitor('test'))

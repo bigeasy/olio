@@ -58,6 +58,9 @@ require('arguable')(module, require('cadence')(function (async, program) {
                 destructible.monitor('caller', Caller, callback)
             }, async())
         }, function (sender) {
+            sender.processes.forEach(function (process) {
+               destructible.destruct.wait(process.sender.outbox, 'end')
+            })
             var http = require('http')
             var cluster = require('cluster')
             var delta = require('delta')

@@ -24,12 +24,17 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var Olio = require('..')
 
     async(function () {
-        destructible.monitor('olio', Olio, program, function (destructible, to, from, callback) {
-            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
-                console.log(envelope)
-                return [ 1 ]
-            }), callback)
-        }, async())
+        destructible.monitor('olio', Olio, program, cadence(function (async, destructible) {
+            async(function () {
+                destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                    console.log(envelope)
+                    return [ 1 ]
+                }), async())
+            }, function (procedure) {
+                procedure.eos.wait(procedure.outbox, 'end')
+                return procedure
+            })
+        }), async())
     }, function (olio) {
         logger.info('started', { hello: 'world', pid: program.pid })
     })

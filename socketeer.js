@@ -19,8 +19,6 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
     async(function () {
         destructible.monitor('receiver', Receiver, message.from, message.to, async())
     }, function (receiver) {
-        destructible.destruct.wait(function () { receiver.inbox.push(null) })
-        destructible.destruct.wait(socket, 'destroy')
         destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
     }, function (conduit) {
         conduit.receiver.outbox.push({ module: 'olio', method: 'connect' })
@@ -30,7 +28,6 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
 SocketFactory.prototype.createSender = cadence(function (async, destructible, from, Receiver, message, handle, index) {
     var through = new stream.PassThrough
     var readable = new Staccato.Readable(through)
-    var cookie = destructible.destruct.wait(readable, 'destroy')
 
     async(function () {
         var request = http.request({
@@ -46,7 +43,6 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
         delta(async()).ee(request).on('upgrade')
         request.end()
     }, function (request, socket, head) {
-        destructible.destruct.wait(socket, 'destroy')
         async(function () {
             destructible.monitor('receiver', Receiver, message.argv, index, message.count, async())
         }, function (receiver) {
@@ -58,8 +54,6 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
             async(function () {
                 destructible.monitor('conduit', Conduit, socket, socket, sip, head, async())
             }, function (conduit) {
-                var header = shifter.shift()
-                Interrupt.assert(header.module == 'conduit' && header.method == 'connect', 'bad.header')
                 async(function () {
                     shifter.dequeue(async())
                 }, function (header) {
@@ -71,7 +65,6 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
                     // believe it pushed out a `null` to indicate that the stream
                     // has closed. A Window would look for this and wait for
                     // restart. The Window needs to be closed explicity.
-                    destructible.destruct.wait(function () { receiver.inbox.push(null) })
                 })
             }, function() {
                 return [ receiver ]
