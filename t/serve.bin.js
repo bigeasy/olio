@@ -7,7 +7,7 @@
         --help              display this message
     ___ . ___
  */
-require('arguable')(module, require('cadence')(function (async, program) {
+require('arguable')(module, function (program, callback) {
     var Olio = require('..')
     var cadence = require('cadence')
     var Caller = require('conduit/caller')
@@ -38,7 +38,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var Signal = require('signal')
 
     var Destructible = require('destructible')
-    var destructible = new Destructible(900, './bin/http.bin.js')
+    var destructible = new Destructible('./t/serve.bin.js')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var logger = require('prolific.logger').createLogger('olio.http')
@@ -46,37 +46,38 @@ require('arguable')(module, require('cadence')(function (async, program) {
     shuttle.start()
     destructible.destruct.wait(shuttle, 'close')
 
-    destructible.completed.wait(async())
+    destructible.completed.wait(callback)
 
-    async([function () {
-        destructible.destroy()
-    }], function () {
-        destructible.monitor('olio', Olio, program, async())
-    }, function (olio) {
+    var cadence = require('cadence')
+
+    cadence(function (async) {
         async(function () {
-            olio.sender('run', function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
-            }, async())
-        }, function (sender) {
-            sender.processes.forEach(function (process) {
-               destructible.destruct.wait(process.sender.outbox, 'end')
-            })
-            var http = require('http')
-            var cluster = require('cluster')
-            var delta = require('delta')
-
-            var server = http.createServer(reactor.middleware)
+            destructible.monitor('olio', Olio, program, async())
+        }, function (olio) {
             async(function () {
-                destructible.destruct.wait(cluster.worker, 'disconnect')
-                destructible.destruct.wait(server, 'close')
+                olio.sender('run', function (destructible, argv, index, count, callback) {
+                    destructible.monitor('caller', Caller, callback)
+                }, async())
+            }, function (caller) {
+                caller.processes.forEach(function (process) {
+                    destructible.destruct.wait(process.sender.outbox, 'end')
+                })
+                var http = require('http')
+                var cluster = require('cluster')
+                var delta = require('delta')
 
-                server.listen(8080, async())
-            }, function () {
-                delta(destructible.monitor('http')).ee(server).on('close')
+                var server = http.createServer(reactor.middleware)
+                async(function () {
+                    destructible.destruct.wait(cluster.worker, 'disconnect')
+                    destructible.destruct.wait(server, 'close')
+
+                    server.listen(8080, async())
+                }, function () {
+                    delta(destructible.monitor('http')).ee(server).on('close')
+                })
             })
+        }, function () {
+            logger.info('started', { http: true })
         })
-    }, function () {
-        logger.info('started', { http: true })
-        destructible.completed.wait(async())
-    })
-}))
+    })(destructible.monitor('initialize', true))
+})
