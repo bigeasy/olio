@@ -36,6 +36,8 @@ require('arguable')(module, function (program, callback) {
                         return [ 1 ]
                     }), async())
                 }, function (procedure) {
+                    // TODO Figure out how to tier your shutdowns for Node.js 6.
+                    destructible.destruct.wait(procedure.outbox, 'end')
                     procedure.eos.wait(procedure.outbox, 'end')
                     return procedure
                 })
