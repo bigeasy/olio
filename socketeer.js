@@ -26,9 +26,6 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
 })
 
 SocketFactory.prototype.createSender = cadence(function (async, destructible, from, Receiver, message, handle, index) {
-    var through = new stream.PassThrough
-    var readable = new Staccato.Readable(through)
-
     async(function () {
         var request = http.request({
             socketPath: message.socketPath,
