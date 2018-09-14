@@ -19,7 +19,7 @@ SocketFactory.prototype.createReceiver = cadence(function (async, destructible, 
     async(function () {
         destructible.monitor('receiver', Receiver, message.from, message.to, async())
     }, function (receiver) {
-        destructible.monitor('conduit', Conduit, socket, socket, receiver, async())
+        destructible.monitor('conduit', Conduit, receiver, socket, socket, async())
     }, function (conduit) {
         conduit.receiver.outbox.push({ module: 'olio', method: 'connect' })
     })
@@ -52,7 +52,7 @@ SocketFactory.prototype.createSender = cadence(function (async, destructible, fr
             }
             var shifter = sip.inbox.shifter()
             async(function () {
-                destructible.monitor('conduit', Conduit, socket, socket, sip, head, async())
+                destructible.monitor('conduit', Conduit, sip, socket, socket, head, async())
             }, function (conduit) {
                 async(function () {
                     shifter.dequeue(async())
