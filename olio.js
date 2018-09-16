@@ -60,14 +60,14 @@ function Olio (destructible, ee, initialized, Receiver) {
 
     this._siblings = new Cubbyhole
 
+    this._factory = new SocketFactory
+
     // Any error causes messages to get cut, we do not get `_message`.
     descendent.increment()
     destructible.destruct.wait(descendent, 'decrement')
     descendent.on('olio:message', Operation([ this, '_message' ]))
     descendent.across('olio:mock', {})
     descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
-
-    this._factory = new SocketFactory
 }
 
 Olio.prototype.sibling = cadence(function (async, name) {
