@@ -5,14 +5,13 @@ function prove (async, okay) {
     var Caller = require('conduit/caller')
     var cadence = require('cadence')
     var events = require('events')
-    var ee = new events.EventEmitter
     var Mock = require('../mock')
     var Olio = require('../olio')
-    var mock = new Mock(ee)
+    var mock = new Mock
     var Destructible = require('destructible')
     var destructible = new Destructible('t/mock.t.js')
     async(function () {
-        destructible.monitor('olio', Olio, ee, function (destructible, from, to, callback) {
+        destructible.monitor('olio', Olio, null, function (destructible, from, to, callback) {
             destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
         }, async())
         mock.initialize('self', 0)

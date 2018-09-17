@@ -5,7 +5,7 @@ var util = require('util')
 var events = require('events')
 var descendent = require('foremost')('descendent')
 
-function Mock (ee) {
+function Mock () {
     this._pid = 0
     var ready = this.ready = new Signal
     descendent.on('olio:mock', function () { ready.unlatch() })
