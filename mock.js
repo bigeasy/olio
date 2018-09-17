@@ -5,6 +5,8 @@ var util = require('util')
 var events = require('events')
 var descendent = require('foremost')('descendent')
 
+var coalesce = require('extant')
+
 function Mock () {
     this._pid = 0
     var ready = this.ready = new Signal
@@ -26,7 +28,7 @@ Mock.prototype.sender = function (name, index, sender) {
     descendent.across('olio:message', {
         method: 'connect',
         from: { name: name, index: index }
-    }, sender)
+    }, coalesce(sender))
     return sender
 }
 
