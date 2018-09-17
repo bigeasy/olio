@@ -11,7 +11,7 @@ function prove (async, okay) {
     var Destructible = require('destructible')
     var destructible = new Destructible('t/mock.t.js')
     async(function () {
-        destructible.monitor('olio', Olio, null, function (destructible, from, to, callback) {
+        destructible.monitor('olio', Olio, function (destructible, from, to, callback) {
             destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
         }, async())
         mock.initialize('self', 0)

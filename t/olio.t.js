@@ -81,7 +81,7 @@ function prove (okay, callback) {
             descendent.increment()
 
             async(function () {
-                destructible.monitor('olio', Olio, program, function (destructible, from, to, callback) {
+                destructible.monitor('olio', Olio, function (destructible, from, to, callback) {
                     destructible.monitor('procedure', Procedure, function () {}, callback)
                 }, async())
 

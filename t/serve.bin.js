@@ -52,7 +52,7 @@ require('arguable')(module, function (program, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('olio', Olio, program, async())
+            destructible.monitor('olio', Olio, async())
         }, function (olio) {
             async(function () {
                 olio.sender('run', function (destructible, argv, index, count, callback) {

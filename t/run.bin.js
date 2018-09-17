@@ -29,7 +29,7 @@ require('arguable')(module, function (program, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('olio', Olio, program, cadence(function (async, destructible) {
+            destructible.monitor('olio', Olio, cadence(function (async, destructible) {
                 async(function () {
                     destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
                         console.log(envelope)

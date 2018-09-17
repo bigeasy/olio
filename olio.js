@@ -48,7 +48,7 @@ Sender.prototype.hash = function (key) {
     return this.processes[fnv(0, buffer, 0, buffer.length) % this.count]
 }
 
-function Olio (destructible, ee, initialized, Receiver) {
+function Olio (destructible, initialized, Receiver) {
     this._destructible = destructible
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
 
@@ -157,9 +157,9 @@ Olio.prototype._message = function (message, handle) {
 
 //
 
-module.exports = cadence(function (async, destructible, ee, Receiver) {
+module.exports = cadence(function (async, destructible, Receiver) {
     var initialized = new Signal
-    var olio = new Olio(destructible, ee, initialized, coalesce(Receiver))
+    var olio = new Olio(destructible, initialized, coalesce(Receiver))
     async(function () {
         initialized.wait(async())
     }, function () {
