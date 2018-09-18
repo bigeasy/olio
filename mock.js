@@ -8,7 +8,7 @@ var descendent = require('foremost')('descendent')
 var coalesce = require('extant')
 
 function Mock () {
-    this._pid = 0
+    this._pid = descendent.process.pid
     var ready = this.ready = new Signal
     descendent.on('olio:mock', function () { ready.unlatch() })
 }
@@ -33,9 +33,11 @@ Mock.prototype.sender = function (name, index, sender) {
 }
 
 Mock.prototype.sibling = function (name, count, factory) {
+    var pid = ++this._pid
+    descendent.addMockChild(pid, null)
     var paths = []
     for (var i = 0; i < count; i++) {
-        paths[i] = [ 0, ++this._pid ]
+        paths[i] = [ descendent.process.pid, this._pid ]
     }
     descendent.across('olio:message', {
         method: 'created',
