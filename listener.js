@@ -93,7 +93,9 @@ Listener.prototype._registered = function (message) {
                 method: 'initialize',
                 name: name,
                 argv: child.argv,
-                index: index
+                index: index,
+                path: child.paths[child.index],
+                count: child.count
             })
         }, this)
         child.paths.forEach(function (path, index) {

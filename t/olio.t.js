@@ -1,4 +1,4 @@
-require('proof')(4, prove)
+require('proof')(5, prove)
 
 function prove (okay, callback) {
     var Downgrader = require('downgrader')
@@ -95,6 +95,8 @@ function prove (okay, callback) {
                         method: 'initialize',
                         name: 'this',
                         argv: [ 'program', 'this' ],
+                        path: [ 1, 2],
+                        count: 3,
                         index: 2
                     }
                 })
@@ -114,6 +116,19 @@ function prove (okay, callback) {
                     }
                 })
             }, function (olio) {
+                okay({
+                    name: olio.name,
+                    argv: olio.argv,
+                    index: olio.index,
+                    path: olio.path,
+                    count: olio.count
+                }, {
+                    name: 'this',
+                    argv: [ 'program', 'this' ],
+                    index: 2,
+                    path: [ 1, 2 ],
+                    count: 3
+                }, 'properties')
                 async(function () {
                     olio.sender('that', function (destructible, argv, index, count, callback) {
                         destructible.monitor('caller', Caller, callback)

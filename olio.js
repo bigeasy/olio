@@ -86,9 +86,9 @@ Olio.prototype.sender = cadence(function (async, name, Receiver) {
                 }
                 // TODO `message.name` instead.
                 this._destructible.monitor([ 'created', sibling.name, i ], this._factory, 'createSender', {
-                    argv: this._argv,
-                    name: this._name,
-                    index: this._index,
+                    argv: this.argv,
+                    name: this.name,
+                    index: this.index,
                 }, Receiver, sibling, sibling.handle, i, sibling.count, async())
             }, function (receiver) {
                 receivers[i++] = receiver
@@ -107,9 +107,11 @@ Olio.prototype._dispatch = cadence(function (async, message, handle) {
         this._factory = handle
         break
     case 'initialize':
-        this._name = message.name
-        this._argv = message.argv
-        this._index = message.index
+        this.name = message.name
+        this.argv = message.argv
+        this.index = message.index
+        this.count = message.count
+        this.path = message.path
         this._initialized.unlatch()
         break
     case 'connect':
