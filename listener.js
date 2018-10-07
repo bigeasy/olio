@@ -137,15 +137,16 @@ Listener.prototype._ready = function (message) {
 
 Listener.prototype.children = cadence(function (async, children) {
     async.forEach(function (body) {
+        var workers = +coalesce(body.parameters.workers, 1)
         switch (body.method) {
         case 'serve':
             var child = spawn('node', [
                 path.join(__dirname, 'serve.child.js'),
                 '--name', body.parameters.name,
-                '--workers', coalesce(body.parameters.workers, 1)
+                '--workers', workers
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
             descendent.addChild(child, null)
-            this._created(+body.parameters.workers, body.parameters.name, body.argv, [ child.pid ])
+            this._created(workers, body.parameters.name, body.argv, [ child.pid ])
             this._destructible.destruct.wait(child, 'kill')
             Monitor(Interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
             break
@@ -153,12 +154,12 @@ Listener.prototype.children = cadence(function (async, children) {
             async(function () {
                 this._destructible.monitor([ 'run', body.parameters.name ], Runner, {
                     process: process,
-                    workers: coalesce(body.parameters.workers, 1),
+                    workers: workers,
                     name: body.parameters.name,
                     argv: body.argv
                 }, async())
             }, function (runner) {
-                this._created(+body.parameters.workers, body.parameters.name, body.argv, runner.pids)
+                this._created(workers, body.parameters.name, body.argv, runner.pids)
             })
             break
         }
