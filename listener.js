@@ -9,6 +9,8 @@ var Reactor = require('reactor')
 var Runner = require('./runner')
 var spawn = require('child_process').spawn
 
+var coalesce = require('extant')
+
 var descendent = require('foremost')('descendent')
 
 // Exceptions that you can catch by type.
@@ -140,7 +142,7 @@ Listener.prototype.children = cadence(function (async, children) {
             var child = spawn('node', [
                 path.join(__dirname, 'serve.child.js'),
                 '--name', body.parameters.name,
-                '--workers', body.parameters.workers
+                '--workers', coalesce(body.parameters.workers, 1)
             ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
             descendent.addChild(child, null)
             this._created(+body.parameters.workers, body.parameters.name, body.argv, [ child.pid ])
@@ -151,7 +153,7 @@ Listener.prototype.children = cadence(function (async, children) {
             async(function () {
                 this._destructible.monitor([ 'run', body.parameters.name ], Runner, {
                     process: process,
-                    workers: body.parameters.workers,
+                    workers: coalesce(body.parameters.workers, 1),
                     name: body.parameters.name,
                     argv: body.argv
                 }, async())
