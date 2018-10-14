@@ -52,7 +52,6 @@ function Server (destructible, process, name, argv, descendent) {
 
 // https://groups.google.com/forum/#!msg/comp.unix.wizards/GNU3ZFJiq74/ZFeCKhnavkMJ
 Server.prototype._shutdown = function () {
-    // TODO Can't I just call `child.kill`?
     for (var id in cluster.workers) {
         cluster.workers[id].kill()
     }
