@@ -49,7 +49,7 @@
     "main":                 "olio",
     "bin":
     {
-                            "olio":                         "0.17.2"
+                            "olio":                         "olio.bin.js"
     },
     "scripts":
     {
