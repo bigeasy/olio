@@ -43,7 +43,6 @@
     "devDependencies":
     {
                             "prolific.logger":              "8.1.x",
-                            "prolific.resolver":            "8.1.x",
                             "proof":                        "3.0.x"
     },
     "main":                 "olio",
