@@ -15,30 +15,27 @@ require('arguable')(module, require('cadence')(function (async, program) {
     var cadence = require('cadence')
 
     var logger = require('prolific.logger').createLogger('olio.echo')
-    var Shuttle = require('prolific.shuttle')
-    var shuttle = Shuttle.shuttle(program, logger)
+    var shuttle = require('foremost')('prolific.shuttle')
+    shuttle.start(logger)
+    destructible.destruct.wait(shuttle, 'close')
 
     program.on('shutdown', destructible.destroy.bind(destructible))
     destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
+    var Olio = require('..')
+
     cadence(function (async) {
-        var Olio = require('..')
         async(function () {
-            destructible.monitor('olio', Olio, program, function (constructor) {
-                constructor.receiver = cadence(function (async, destructible) {
-                    async(function () {
-                        destructible.monitor('destructible', Procedure, cadence(function (async, envelope) {
-                            console.log(envelope)
-                            return [ {} ]
-                        }), async())
-                    }, function (procedure) {
-                        return [ procedure ]
-                    })
-                })
-            }, async())
+            destructible.monitor('olio', Olio, cadence(function (async, destructible) {
+                destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                    console.log(envelope)
+                    return [ {} ]
+                }), async())
+            }), async())
         }, function () {
+            console.log('started')
             logger.info('started', { hello: 'world', pid: program.pid })
         })
     })(destructible.monitor('initialize', true))

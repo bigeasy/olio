@@ -20,6 +20,8 @@ var Monitor = require('./monitor')
 
 var Operation = require('operation')
 
+var cluster = require('cluster')
+
 function Listener (destructible, socketPath) {
     this._destructible = destructible
     this._destructible.markDestroyed(this)
@@ -90,6 +92,7 @@ Listener.prototype._registered = function (message) {
     for (var name in this._children) {
         child = this._children[name]
         child.paths.forEach(function (path, index) {
+            console.log('INITIALIZED', name, path, message, child)
             // TODO Shouldn't count go down now with initialization?
             descendent.down(path, 'olio:message', {
                 method: 'initialize',
@@ -101,6 +104,7 @@ Listener.prototype._registered = function (message) {
             })
         }, this)
         child.paths.forEach(function (path, index) {
+            console.log('CREATED')
             descendent.down(path, 'olio:message', {
                 method: 'created',
                 socketPath: this._socketPath,
@@ -140,27 +144,25 @@ Listener.prototype.children = cadence(function (async, children) {
         var workers = +coalesce(body.parameters.workers, 1)
         switch (body.method) {
         case 'serve':
-            var child = spawn('node', [
-                path.join(__dirname, 'serve.child.js'),
-                '--name', body.parameters.name,
-                '--workers', workers
-            ].concat(body.argv), { stdio: [ 0, 1, 2, 'ipc' ] })
-            descendent.addChild(child, null)
-            this._created(workers, body.parameters.name, body.argv, [ child.pid ])
-            this._destructible.destruct.wait(child, 'kill')
-            Monitor(Interrupt, this, child, this._destructible.monitor([ 'serve', body.argv ]))
-            break
         case 'run':
-            async(function () {
-                this._destructible.monitor([ 'run', body.parameters.name ], Runner, {
-                    process: process,
-                    workers: workers,
+            cluster.setupMaster({ exec: body.argv[0], args: body.argv.slice(1) })
+            var pids = []
+            for (var i = 0; i < workers; i++) {
+                var worker = cluster.fork(function (index) {
+                    var env = JSON.parse(JSON.stringify(program.env))
+                    env.OLIO_WORKER_INDEX = index
+                    return env
+                })
+                this._destructible.destruct.wait(worker, 'kill')
+                descendent.addChild(worker.process, {
                     name: body.parameters.name,
-                    argv: body.argv
-                }, async())
-            }, function (runner) {
-                this._created(workers, body.parameters.name, body.argv, runner.pids)
-            })
+                    argv: body.argv,
+                    index: i
+                })
+                pids.push(worker.process.pid)
+                Monitor(Interrupt, this, worker.process, this._destructible.monitor([ 'child', body.argv, i ]))
+            }
+            this._created(workers, body.parameters.name, body.argv, pids)
             break
         }
     })(children)

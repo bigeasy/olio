@@ -4,7 +4,9 @@
     ___ usage ___ en_US ___
     usage: olio <socket> [command] <args>
 
-        --help              display this message
+        -p, --port  <integer>   port to bind to
+
+        --help                  display this message
     ___ . ___
  */
 require('arguable')(module, require('cadence')(function (async, program) {
@@ -18,25 +20,27 @@ require('arguable')(module, require('cadence')(function (async, program) {
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var logger = require('prolific.logger').createLogger('olio.http')
-    var Shuttle = require('prolific.shuttle')
-    var shuttle = Shuttle.shuttle(program, logger)
+    var shuttle = require('foremost')('prolific.shuttle')
+    shuttle.start(logger)
     destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(async())
 
+    console.log
+
     async([function () {
         destructible.destroy()
     }], function () {
-        destructible.monitor('olio', Olio, program, function (constructor) {
-            constructor.sender('echo', cadence(function (async, destructible) {
-                destructible.monitor('caller', Caller, async())
-            }))
-        }, async())
+        destructible.monitor('olio', Olio, async())
     }, function (olio) {
+        olio.sender('echo', cadence(function (async, destructible) {
+            destructible.monitor('caller', Caller, async())
+        }), async())
+    }, function (sender) {
         var reactor = new Reactor({
             echo: cadence(function (async, request, index) {
                 async(function () {
-                    olio.sender('echo', +index).invoke({
+                    sender.processes[+index].invoke({
                         url: request.url,
                         body: request.body
                     }, async())
@@ -45,7 +49,7 @@ require('arguable')(module, require('cadence')(function (async, program) {
                 })
             }),
             index: cadence(function (async) {
-                return 'Hello, World!\n'
+                return 'Hello, World! ' + program.ultimate.port + '\n'
             })
         }, function (dispatcher) {
             dispatcher.dispatch('GET /', 'index')
@@ -60,12 +64,12 @@ require('arguable')(module, require('cadence')(function (async, program) {
         var server = http.createServer(reactor.middleware)
         async(function () {
             destructible.destruct.wait(server, 'close')
-            server.listen(8080, async())
+            server.listen(+program.ultimate.port, async())
         }, function () {
             delta(destructible.monitor('http')).ee(server).on('close')
         })
     }, function () {
-        logger.info('started', { http: true })
+        logger.info('started', { parameters: program.ultimate })
         destructible.completed.wait(async())
     })
 }))
