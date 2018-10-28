@@ -34,7 +34,11 @@ require('arguable')(module, require('cadence')(function (async, program) {
         destructible.monitor('olio', Olio, async())
     }, function (olio) {
         olio.sender('echo', cadence(function (async, destructible) {
-            destructible.monitor('caller', Caller, async())
+            async(function () {
+                destructible.monitor('caller', Caller, async())
+            }, function (caller) {
+                destructible.destruct.wait(caller.outbox, 'end')
+            })
         }), async())
     }, function (sender) {
         var reactor = new Reactor({

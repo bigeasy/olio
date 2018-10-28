@@ -6,7 +6,6 @@ var delta = require('delta')
 var cadence = require('cadence')
 
 var Reactor = require('reactor')
-var Runner = require('./runner')
 var spawn = require('child_process').spawn
 
 var coalesce = require('extant')
@@ -148,11 +147,7 @@ Listener.prototype.children = cadence(function (async, children) {
             cluster.setupMaster({ exec: body.argv[0], args: body.argv.slice(1) })
             var pids = []
             for (var i = 0; i < workers; i++) {
-                var worker = cluster.fork(function (index) {
-                    var env = JSON.parse(JSON.stringify(program.env))
-                    env.OLIO_WORKER_INDEX = index
-                    return env
-                })
+                var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
                 this._destructible.destruct.wait(worker, 'kill')
                 descendent.addChild(worker.process, {
                     name: body.parameters.name,

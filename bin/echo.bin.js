@@ -29,10 +29,14 @@ require('arguable')(module, require('cadence')(function (async, program) {
     cadence(function (async) {
         async(function () {
             destructible.monitor('olio', Olio, cadence(function (async, destructible) {
-                destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
-                    console.log(envelope)
-                    return [ {} ]
-                }), async())
+                async(function () {
+                    destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                        console.log(envelope)
+                        return [ {} ]
+                    }), async())
+                }, function (procedure) {
+                    destructible.destruct.wait(procedure.outbox, 'end')
+                })
             }), async())
         }, function () {
             console.log('started')
