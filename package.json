@@ -35,7 +35,7 @@
                             "keyify":                       "0.0.x",
                             "nop":                          "1.0.x",
                             "operation":                    "2.0.x",
-                            "prolific.shuttle":             "20.10.x",
+                            "prolific.shuttle":             "20.12.x",
                             "reactor":                      "10.7.x",
                             "signal":                       "4.0.x",
                             "staccato":                     "6.3.x"
