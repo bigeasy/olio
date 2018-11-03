@@ -1,0 +1,17 @@
+{
+    "socket": "t/socket",
+    "children": {
+        "run": {
+            "workers": 1,
+            "properties": {
+                "path": "./t/run.bin.js"
+            }
+        },
+        "serve": {
+            "workers": 1,
+            "properties": {
+                "path": "./t/serve.bin.js"
+            }
+        }
+    }
+}

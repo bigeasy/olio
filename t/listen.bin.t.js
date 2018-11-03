@@ -1,9 +1,14 @@
-require('proof')(1, require('cadence')(prove))
+require('proof')(1, prove)
 
-function prove (async, okay) {
+function prove (okay, callback) {
+    var Destructible = require('destructible')
+    var destructible = new Destructible('t/listen.bin')
+
+    destructible.completed.wait(callback)
+
     var Olio = require('..')
 
-    var bin = require('../olio.bin')
+    var bin = require('../listen.bin')
     var fs = require('fs')
 
     try {
@@ -14,14 +19,18 @@ function prove (async, okay) {
         }
     }
 
-    var program
-    async(function () {
-        program = bin([ 'listen', '--socket', './t/socket' ], {}, async())
+    var program = bin([ '--configuration', './t/configuration.json' ], destructible.monitor('bin'))
+
+    var cadence = require('cadence')
+
+    cadence(function (async) {
         async(function () {
-            program.ready.wait(async())
-        }, function () {
-            okay(true, 'done')
-            program.emit('SIGINT')
+            async(function () {
+                program.ready.wait(async())
+            }, function () {
+                okay(true, 'done')
+                program.emit('SIGINT')
+            })
         })
-    })
+    })(destructible.monitor('test'))
 }

@@ -1,49 +1,39 @@
-#!/usr/bin/env node
+var cadence = require('cadence')
+var Procedure = require('conduit/procedure')
 
-/*
-    ___ usage ___ en_US ___
-    usage: olio <socket> [command] <args>
+// TODO No, we do not wait for all message to complete before exit, we just
+// exit, that's where we're at. Or maybe, it is always the client that hangs up
+// on the server and we're bi-directional then all the hangups will wind down a
+// multiplexer.
 
-        --help              display this message
-    ___ . ___
- */
-require('arguable')(module, function (program, callback) {
-    var Procedure = require('conduit/procedure')
-
-    var Destructible = require('destructible')
-    var destructible = new Destructible('./t/run.bin.js')
-    var cadence = require('cadence')
-
-    var logger = require('prolific.logger').createLogger('olio.echo')
-    var shuttle = require('foremost')('prolific.shuttle')
-    shuttle.start(logger)
-
-    program.on('shutdown', destructible.destroy.bind(destructible))
-    destructible.destruct.wait(shuttle, 'close')
-
-    var Olio = require('..')
-
-    destructible.completed.wait(callback)
-
-    var cadence = require('cadence')
-
-    cadence(function (async) {
-        async(function () {
-            destructible.monitor('olio', Olio, cadence(function (async, destructible) {
-                async(function () {
-                    destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
-                        console.log(envelope)
-                        return [ 1 ]
-                    }), async())
-                }, function (procedure) {
-                    // TODO Figure out how to tier your shutdowns for Node.js 6.
-                    destructible.destruct.wait(procedure.outbox, 'end')
-                    procedure.eos.wait(procedure.outbox, 'end')
-                    return procedure
-                })
+// TODO Looks like you are getting ever more liberal with your use of
+// `Destructible`. The wrapper will need to know how to handle incoming
+// requests, so it needs a `receiver` function. If the child is going to call
+// itself, then it needs to wait for the wrapper to get the `receiver` before it
+// can create a sender on itself. We kind of had this apparent when Olio was
+// constructed with a listener builder as an argument if it was going to be a
+// server. Could pass in a builder.
+module.exports = cadence(function (async, destructible, binder) {
+    async(function () {
+        binder.listen(cadence(function (async, destructible, name, index) {
+            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
+                console.log(envelope)
+                return [ 1 ]
             }), async())
-        }, function (olio) {
-            logger.info('started', { hello: 'world', pid: program.pid })
-        })
-    })(destructible.monitor('initialize', true))
+        }, function (procedure) {
+            // TODO Figure out how to tier your shutdowns for Node.js 6.
+            destructible.destruct.wait(procedure.outbox, 'end')
+            procedure.eos.wait(procedure.outbox, 'end')
+            return procedure
+        }), async())
+    }, function (olio) {
+        var messages = olio.messages.pump(function (envelope) {
+            console.log(envelope)
+            if (envelope.body.method == 'send') {
+                olio.broadcast('serve', { method: 'broadcast', sequence: envelope.body.sequence }, async())
+            }
+        }, destructible.monitor('messages'))
+        destructible.destruct.wait(messages, 'destroy')
+        return null
+    })
 })

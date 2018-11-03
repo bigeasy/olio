@@ -1,45 +1,58 @@
-require('proof')(2, require('cadence')(prove))
+require('proof')(3, prove)
 
-function prove (async, okay) {
-    var Procedure = require('conduit/procedure')
-    var Caller = require('conduit/caller')
-    var cadence = require('cadence')
-    var events = require('events')
-    var Mock = require('../mock')
-    var Olio = require('../olio')
-    var mock = new Mock
+function prove (okay, callback) {
     var Destructible = require('destructible')
-    var destructible = new Destructible('t/mock.t.js')
-    async(function () {
-        destructible.monitor('olio', Olio, function (destructible, from, to, callback) {
-            destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
-        }, async())
-        mock.initialize('self', 0)
-        mock.sibling('command', 1, function (destructible, index, count, callback) {
-            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) { return [ 1 ] }), callback)
-        })
-        mock.sibling('ignored', 1, function () {
-            throw new Error('error')
-        })
-    }, function (olio) {
+    var destructible = new Destructible('t/pseudo.t')
+
+    destructible.completed.wait(callback)
+
+    var Mock = require('../mock')
+
+    var cadence = require('cadence')
+
+    var UserAgent = require('vizsla')
+    var ua = new UserAgent
+
+    cadence(function (async) {
         async(function () {
-            olio.sender('command', function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
+            destructible.monitor('mock', Mock, {
+                socket: 't/socket',
+                children: {
+                    run: {
+                        path: 't/run.bin',
+                        workers: 1,
+                        properties: {}
+                    },
+                    serve: {
+                        path: 't/serve.bin',
+                        workers: 1,
+                        properties: {}
+                    }
+                }
             }, async())
-        }, function (sender) {
-            async(function () {
-                destructible.monitor('caller', Caller, async())
-            }, function (caller) {
-                destructible.destruct.wait(function () { caller.inbox.push(null) })
-                mock.sender('client', 0, caller)
-                caller.invoke({}, async())
-            }, function (result) {
-                okay(result, 0, 'receiver')
-                sender.processes[0].sender.invoke({}, async())
-            }, function (result) {
-                okay(result, 1, 'sender')
-                destructible.destroy()
-            })
+        }, function (children) {
+            ua.fetch({
+                url: '/',
+                socketPath: './t/socket',
+                parse: 'text',
+                raise: true
+            }, async())
+        }, function (body, response) {
+            okay(body, 'Olio Mock API\n', 'index')
+            ua.fetch({
+                url: 'http://127.0.0.1:8888/worker/0/conduit',
+                parse: 'json',
+                post: {}
+            }, async())
+        }, function (body, response) {
+            okay(body, 1, 'conduit')
+            ua.fetch({
+                url: 'http://127.0.0.1:8888/worker/0/ipc',
+                parse: 'json',
+                post: {}
+            }, async())
+        }, function (body, response) {
+            okay(body, 0, 'ipc')
         })
-    })
+    })(destructible.monitor('test'))
 }

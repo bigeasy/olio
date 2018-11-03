@@ -14,9 +14,27 @@ function prove (okay, callback) {
 
     var cadence = require('cadence')
 
+    var configuration = {
+        socket: socketPath,
+        children: {
+            run: {
+                workers: 1,
+                properties: {
+                    path: './t/run.bin.js',
+                }
+            },
+            serve: {
+                workers: 1,
+                properties: {
+                    path: './t/serve.bin.js',
+                }
+            }
+        }
+    }
+
     cadence(function (async) {
         async(function () {
-            destructible.monitor('listener', Listener, socketPath, async())
+            destructible.monitor('listener', Listener, configuration, async())
         }, function (listener) {
             async(function () {
                 listener.index(async())
@@ -44,15 +62,11 @@ function prove (okay, callback) {
 
                 server.listen(socketPath, async())
             }, function () {
-                listener.children([
-                    {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
-                    {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
-                ], async())
+                listener.spawn(configuration, async())
             }, function () {
                 async(function () {
                     setTimeout(async(), 1000)
                 }, function () {
-                    console.log('done')
                     destructible.destroy()
                 })
             })

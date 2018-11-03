@@ -11,7 +11,7 @@
         --kill  <number>
             number of milliseconds to wait before declaring child processess hung
 
-        --socket <string>
+        --configuration <string>
             path for UNIX domain socket server
 
     ___ $ ___ en_US ___
@@ -48,17 +48,17 @@ require('arguable')(module, function (program, callback) {
 
     destructible.completed.wait(callback)
 
-    var children = program.argv.map(JSON.parse.bind(JSON))
-
-    program.required('socket')
+    program.required('configuration')
 
     var cadence = require('cadence')
 
     var Listener = require('./listener')
 
+    var configuration = JSON.parse(require('fs').readFileSync(program.ultimate.configuration, 'utf8'))
+
     cadence(function (async) {
         async(function  () {
-            destructible.monitor('listener', Listener, program.ultimate.socket, async())
+            destructible.monitor('listener', Listener, configuration, async())
         }, function (listener) {
             var downgrader = new Downgrader
             downgrader.on('socket', Operation([ listener, 'socket' ]))
@@ -85,7 +85,7 @@ require('arguable')(module, function (program, callback) {
             async(function () {
                 server.listen(program.ultimate.socket, async())
             }, function () {
-                listener.children(children, async())
+                listener.spawn(configuration, async())
             }, function () {
                 program.ready.unlatch()
             })
