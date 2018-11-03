@@ -2,6 +2,8 @@
 var assert = require('assert')
 var events = require('events')
 
+var Procession = require('procession')
+
 // Contextualized callbacks and event handlers.
 var Operation = require('operation')
 
@@ -23,55 +25,101 @@ var Keyify = require('keyify')
 // Controlled demolition of asynchronous operations.
 var Destructible = require('destructible')
 
-// Route messages through a process hierarchy using Node.js IPC.
-var descendent = require('foremost')('descendent')
-
-// Pipe construction around UNIX domain sockets.
-var SocketFactory = require('./socketeer')
-
 var Cubbyhole = require('cubbyhole')
-
-var fnv = require('hash.fnv')
 
 var Interrupt = require('interrupt').createInterrupter('olio')
 
-function Sender (receivers, paths, count) {
-    this.processes = []
-    for (var i = 0; i < count; i++) {
-        this.processes.push({ sender: receivers[i], path: paths[i], index: i })
-    }
-    this.count = count
-}
+var Sender = require('./sender')
 
-Sender.prototype.hash = function (key) {
-    var buffer = Buffer.from(Keyify.stringify(key))
-    return this.processes[fnv(0, buffer, 0, buffer.length) % this.count]
-}
+var http = require('http')
+var Downgrader = require('downgrader')
 
-function Olio (destructible, initialized, Receiver) {
+var delta = require('delta')
+
+var Conduit = require('conduit')
+
+function Olio (destructible, dispatcher, binder) {
+    this.destroyed = false
+
     this._destructible = destructible
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
 
-    this.destroyed = false
+    this._siblings = dispatcher.siblings
 
-    this._Receiver = Receiver
+    this.name = binder.name
+    this.index = binder.index
+    this.address = binder.address
+    this.socket = binder.socket
 
-    this._initialized = initialized
-
-    this._siblings = new Cubbyhole
-
-    this._factory = new SocketFactory
-
-    // Any error causes messages to get cut, we do not get `_message`.
-    descendent.increment()
-    destructible.destruct.wait(descendent, 'decrement')
-    descendent.on('olio:message', Operation([ this, '_message' ]))
-    descendent.across('olio:mock', {})
-    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
+    this._transmitter = dispatcher.transmitter
+    this._transmitter.ready(this.name, this.index)
 }
+
+Olio.prototype.send = cadence(function (async, name, index, message, handle) {
+    async(function () {
+        this.sibling(name, async())
+    }, function (sibling) {
+        this._transmitter.send(sibling, index, message, coalesce(handle))
+    })
+})
+
+Olio.prototype.broadcast = cadence(function (async, name, message) {
+    async(function () {
+        this.sibling(name, async())
+    }, function (sibling) {
+        this._transmitter.broadcast(sibling, message)
+    })
+})
 
 Olio.prototype.sibling = cadence(function (async, name) {
     this._siblings.wait(name, async())
+})
+
+Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
+    async(function () {
+        var request = http.request({
+            socketPath: this.socket,
+            url: 'http://olio/',
+            headers: Downgrader.headers({
+                'x-olio-to-name': message.name,
+                'x-olio-to-index': index,
+                'x-olio-from-name': this.name,
+                'x-olio-from-index': this.index
+            })
+        })
+        request.on('error', function () {})
+        delta(async()).ee(request).on('upgrade')
+        request.end()
+    }, function (request, socket, head) {
+        async(function () {
+            destructible.monitor('receiver', Receiver, index, async())
+        }, function (receiver) {
+            var sip = {
+                outbox: receiver.outbox,
+                inbox: new Procession
+            }
+            var shifter = sip.inbox.shifter()
+            async(function () {
+                destructible.monitor('conduit', Conduit, sip, socket, socket, head, async())
+            }, function (conduit) {
+                async(function () {
+                    shifter.dequeue(async())
+                }, function (header) {
+                console.log('dequeue')
+                    Interrupt.assert(header.module == 'olio' && header.method == 'connect', 'failed to start middleware')
+                    Interrupt.assert(shifter.shift() == null, 'unexpected traffic on connect')
+                    conduit.receiver = receiver
+                    // Do we do this or do we register an end to pumping instead? It
+                    // would depend on how we feal about ending a Conduit. I do
+                    // believe it pushed out a `null` to indicate that the stream
+                    // has closed. A Window would look for this and wait for
+                    // restart. The Window needs to be closed explicity.
+                })
+            }, function() {
+                return [ receiver ]
+            })
+        })
+    })
 })
 
 Olio.prototype.sender = cadence(function (async, name, Receiver) {
@@ -85,56 +133,15 @@ Olio.prototype.sender = cadence(function (async, name, Receiver) {
                     return [ loop.break ]
                 }
                 // TODO `message.name` instead.
-                this._destructible.monitor([ 'created', sibling.name, i ], this._factory, 'createSender', {
-                    argv: this.argv,
-                    name: this.name,
-                    index: this.index,
-                }, Receiver, sibling, sibling.handle, i, sibling.count, async())
+                this._destructible.monitor([ 'created', sibling.name, i ], this, '_createSender', Receiver, sibling, i, async())
             }, function (receiver) {
                 receivers[i++] = receiver
             })()
         }, function () {
-            return new Sender(receivers, sibling.paths, sibling.count)
+            return new Sender(receivers, sibling.addresses, sibling.count)
         })
     })
 })
-
-// TODO Maybe use cubbyhole to index by a particular name or, rather, argument path?
-// TODO Looks like two flavors of "ready."
-Olio.prototype._dispatch = cadence(function (async, message, handle) {
-    switch (message.method) {
-    case 'factory':
-        this._factory = handle
-        break
-    case 'initialize':
-        this.name = message.name
-        this.argv = message.argv
-        this.index = message.index
-        this.count = message.count
-        this.path = message.path
-        this._initialized.unlatch()
-        break
-    case 'connect':
-        // TODO This is also swallowing errors somehow.
-        this._destructible.monitor([ 'connect', message ], this._factory, 'createReceiver', this._Receiver, message, handle, async())
-        break
-    case 'created':
-        this._siblings.set(message.name, null, {
-            name: message.name,
-            paths: message.paths,
-            count: message.count,
-            argv: message.argv,
-            socketPath: message.socketPath,
-            handle: coalesce(handle)
-        })
-        break
-    }
-})
-
-// Any error causes messages to get cut.
-Olio.prototype._message = function (message, handle) {
-    this._dispatch(message.body, handle, this._destructible.monitor([ 'message', message.body ], true))
-}
 
 // TODO You're working through this right now.
 //
@@ -159,21 +166,6 @@ Olio.prototype._message = function (message, handle) {
 
 //
 
-module.exports = cadence(function (async, destructible, Receiver) {
-    var initialized = new Signal
-    var olio = new Olio(destructible, initialized, coalesce(Receiver))
-    async(function () {
-        initialized.wait(async())
-    }, function () {
-        // TODO Now `ready` doens't seem necessary because everything happens on
-        // initialization.
-        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
-        // TODO This makes `unready` in Destructible seem dubious. No, it's not.
-        // The unready error will trigger if `destroy` is called before we are
-        // ready. Likely we will wreck initialization with a destroyed
-        // Destructible. Come back and think hard, but for now it seems that we
-        // are going to have this marked destroyed.
-        Interrupt.assert(!destructible.destroyed, 'destroyed')
-        return [ olio ]
-    })
+module.exports = cadence(function (async, destructible, dispatcher, binder) {
+    return new Olio(destructible, dispatcher, binder)
 })

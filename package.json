@@ -43,7 +43,9 @@
     "devDependencies":
     {
                             "prolific.logger":              "8.4.x",
-                            "proof":                        "3.0.x"
+                            "proof":                        "3.0.x",
+                            "server-destroy":               "1.0.1",
+                            "vizsla":                       "12.13.x"
     },
     "main":                 "olio",
     "bin":

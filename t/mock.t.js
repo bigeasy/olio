@@ -1,45 +1,35 @@
-require('proof')(2, require('cadence')(prove))
+require('proof')(1, prove)
 
-function prove (async, okay) {
-    var Procedure = require('conduit/procedure')
-    var Caller = require('conduit/caller')
-    var cadence = require('cadence')
-    var events = require('events')
-    var Mock = require('../mock')
-    var Olio = require('../olio')
-    var mock = new Mock
+function prove (okay, callback) {
     var Destructible = require('destructible')
-    var destructible = new Destructible('t/mock.t.js')
-    async(function () {
-        destructible.monitor('olio', Olio, function (destructible, from, to, callback) {
-            destructible.monitor('procedure', Procedure, function (envelope, callback) { callback(null, 0) }, callback)
-        }, async())
-        mock.initialize('self', 0)
-        mock.sibling('command', 1, function (destructible, index, count, callback) {
-            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) { return [ 1 ] }), callback)
-        })
-        mock.sibling('ignored', 1, function () {
-            throw new Error('error')
-        })
-    }, function (olio) {
+    var destructible = new Destructible('t/pseudo.t')
+
+    destructible.completed.wait(callback)
+
+    var Pseudo = require('../mock')
+
+    var cadence = require('cadence')
+
+    cadence(function (async) {
         async(function () {
-            olio.sender('command', function (destructible, argv, index, count, callback) {
-                destructible.monitor('caller', Caller, callback)
+            destructible.monitor('pseudo', Pseudo, {
+                socket: 't/socket',
+                children: {
+                    run: {
+                        path: 't/run.bin',
+                        workers: 1,
+                        properties: {}
+                    },
+                    serve: {
+                        path: 't/serve.bin',
+                        workers: 1,
+                        properties: {}
+                    }
+                }
             }, async())
-        }, function (sender) {
-            async(function () {
-                destructible.monitor('caller', Caller, async())
-            }, function (caller) {
-                destructible.destruct.wait(function () { caller.inbox.push(null) })
-                mock.sender('client', 0, caller)
-                caller.invoke({}, async())
-            }, function (result) {
-                okay(result, 0, 'receiver')
-                sender.processes[0].sender.invoke({}, async())
-            }, function (result) {
-                okay(result, 1, 'sender')
-                destructible.destroy()
-            })
+        }, function (children) {
+            console.log(children)
+            okay(true, 'test')
         })
-    })
+    })(destructible.monitor('test'))
 }

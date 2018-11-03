@@ -44,10 +44,20 @@ function prove (okay, callback) {
 
                 server.listen(socketPath, async())
             }, function () {
-                listener.children([
-                    {"method":"run","parameters":{"name":"run","workers":"2"},"argv":["./t/run.bin.js" ]},
-                    {"method":"serve","parameters":{"name":"serve","workers":"1"},"argv":["./t/serve.bin.js" ]}
-                ], async())
+                listener.spawn({
+                    children: {
+                        run: {
+                            workers: 2,
+                            path: './t/run.bin.js',
+                            properties: {}
+                        },
+                        serve: {
+                            workers: 2,
+                            path: './t/serve.bin.js',
+                            properties: {}
+                        }
+                    }
+                }, async())
             }, function () {
                 async(function () {
                     setTimeout(async(), 1000)

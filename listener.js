@@ -64,12 +64,12 @@ Listener.prototype.index = cadence(function (async) {
     return [ 200, { 'content-type': 'text/plain' }, 'Olio Listener API\n' ]
 })
 
-Listener.prototype._created = function (count, name, argv, pids) {
+Listener.prototype._created = function (count, name, properties, pids) {
     this._children[name] = {
         count: count,
         registered: 0,
         ready: 0,
-        argv: argv,
+        properties: properties,
         pids: pids,
         paths: []
     }
@@ -98,6 +98,7 @@ Listener.prototype._registered = function (message) {
                 name: name,
                 argv: child.argv,
                 index: index,
+                configuration: child.properties,
                 path: child.paths[child.index],
                 count: child.count
             })
@@ -161,6 +162,29 @@ Listener.prototype.children = cadence(function (async, children) {
             break
         }
     })(children)
+})
+
+Listener.prototype.spawn = cadence(function (async, children) {
+    var executable = path.join(__dirname, 'child.js')
+    for (var name in children) {
+        var config = children[name]
+        // TODO Set Node.js arguments.
+        cluster.setupMaster({ exec: executable, args: [] })
+        var workers = coalesce(config.workers, 1)
+        var pids = []
+        for (var i = 0; i < workers; i++) {
+            var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
+            this._destructible.destruct.wait(worker, 'kill')
+            descendent.addChild(worker.process, {
+                name: name,
+                properties: worker.properties,
+                index: i
+            })
+            pids.push(worker.process.pid)
+            Monitor(Interrupt, this, worker.process, this._destructible.monitor([ 'child', name, i ]))
+        }
+        this._created(workers, name, worker.properties, pids)
+    }
 })
 
 module.exports = function (destructible, socketPath, callback) {
