@@ -16,7 +16,7 @@ Transmitter.prototype.ready = function () {
 }
 
 Transmitter.prototype.kibitz = function (address, message, handle) {
-    this._supervisor.kibitz(address,  message, handle)
+    this._supervisor.kibitz(address, message, handle)
 }
 
 module.exports = Transmitter

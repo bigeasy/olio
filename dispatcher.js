@@ -10,7 +10,6 @@ var Cubbyhole = require('cubbyhole')
 var Conduit = require('conduit')
 
 function Dispatcher (destructible, transmitter, callback) {
-    console.log('--- builder ---')
     this._ready = new Signal
     this._ready.wait(callback)
     this.transmitter = transmitter
@@ -37,10 +36,9 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
 
 Dispatcher.prototype.dispatch = cadence(function (async, envelope) {
     var message = envelope.message, socket = envelope.socket
-    console.log('got', message, socket)
+    console.log('got', message, !! socket)
     switch (message.method) {
     case 'initialize':
-        console.log(message)
         this._ready.unlatch(null, this._createBinder(this, message), message.properties)
         break
     case 'connect':
@@ -58,6 +56,5 @@ Dispatcher.prototype.dispatch = cadence(function (async, envelope) {
 })
 
 module.exports = cadence(function (async, destructible, transmitter) {
-    console.log('--- xxx ---')
     new Dispatcher(destructible, transmitter, async())
 })

@@ -1,4 +1,4 @@
-require('proof')(1, prove)
+require('proof')(4, prove)
 
 function prove (okay, callback) {
     var path = require('path')
@@ -6,6 +6,9 @@ function prove (okay, callback) {
     var Listener = require('../listener')
 
     var socketPath = path.join(__dirname, 'socket')
+
+    var UserAgent = require('vizsla')
+    var ua = new UserAgent
 
     var Destructible = require('destructible')
     var destructible = new Destructible('destructible')
@@ -64,11 +67,30 @@ function prove (okay, callback) {
             }, function () {
                 listener.spawn(configuration, async())
             }, function () {
-                async(function () {
-                    setTimeout(async(), 1000)
-                }, function () {
-                    destructible.destroy()
-                })
+                ua.fetch({
+                    url: '/',
+                    socketPath: './t/socket',
+                    parse: 'text',
+                    raise: true
+                }, async())
+            }, function (body, response) {
+                okay(body, 'Olio Listener API\n', 'index')
+                setTimeout(async(), 1000)
+            }, function () {
+                ua.fetch({
+                    url: 'http://127.0.0.1:8888/worker/0/conduit',
+                    parse: 'json',
+                    post: {}
+                }, async())
+            }, function (body, response) {
+                okay(body, 1, 'conduit')
+                ua.fetch({
+                    url: 'http://127.0.0.1:8888/worker/0/ipc',
+                    parse: 'json',
+                    post: {}
+                }, async())
+            }, function (body, response) {
+                okay(body, 0, 'ipc')
             })
         })
     })(destructible.monitor('test'))

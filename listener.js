@@ -59,8 +59,9 @@ Listener.prototype.socket = function (request, socket) {
             index: +request.headers['x-olio-from-index']
         }
     }
+    console.log(this._children[message.to.name])
     var path = this._children[message.to.name].paths[message.to.index]
-    descendent.down(path, 'olio:message', message, socket)
+    descendent.down(path, 'olio:operate', message, socket)
 }
 
 Listener.prototype.index = cadence(function (async) {
@@ -80,6 +81,7 @@ Listener.prototype._created = function (count, name, properties, pids) {
 
 Listener.prototype._register = function (message) {
     var name = message.cookie.name, index = message.cookie.index
+    this._children[name].paths[index] = message.from
     this._registrator.register(name, index, message.from)
 }
 
@@ -88,29 +90,10 @@ Listener.prototype.send = function (address, message, socket) {
 }
 
 Listener.prototype._ready = function (message) {
-    var child = this._children[message.cookie.name]
-    if (++child.ready != child.count) {
-        return
-    }
-    for (var name in this._children) {
-        var sibling = this._children[name]
-        if (name != message.cookie.name) {
-            sibling.paths.forEach(function (path, index) {
-                descendent.down(path, 'olio:message', {
-                    method: 'created',
-                    socketPath: this._socketPath,
-                    name: message.cookie.name,
-                    paths: child.paths,
-                    count: child.count,
-                    argv: child.argv
-                })
-            }, this)
-        }
-    }
+    this._registrator.ready(message.cookie.name)
 }
 
 Listener.prototype.spawn = cadence(function (async, configuration) {
-        console.log('--- xxx ---')
     var executable = path.join(__dirname, 'child.js')
     for (var name in configuration.children) {
         var config = configuration.children[name]
@@ -121,11 +104,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
         for (var i = 0; i < workers; i++) {
             var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
             this._destructible.destruct.wait(worker, 'kill')
-            descendent.addChild(worker.process, {
-                name: name,
-                properties: worker.properties,
-                index: i
-            })
+            descendent.addChild(worker.process, { name: name, index: i })
             pids.push(worker.process.pid)
             Monitor(Interrupt, this, worker.process, this._destructible.monitor([ 'child', name, i ]))
         }

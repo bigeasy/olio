@@ -26,22 +26,21 @@ Descendent.prototype.ready = function () {
 }
 
 Descendent.prototype._child = function (message, handle) {
-    console.log(message, handle)
-    this.messages.parent.push({ message: message.body, handle: handle })
+    this.messages.parent.push({ message: message.body, socket: handle })
 }
 
-Descendent.prototype._sibling = function (message, handle) {
-    this.messages.sibling.push({ message: message, handle: handle })
-}
-
-Descendent.prototype.send = function (sibling, index, message, handle) {
-    descendent.up(sibling.paths[index], 'olio:message', message, handle)
-}
-
-Descendent.prototype.broadcast = function (sibling, message) {
-    sibling.paths.forEach(function (path) {
-        descendent.up(sibling.paths[index], 'olio:message', message)
+Descendent.prototype._sibling = function (message, socket) {
+    console.log('MADE IT!')
+    this.messages.siblings.push({
+        to: message.body.to,
+        from: message.body.from,
+        body: message.body.body,
+        socket: coalesce(socket)
     })
+}
+
+Descendent.prototype.kibitz = function (address, message, handle) {
+    descendent.up(address, 'olio:message', message, handle)
 }
 
 module.exports = Descendent

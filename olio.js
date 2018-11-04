@@ -54,13 +54,15 @@ function Olio (destructible, dispatcher, binder) {
     this.messages = dispatcher.transmitter.messages.siblings
 
     this._transmitter = dispatcher.transmitter
-    this._transmitter.ready(this.name, this.index)
+    this._transmitter.ready()
 }
 
 Olio.prototype.send = cadence(function (async, name, index, message, handle) {
     async(function () {
+        console.log('getting sibling', name)
         this.sibling(name, async())
     }, function (sibling) {
+        console.log('no error???')
         this._transmitter.kibitz(sibling.addresses[index], {
             to: { name: name, index: index },
             from: { name: this.name, index: this.index },

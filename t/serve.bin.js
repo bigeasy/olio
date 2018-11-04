@@ -18,6 +18,7 @@ module.exports = cadence(function (async, destructible, binder) {
                 })
             }), async())
         }, function (caller) {
+        console.log('got CALLER!!!!')
             var reactor = new Reactor({
                 sequence: 0,
                 conduit: cadence(function (async, request, index) {
@@ -32,6 +33,7 @@ module.exports = cadence(function (async, destructible, binder) {
                 }),
                 message: cadence(function (async, request, index) {
                     async(function () {
+                    console.log('ipc called!!!!!')
                         var shifter = olio.messages.shifter(), sequence = this.sequence++
                         async(function () {
                             olio.send('run', +index, { method: 'send', sequence: sequence }, async())
