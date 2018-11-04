@@ -99,7 +99,6 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
                 'x-olio-from-index': this.index
             })
         })
-        request.on('error', function () {})
         delta(async()).ee(request).on('upgrade')
         request.end()
     }, function (request, socket, head) {
