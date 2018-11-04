@@ -6,9 +6,7 @@ function prove (okay, callback) {
 
     destructible.completed.wait(callback)
 
-    var Olio = require('..')
-
-    var bin = require('../listen.bin')
+    var bin = require('../olio.bin')
     var fs = require('fs')
 
     try {
