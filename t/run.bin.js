@@ -16,7 +16,6 @@ var Procedure = require('conduit/procedure')
 module.exports = cadence(function (async, destructible, binder) {
     async(function () {
         binder.listen(cadence(function (async, destructible, name, index) {
-            console.log('is buildering!!!!!!!!!')
             destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
                 console.log(envelope)
                 return [ 1 ]
@@ -28,6 +27,11 @@ module.exports = cadence(function (async, destructible, binder) {
             return procedure
         }), async())
     }, function (olio) {
+        olio.messages.pump(function (envelope) {
+            if (envelope != null && envelope.method == 'send') {
+                olio.broadcast('serve', { method: 'broadcast' })
+            }
+        }, destructible.monitor('messages'))
         return null
     })
 })

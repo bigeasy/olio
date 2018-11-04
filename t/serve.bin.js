@@ -7,6 +7,7 @@ module.exports = cadence(function (async, destructible, binder) {
     var Reactor = require('reactor')
     var Caller = require('conduit/caller')
     var reactor = new Reactor({
+        sequence: 0,
         echo: cadence(function (async, request, index) {
             async(function () {
                 olio.sender('run', +index).invoke({
@@ -14,7 +15,20 @@ module.exports = cadence(function (async, destructible, binder) {
                     body: request.body
                 }, async())
             }, function (response) {
-                console.log(response)
+                return response
+            })
+        }),
+        message: cadence(function (async, request, index) {
+            async(function () {
+                var shifter = olio.messages.shifter(), sequence = this.sequence++
+                async(function () {
+                    olio.send('run', +index, { method: 'send', sequence: sequence }, async())
+                }, function () {
+                    shifter.join(function (message) {
+                        return message.sequence = sequence
+                    }, async())
+                })
+            }, function (response) {
                 return response
             })
         }),
@@ -24,6 +38,7 @@ module.exports = cadence(function (async, destructible, binder) {
     }, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
         dispatcher.dispatch('POST /worker/:id/echo', 'echo')
+        dispatcher.dispatch('POST /worker/:id/message', 'message')
         dispatcher.logger = function (entry) {
             console.log(entry)
         }
@@ -48,8 +63,6 @@ module.exports = cadence(function (async, destructible, binder) {
         }, function () {
             delta(destructible.monitor('http')).ee(server).on('close')
             server.on('close', function () { console.log('closing!!!') })
-        }, function () {
-            console.log('-------> listening!!!')
         })
     })
 })
