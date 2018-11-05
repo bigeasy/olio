@@ -18,7 +18,7 @@ function prove (async, okay) {
             ready.wait(async())
             descendent.across('olio:operate', {
                 method: 'initialize',
-                properties: { path: 't/child', properties: {} },
+                properties: { path: 't/child.bin', properties: {} },
                 index: 0
             })
         })
