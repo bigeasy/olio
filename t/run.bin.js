@@ -28,11 +28,14 @@ module.exports = cadence(function (async, destructible, binder) {
         }), async())
     }, function (olio) {
         var messages = olio.messages.pump(function (envelope) {
+            if (envelope == null) {
+                return
+            }
             console.log(envelope)
             if (envelope.body.method == 'send') {
                 olio.broadcast('serve', { method: 'broadcast', sequence: envelope.body.sequence }, async())
             }
-        }, destructible.monitor('messages'))
+        }).run(destructible.monitor('messages'))
         destructible.destruct.wait(messages, 'destroy')
         return null
     })

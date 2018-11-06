@@ -13,7 +13,7 @@ function Dispatcher (destructible, transmitter, callback) {
     this._ready = new Signal
     this._ready.wait(callback)
     this.transmitter = transmitter
-    var messages = this.transmitter.messages.parent.pump(this, 'dispatch', destructible.monitor('messages'))
+    var messages = this.transmitter.messages.parent.pump(this, 'dispatch').run(destructible.monitor('messages'))
     destructible.destruct.wait(messages, 'destroy')
     this.destructible = destructible
     this.siblings = new Cubbyhole
@@ -35,6 +35,9 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
 })
 
 Dispatcher.prototype.dispatch = cadence(function (async, envelope) {
+    if (envelope == null) {
+        return
+    }
     var message = envelope.message, socket = envelope.socket
     console.log('got', message, !! socket)
     switch (message.method) {
