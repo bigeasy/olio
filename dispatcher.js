@@ -1,5 +1,6 @@
 var cadence = require('cadence')
 var Signal = require('signal')
+var Socket = require('./socket')
 
 var Binder = require('./binder')
 
@@ -26,11 +27,13 @@ Dispatcher.prototype._createBinder = function (destructible, message) {
 
 Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
     async(function () {
-        destructible.monitor('receiver', this.Receiver, message.from, message.to, async())
-    }, function (receiver) {
-        destructible.monitor('conduit', Conduit, receiver, socket, socket, async())
-    }, function (conduit) {
-        conduit.receiver.outbox.push({ module: 'olio', method: 'connect' })
+        destructible.monitor('socket', Socket, this._name, this._index, socket, socket, async())
+    }, function (inbox, outbox) {
+        async(function () {
+            destructible.monitor('conduit', Conduit, inbox, outbox, this.Receiver, async())
+        }, function (conduit) {
+            outbox.push({ module: 'olio', method: 'connect' })
+        })
     })
 })
 
@@ -42,6 +45,8 @@ Dispatcher.prototype.dispatch = cadence(function (async, envelope) {
     console.log('got', message, !! socket)
     switch (message.method) {
     case 'initialize':
+        this._name = message.name
+        this._index = message.index
         this._ready.unlatch(null, this._createBinder(this, message), message.properties)
         break
     case 'connect':

@@ -4,7 +4,7 @@ var fnv = require('hash.fnv')
 function Sender (receivers, paths, count) {
     this.processes = []
     for (var i = 0; i < count; i++) {
-        this.processes.push({ sender: receivers[i], path: paths[i], index: i })
+        this.processes.push({ conduit: receivers[i], path: paths[i], index: i })
     }
     this.count = count
 }

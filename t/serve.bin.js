@@ -23,10 +23,10 @@ module.exports = cadence(function (async, destructible, binder) {
                 sequence: 0,
                 conduit: cadence(function (async, request, index) {
                     async(function () {
-                        caller.hash(String(index)).sender.invoke({
+                        caller.hash(String(index)).conduit.connect({
                             url: request.url,
                             body: request.body
-                        }, async())
+                        }).inbox.dequeue(async())
                     }, function (response) {
                         return [ 200, { 'content-type': 'application/json' }, response ]
                     })

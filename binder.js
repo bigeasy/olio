@@ -16,8 +16,7 @@ function Binder (distpacher, message) {
 Binder.prototype.listen = cadence(function (async) {
     assert(!this.listening)
     this.listening = true
-    var vargs = Array.prototype.slice.call(arguments, 1)
-    this._dispatcher.Receiver = vargs[0] == null ? vargs.shift() : new Operation(vargs)
+    this._dispatcher.Receiver = Array.prototype.slice.call(arguments, 1)
     this._dispatcher.destructible.monitor('olio', Olio, this._dispatcher, this, async())
 })
 

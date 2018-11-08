@@ -15,16 +15,8 @@ var Procedure = require('conduit/procedure')
 // server. Could pass in a builder.
 module.exports = cadence(function (async, destructible, binder) {
     async(function () {
-        binder.listen(cadence(function (async, destructible, name, index) {
-            destructible.monitor('procedure', Procedure, cadence(function (async, envelope) {
-                console.log(envelope)
-                return [ 1 ]
-            }), async())
-        }, function (procedure) {
-            // TODO Figure out how to tier your shutdowns for Node.js 6.
-            destructible.destruct.wait(procedure.outbox, 'end')
-            procedure.eos.wait(procedure.outbox, 'end')
-            return procedure
+        binder.listen(cadence(function (async, request, inbox, outbox) {
+            return [ 1 ]
         }), async())
     }, function (olio) {
         var messages = olio.messages.pump(function (envelope) {

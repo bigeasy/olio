@@ -38,6 +38,8 @@ var delta = require('delta')
 
 var Conduit = require('conduit')
 
+var Socket = require('./socket')
+
 function Olio (destructible, dispatcher, binder) {
     this.destroyed = false
 
@@ -91,6 +93,7 @@ Olio.prototype.sibling = cadence(function (async, name) {
 
 Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
     async(function () {
+            console.log('here', message.name, index)
         var request = http.request({
             socketPath: this.socket,
             url: 'http://olio/',
@@ -105,36 +108,31 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         request.end()
     }, function (request, socket, head) {
         async(function () {
-            destructible.monitor('receiver', Receiver, index, async())
-        }, function (receiver) {
-            var sip = {
-                outbox: receiver.outbox,
-                inbox: new Procession
-            }
-            var shifter = sip.inbox.shifter()
+            destructible.monitor('socket', Socket, this.name, this.index, socket, socket, head, async())
+        }, function (inbox, outbox) {
+            var shifter = inbox.shifter()
             async(function () {
-                destructible.monitor('conduit', Conduit, sip, socket, socket, head, async())
+                destructible.monitor('conduit', Conduit, inbox, outbox, Receiver, async())
             }, function (conduit) {
                 async(function () {
                     shifter.dequeue(async())
                 }, function (header) {
                     Interrupt.assert(header.module == 'olio' && header.method == 'connect', 'failed to start middleware')
                     Interrupt.assert(shifter.shift() == null, 'unexpected traffic on connect')
-                    conduit.receiver = receiver
                     // Do we do this or do we register an end to pumping instead? It
                     // would depend on how we feal about ending a Conduit. I do
                     // believe it pushed out a `null` to indicate that the stream
                     // has closed. A Window would look for this and wait for
                     // restart. The Window needs to be closed explicity.
+                    return [ conduit ]
                 })
-            }, function() {
-                return [ receiver ]
             })
         })
     })
 })
 
-Olio.prototype.sender = cadence(function (async, name, Receiver) {
+Olio.prototype.sender = cadence(function (async, name) {
+    var vargs = Array.prototype.slice.call(arguments, 2)
     async(function () {
         this.sibling(name, async())
     }, function (sibling) {
@@ -145,7 +143,7 @@ Olio.prototype.sender = cadence(function (async, name, Receiver) {
                     return [ loop.break ]
                 }
                 // TODO `message.name` instead.
-                this._destructible.monitor([ 'created', sibling.name, i ], this, '_createSender', Receiver, sibling, i, async())
+                this._destructible.monitor([ 'created', sibling.name, i ], this, '_createSender', vargs, sibling, i, async())
             }, function (receiver) {
                 receivers[i++] = receiver
             })()
