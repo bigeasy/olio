@@ -1,6 +1,7 @@
 var cadence = require('cadence')
 var http = require('http')
 var delta = require('delta')
+var Conduit = require('conduit/conduit')
 
 module.exports = cadence(function (async, destructible, binder) {
     var logger = require('prolific.logger').createLogger('olio.http')
@@ -10,12 +11,8 @@ module.exports = cadence(function (async, destructible, binder) {
         binder.listen(null, async())
     }, function (olio) {
         async(function () {
-            olio.sender('run', cadence(function (async, destructible) {
-                async(function () {
-                    destructible.monitor('caller', Caller, async())
-                }, function (caller) {
-                    destructible.destruct.wait(caller.outbox, 'end')
-                })
+            olio.sender('run', cadence(function (async, destructible, inbox, outbox) {
+                destructible.monitor('conduit', Conduit, inbox, outbox, null, async())
             }), async())
         }, function (caller) {
         console.log('got CALLER!!!!')

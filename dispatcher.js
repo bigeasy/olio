@@ -30,7 +30,7 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
         destructible.monitor('socket', Socket, this._name, this._index, socket, socket, async())
     }, function (inbox, outbox) {
         async(function () {
-            destructible.monitor('conduit', Conduit, inbox, outbox, this.Receiver, async())
+            destructible.monitor('receiver', this.Receiver, inbox, outbox, async())
         }, function (conduit) {
             outbox.push({ module: 'olio', method: 'connect' })
         })

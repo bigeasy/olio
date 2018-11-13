@@ -1,5 +1,5 @@
 var cadence = require('cadence')
-var Procedure = require('conduit/procedure')
+var Conduit = require('conduit/conduit')
 
 // TODO No, we do not wait for all message to complete before exit, we just
 // exit, that's where we're at. Or maybe, it is always the client that hangs up
@@ -15,8 +15,10 @@ var Procedure = require('conduit/procedure')
 // server. Could pass in a builder.
 module.exports = cadence(function (async, destructible, binder) {
     async(function () {
-        binder.listen(cadence(function (async, request, inbox, outbox) {
-            return [ 1 ]
+        binder.listen(cadence(function (async, destructible, inbox, outbox) {
+            destructible.monitor('conduit', Conduit, inbox, outbox, cadence(function (async, request, inbox, outbox) {
+                return [ 1 ]
+            }), async())
         }), async())
     }, function (olio) {
         var messages = olio.messages.pump(function (envelope) {

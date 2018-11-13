@@ -93,7 +93,6 @@ Olio.prototype.sibling = cadence(function (async, name) {
 
 Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
     async(function () {
-            console.log('here', message.name, index)
         var request = http.request({
             socketPath: this.socket,
             url: 'http://olio/',
@@ -112,7 +111,7 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         }, function (inbox, outbox) {
             var shifter = inbox.shifter()
             async(function () {
-                destructible.monitor('conduit', Conduit, inbox, outbox, Receiver, async())
+                destructible.monitor('receiver', Receiver, inbox, outbox, async())
             }, function (conduit) {
                 async(function () {
                     shifter.dequeue(async())
