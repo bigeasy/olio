@@ -80,6 +80,7 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
         var config = configuration.children[name]
         var workers = coalesce(config.workers, 1)
         this._children[name] = []
+        created[name] = []
         var index = 0
         var Child = Resolve(config, require)
         var loop = async(function () {
@@ -93,7 +94,8 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
             }, function (binder, configuration) {
                 destructible.monitor([ 'child', binder.name, binder.index ], Child, binder, configuration, async())
             }, function (child) {
-                created[index++] = coalesce(child)
+                created[name][index] = coalesce(child)
+                index++
             })
         })()
     })(Object.keys(configuration.children))
