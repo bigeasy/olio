@@ -12,7 +12,6 @@ Run.prototype.connect = cadence(function (async, destructible, inbox, outbox) {
 })
 
 Run.prototype.message = cadence(function (async, envelope) {
-    console.log('!', envelope)
     if (envelope.body.method == 'send') {
         this._olio.broadcast('serve', { method: 'broadcast', sequence: envelope.body.sequence }, async())
     }
@@ -35,5 +34,6 @@ Run.prototype.reconfigure = cadence(function () {
 // constructed with a listener builder as an argument if it was going to be a
 // server. Could pass in a builder.
 module.exports = cadence(function (async, destructible, olio) {
+    console.log('RUN CALLED')
     return new Run(olio)
 })

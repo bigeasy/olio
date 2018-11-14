@@ -73,33 +73,35 @@ Mock.prototype.ready = function (name, index) {
     this._registrator.ready(name)
 }
 
+Mock.prototype._spawn = cadence(function (async, destructible, Child, name, index, configuration, created) {
+    var transmitter = new Transmitter(this, name, index)
+    this._children[name][index] = { messages: transmitter.messages }
+    async(function () {
+        destructible.monitor('dispatcher', Dispatcher, transmitter, async())
+    }, function (dispatcher, olio, configuration) {
+        async(function () {
+            destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
+        }, function (child) {
+            transmitter.ready()
+            dispatcher.receiver = child
+            created[name][index] = coalesce(child)
+            index++
+        })
+    })
+})
+
 Mock.prototype.spawn = cadence(function (async, destructible, configuration, created) {
-    async.forEach(function (name) {
+    for (var name in configuration.children) {
         var config = configuration.children[name]
         var workers = coalesce(config.workers, 1)
         this._children[name] = []
         created[name] = []
         var index = 0
         var Child = Resolve(config, require)
-        var loop = async(function () {
-            if (index == workers) {
-                return [ loop.break ]
-            }
-            var transmitter = new Transmitter(this, name, index)
-            this._children[name][index] = { messages: transmitter.messages }
-            async(function () {
-                destructible.monitor('dispatcher', Dispatcher, transmitter, async())
-            }, function (dispatcher, olio, configuration) {
-                async(function () {
-                    destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
-                }, function (child) {
-                    transmitter.ready()
-                    dispatcher.receiver = created[name][index] = coalesce(child)
-                    index++
-                })
-            })
-        })()
-    })(Object.keys(configuration.children))
+        for (var index = 0; index < workers; index++) {
+            destructible.monitor([ 'child', name, index ], this, '_spawn', Child, name, index, configuration, created, async())
+        }
+    }
 })
 
 var http = require('http')
