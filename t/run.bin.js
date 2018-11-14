@@ -1,6 +1,27 @@
 var cadence = require('cadence')
 var Conduit = require('conduit/conduit')
 
+function Run (olio) {
+    this._olio = olio
+}
+
+Run.prototype.connect = cadence(function (async, destructible, inbox, outbox) {
+    destructible.monitor('conduit', Conduit, inbox, outbox, cadence(function (async, request, inbox, outbox) {
+        return [ 1 ]
+    }), async())
+})
+
+Run.prototype.message = cadence(function (async, envelope) {
+    console.log('!', envelope)
+    if (envelope.body.method == 'send') {
+        this._olio.broadcast('serve', { method: 'broadcast', sequence: envelope.body.sequence }, async())
+    }
+})
+
+Run.prototype.reconfigure = cadence(function () {
+    // TODO Someday.
+})
+
 // TODO No, we do not wait for all message to complete before exit, we just
 // exit, that's where we're at. Or maybe, it is always the client that hangs up
 // on the server and we're bi-directional then all the hangups will wind down a
@@ -13,24 +34,6 @@ var Conduit = require('conduit/conduit')
 // can create a sender on itself. We kind of had this apparent when Olio was
 // constructed with a listener builder as an argument if it was going to be a
 // server. Could pass in a builder.
-module.exports = cadence(function (async, destructible, binder) {
-    async(function () {
-        binder.listen(cadence(function (async, destructible, inbox, outbox) {
-            destructible.monitor('conduit', Conduit, inbox, outbox, cadence(function (async, request, inbox, outbox) {
-                return [ 1 ]
-            }), async())
-        }), async())
-    }, function (olio) {
-        var messages = olio.messages.pump(function (envelope) {
-            if (envelope == null) {
-                return
-            }
-            console.log(envelope)
-            if (envelope.body.method == 'send') {
-                olio.broadcast('serve', { method: 'broadcast', sequence: envelope.body.sequence }, async())
-            }
-        }).run(destructible.monitor('messages'))
-        destructible.destruct.wait(messages, 'destroy')
-        return null
-    })
+module.exports = cadence(function (async, destructible, olio) {
+    return new Run(olio)
 })

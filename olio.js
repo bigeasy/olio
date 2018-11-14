@@ -40,7 +40,7 @@ var Conduit = require('conduit')
 
 var Socket = require('./socket')
 
-function Olio (destructible, dispatcher, binder) {
+function Olio (destructible, dispatcher, message) {
     this.destroyed = false
 
     this._destructible = destructible
@@ -48,15 +48,12 @@ function Olio (destructible, dispatcher, binder) {
 
     this._siblings = dispatcher.siblings
 
-    this.name = binder.name
-    this.index = binder.index
-    this.address = binder.address
-    this.socket = binder.socket
-
-    this.messages = dispatcher.transmitter.messages.siblings
+    this.name = message.name
+    this.index = message.index
+    this.address = message.address
+    this.socket = message.socket
 
     this._transmitter = dispatcher.transmitter
-    this._transmitter.ready()
 }
 
 Olio.prototype.send = cadence(function (async, name, index, message, handle) {
@@ -175,6 +172,6 @@ Olio.prototype.sender = cadence(function (async, name) {
 
 //
 
-module.exports = cadence(function (async, destructible, dispatcher, binder) {
-    return new Olio(destructible, dispatcher, binder)
+module.exports = cadence(function (async, destructible, dispatcher, message) {
+    return new Olio(destructible, dispatcher, message)
 })

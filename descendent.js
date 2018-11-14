@@ -30,7 +30,6 @@ Descendent.prototype._child = function (message, handle) {
 }
 
 Descendent.prototype._sibling = function (message, socket) {
-    console.log('MADE IT!')
     this.messages.siblings.push({
         to: message.body.to,
         from: message.body.from,

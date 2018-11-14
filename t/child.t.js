@@ -4,6 +4,7 @@ function prove (async, okay) {
     var descendent = require('foremost')('descendent')
     var Signal = require('signal')
     var ready = new Signal()
+    var messaged = new Signal()
     var expected = [function (message) {
         okay(message, {
             module: 'descendent',
@@ -22,6 +23,11 @@ function prove (async, okay) {
             path: [ 2 ],
             body: {}
         }, 'ready')
+        descendent.across('olio:message', {
+            to: { name: 'run', index: 0 },
+            from: { name: 'run', index: 0 },
+            body: { sequence: 0 }
+        })
     }, function (message) {
         okay(message, {
             module: 'descendent',
@@ -35,11 +41,7 @@ function prove (async, okay) {
                 body: { sequence: 0 }
             }
         }, 'kibitz')
-        descendent.across('olio:message', {
-            to: { name: 'run', index: 0 },
-            from: { name: 'run', index: 0 },
-            body: { sequence: 0 }
-        })
+        messaged.unlatch()
     }]
     descendent.on('olio:mock', function () { ready.unlatch() })
     var destructible
@@ -70,6 +72,8 @@ function prove (async, okay) {
                 count: 1
             })
         })
+    }, function () {
+        messaged.wait(async())
     }, function () {
         destructible.completed.wait(async())
         process.emit('SIGTERM')

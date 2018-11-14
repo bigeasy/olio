@@ -17,8 +17,6 @@ var coalesce = require('extant')
 
 var Dispatcher = require('./dispatcher')
 
-var descendent = require('foremost')('descendent')
-
 // Exceptions that you can catch by type.
 var Interrupt = require('interrupt').createInterrupter('subordinate')
 
@@ -91,11 +89,14 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
             this._children[name][index] = { messages: transmitter.messages }
             async(function () {
                 destructible.monitor('dispatcher', Dispatcher, transmitter, async())
-            }, function (binder, configuration) {
-                destructible.monitor([ 'child', binder.name, binder.index ], Child, binder, configuration, async())
-            }, function (child) {
-                created[name][index] = coalesce(child)
-                index++
+            }, function (dispatcher, olio, configuration) {
+                async(function () {
+                    destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
+                }, function (child) {
+                    transmitter.ready()
+                    dispatcher.receiver = created[name][index] = coalesce(child)
+                    index++
+                })
             })
         })()
     })(Object.keys(configuration.children))

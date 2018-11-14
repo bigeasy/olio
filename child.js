@@ -32,13 +32,18 @@ var cadence = require('cadence')
 cadence(function (async) {
     async(function () {
         destructible.monitor('dispatcher', Dispatcher, transmitter, async())
-    }, function (binder, configuration) {
-        require('prolific.sink').properties.olio = { name: binder.name, index: binder.index }
-        function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
-        memoryUsage()
-        setInterval(memoryUsage, 5000).unref()
-        var Child = Resolve(configuration, require)
-        destructible.monitor([ 'child', binder.name, binder.index ], Child, binder, configuration, async())
+    }, function (dispatcher, olio, configuration) {
+        async(function () {
+            require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
+            function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
+            memoryUsage()
+            setInterval(memoryUsage, 5000).unref()
+            var Child = Resolve(configuration, require)
+            destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
+        }, function (receiver) {
+            dispatcher.receiver = receiver
+            transmitter.ready()
+        })
     })
 })(destructible.monitor('initialize', true))
 
