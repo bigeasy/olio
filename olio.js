@@ -38,7 +38,9 @@ var delta = require('delta')
 
 var Conduit = require('conduit')
 
-var Socket = require('./socket')
+var Staccato = require('staccato')
+
+var Socket = require('procession/socket')(require('./hangup'))
 
 function Olio (destructible, dispatcher, message) {
     this.destroyed = false
@@ -104,7 +106,13 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         request.end()
     }, function (request, socket, head) {
         async(function () {
-            destructible.monitor('socket', Socket, this.name, this.index, socket, socket, head, async())
+            var readable = new Staccato.Readable(socket)
+            var writable = new Staccato.Writable(socket)
+            destructible.monitor('socket', Socket, {
+                label: 'sender',
+                from: { name: this.name, index: this.index },
+                to: { name: message.name, index: index }
+            }, readable, writable, head, async())
         }, function (inbox, outbox) {
             var shifter = inbox.shifter()
             async(function () {

@@ -1,7 +1,5 @@
 var cadence = require('cadence')
 var Signal = require('signal')
-var Socket = require('./socket')
-
 var Procession = require('procession')
 
 var Cubbyhole = require('cubbyhole')
@@ -9,6 +7,12 @@ var Cubbyhole = require('cubbyhole')
 var Conduit = require('conduit')
 
 var Olio = require('./olio')
+
+var Staccato = require('staccato')
+
+var logger = require('prolific.logger').createLogger('olio')
+
+var Socket = require('procession/socket')(require('./hangup'))
 
 function Dispatcher (destructible, transmitter, callback) {
     this._ready = new Signal
@@ -29,7 +33,9 @@ Dispatcher.prototype._sibling = cadence(function (async, envelope) {
 
 Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
     async(function () {
-        destructible.monitor('socket', Socket, this._name, this._index, socket, socket, async())
+        var readable = new Staccato.Readable(socket)
+        var writable = new Staccato.Writable(socket)
+        destructible.monitor('socket', Socket, { label: 'receiver', message: message }, readable, writable, async())
     }, function (inbox, outbox) {
         async(function () {
             destructible.monitor('receiver', this.receiver, 'connect', inbox, outbox, async())
