@@ -10,9 +10,9 @@ function prove (okay) {
             label: label,
             entry: entry
         }, {
-            level: level,
-            qualifier: qualifier,
-            label: label,
+            level: 'error',
+            qualifier: 'olio',
+            label: 'label',
             entry: { label: 'label', value: 1 }
         }, 'error')
     }
