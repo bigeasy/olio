@@ -39,7 +39,7 @@
                             "procession":                   "2.5.x",
                             "reactor":                      "10.9.x",
                             "signal":                       "4.0.x",
-                            "staccato":                     "6.3.x"
+                            "staccato":                     "6.4.x"
     },
     "devDependencies":
     {
