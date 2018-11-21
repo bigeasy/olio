@@ -77,6 +77,8 @@ Mock.prototype._spawn = cadence(function (async, destructible, Child, name, inde
     var transmitter = new Transmitter(this, name, index)
     this._children[name][index] = { messages: transmitter.messages }
     async(function () {
+        setImmediate(async())
+    }, function () {
         destructible.monitor('dispatcher', Dispatcher, transmitter, async())
     }, function (dispatcher, olio, configuration) {
         async(function () {

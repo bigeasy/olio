@@ -50,7 +50,6 @@ Dispatcher.prototype._dispatch = cadence(function (async, envelope) {
         return
     }
     var message = envelope.message, socket = envelope.socket
-    console.log('got', message, !! socket)
     switch (message.method) {
     case 'initialize':
         this._name = message.name
