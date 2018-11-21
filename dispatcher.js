@@ -1,18 +1,14 @@
 var cadence = require('cadence')
+
 var Signal = require('signal')
-var Procession = require('procession')
 
 var Cubbyhole = require('cubbyhole')
 
-var Conduit = require('conduit')
-
-var Olio = require('./olio')
-
 var Staccato = require('staccato')
 
-var logger = require('prolific.logger').createLogger('olio')
-
 var Socket = require('procession/socket')(require('./hangup'))
+
+var Olio = require('./olio')
 
 function Dispatcher (destructible, transmitter, callback) {
     this._ready = new Signal
