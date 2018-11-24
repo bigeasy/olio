@@ -2,6 +2,7 @@ var noop = require('nop')
 var fs = require('fs')
 var abend = require('abend')
 var path = require('path')
+var coalesce = require('extant')
 
 var Destructible = require('destructible')
 var destructible = new Destructible([ 'olio' ])
@@ -9,8 +10,6 @@ var destructible = new Destructible([ 'olio' ])
 var Resolve = require('./resolve')
 
 var Dispatcher = require('./dispatcher')
-
-var Transmitter = require('./descendent')
 
 destructible.completed.wait(abend)
 
@@ -26,13 +25,34 @@ process.on('SIGINT', noop)
 var cadence = require('cadence')
 
 cadence(function (async) {
-    var transmitter = new Transmitter
-    destructible.destruct.wait(transmitter, 'destroy')
+    var descendent = require('foremost')('descendent')
+
+    descendent.increment()
+    destructible.destruct.wait(descendent, 'decrement')
+
     async(function () {
-        destructible.monitor('dispatcher', Dispatcher, transmitter, async())
+        destructible.monitor('dispatcher', Dispatcher, {
+            kibitz: function (address, message, handle) {
+                descendent.up(address, 'olio:message', message, handle)
+            }
+        }, async())
     }, function (dispatcher) {
-        transmitter.dispatcher = dispatcher
-        transmitter.register()
+        function fromParent (message, handle) {
+            dispatcher.fromParent(message.body, handle)
+        }
+        descendent.on('olio:operate', fromParent)
+        function fromSibling (message, handle) {
+            dispatcher.fromSibling(message.body, handle)
+        }
+        descendent.on('olio:message', fromSibling)
+        destructible.completed.wait(function () {
+            descendent.removeListener('olio:operate', fromParent)
+            descendent.removeListener('olio:message', fromSibling)
+        })
+
+        descendent.across('olio:mock', {})
+        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
+
         async(function () {
             dispatcher.ready.wait(async())
         }, function (olio, properties) {
@@ -45,7 +65,7 @@ cadence(function (async) {
                 destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, properties, async())
             }, function (receiver) {
                 dispatcher.receiver = receiver
-                transmitter.ready()
+                descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
             })
         })
     })
