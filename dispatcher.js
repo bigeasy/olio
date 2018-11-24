@@ -52,8 +52,6 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
     } else {
         switch (message.method) {
         case 'initialize':
-            this._name = message.name
-            this._index = message.index
             async(function () {
                 this.destructible.monitor('olio', Olio, this, message, async())
             }, function (olio) {
