@@ -38,5 +38,17 @@ module.exports = cadence(function (async, destructible, olio) {
         olio.broadcast('serve', 'application:response', message)
     })
     console.log('RUN CALLED')
+    destructible.destruct.wait(function () {
+        // This is an example of a test that I know is working only through
+        // coverage. I'd have to add instrumentation to know it worked, also
+        // maybe print my TAP test `ok` directly to standard out here.
+        setImmediate(function () {
+            olio.broadcast('serve', 'application:dropped', {})
+            olio.send('serve', 0, 'application:dropped', {})
+            olio.send('serve', 0, 'application:dropped', {}, {
+                destroy: function () {}
+            })
+        })
+    })
     return new Run(olio)
 })
