@@ -24,8 +24,7 @@ function prove (async, okay) {
             body: {}
         }, 'ready')
         descendent.across('olio:message', {
-            to: { name: 'run', index: 0 },
-            from: { name: 'run', index: 0 },
+            name: 'child:request',
             body: { sequence: 0 }
         })
     }, function (message) {
@@ -36,14 +35,12 @@ function prove (async, okay) {
             to: [ 2 ],
             path: [ 2 ],
             body: {
-                to: { name: 'run', index: 0 },
-                from: { name: 'run', index: 0 },
+                name: 'child:response',
                 body: { sequence: 0 }
             }
         }, 'kibitz')
         messaged.unlatch()
     }]
-    descendent.on('olio:mock', function () { ready.unlatch() })
     var destructible
     async(function () {
         var descendent = require('foremost')('descendent')
@@ -59,6 +56,7 @@ function prove (async, okay) {
             })
             destructible = require('../child').destructible
             ready.wait(async())
+        }, function () {
             descendent.across('olio:operate', {
                 method: 'initialize',
                 name: 'run',

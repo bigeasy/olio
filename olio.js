@@ -42,6 +42,12 @@ var Staccato = require('staccato')
 
 var Socket = require('procession/socket')(require('./hangup'))
 
+var Turnstile = require('turnstile/redux')
+var restrictor = require('restrictor')
+
+var events = require('events')
+var util = require('util')
+
 function Olio (destructible, dispatcher, message) {
     this.destroyed = false
 
@@ -56,35 +62,56 @@ function Olio (destructible, dispatcher, message) {
     this.socket = message.socket
 
     this._transmitter = dispatcher.transmitter
+
+    this.turnstile = new Turnstile
+    this.turnstile.listen(destructible.monitor('turnstile'))
+    destructible.destruct.wait(this.turnstile, 'destroy')
+
+    events.EventEmitter.call(this)
 }
+util.inherits(Olio, events.EventEmitter)
 
-Olio.prototype.send = cadence(function (async, name, index, message, handle) {
-    async(function () {
-        console.log(name)
-        this.sibling(name, async())
-    }, function (sibling) {
-        console.log(sibling, name)
-        this._transmitter.kibitz(sibling.addresses[index], {
-            to: { name: name, index: index },
-            from: { name: this.name, index: this.index },
-            body: message
-        }, coalesce(handle))
-    })
-})
-
-Olio.prototype.broadcast = cadence(function (async, name, message) {
-    async(function () {
-        this.sibling(name, async())
-    }, function (sibling) {
-        sibling.addresses.forEach(function (address, index) {
-            this._transmitter.kibitz(address, {
-                to: { name: sibling.name, index: index },
-                from: { name: this.name, index: this.index },
+Olio.prototype.send = restrictor.push(cadence(function (async, envelope) {
+    var to = {
+        name: envelope.body.shift(),
+        index: envelope.body.shift()
+    }
+    var name = envelope.body.shift()
+    var message = envelope.body.shift()
+    var handle = coalesce(envelope.body.shift())
+    if (envelope.canceled) {
+        if (handle != null) {
+            handle.destroy()
+        }
+    } else {
+        async(function () {
+            this.sibling(to.name, async())
+        }, function (sibling) {
+            this._transmitter.kibitz(sibling.addresses[to.index], {
+                name: name,
                 body: message
-            }, null)
-        }, this)
-    })
-})
+            }, coalesce(handle))
+        })
+    }
+}))
+
+Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
+    if (!envelope.canceled) {
+        var to = { name: envelope.body.shift() }
+        var name = envelope.body.shift()
+        var message = envelope.body.shift()
+        async(function () {
+            this.sibling(to.name, async())
+        }, function (sibling) {
+            sibling.addresses.forEach(function (address, index) {
+                this._transmitter.kibitz(address, {
+                    name: name,
+                    body: message
+                }, null)
+            }, this)
+        })
+    }
+}))
 
 Olio.prototype.sibling = cadence(function (async, name) {
     this._siblings.wait(name, async())

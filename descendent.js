@@ -7,6 +7,7 @@ function Descendent () {
     this.messages = { parent: new Procession, siblings: new Procession }
     this._listeners = { parent: this._child.bind(this), sibling: this._sibling.bind(this) }
     descendent.across('olio:mock', {})
+    // TODO Rename `olio:parent` and `olio:sibling`.
     descendent.on('olio:operate', this._listeners.parent)
     descendent.on('olio:message', this._listeners.sibling)
 }
@@ -26,16 +27,11 @@ Descendent.prototype.ready = function () {
 }
 
 Descendent.prototype._child = function (message, handle) {
-    this.messages.parent.push({ message: message.body, socket: handle })
+    this.dispatcher.fromParent(message.body, handle)
 }
 
-Descendent.prototype._sibling = function (message, socket) {
-    this.messages.siblings.push({
-        to: message.body.to,
-        from: message.body.from,
-        body: message.body.body,
-        socket: coalesce(socket)
-    })
+Descendent.prototype._sibling = function (message, handle) {
+    this.dispatcher.fromSibling(message.body, handle)
 }
 
 Descendent.prototype.kibitz = function (address, message, handle) {

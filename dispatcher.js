@@ -10,22 +10,24 @@ var Socket = require('procession/socket')(require('./hangup'))
 
 var Olio = require('./olio')
 
-function Dispatcher (destructible, transmitter, callback) {
-    this._ready = new Signal
-    this._ready.wait(callback)
+var Turnstile = require('turnstile/redux')
+var restrictor = require('restrictor')
+
+function Dispatcher (destructible, transmitter) {
+    this.ready = new Signal
     this.transmitter = transmitter
-    destructible.monitor('messages', transmitter.messages.parent.pump(this, '_dispatch'), 'destructible', null)
-    destructible.monitor('siblings', transmitter.messages.siblings.pump(this, '_sibling'), 'destructible', null)
     this.destructible = destructible
     this.siblings = new Cubbyhole
-    this.transmitter.register()
+
+    this.turnstile = new Turnstile
+
+    this.turnstile.listen(destructible.monitor('turnstile'))
+    destructible.destruct.wait(this.turnstile, 'destroy')
 }
 
-Dispatcher.prototype._sibling = cadence(function (async, envelope) {
-    if (envelope != null) {
-        this.receiver.message(envelope, async())
-    }
-})
+Dispatcher.prototype.fromSibling = function (message, socket) {
+    this._olio.emit(message.name, message.body, socket)
+}
 
 Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
     async(function () {
@@ -41,35 +43,39 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
     })
 })
 
-Dispatcher.prototype._dispatch = cadence(function (async, envelope) {
-    if (envelope == null) {
-        return
+Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envelope) {
+    var message = envelope.body.shift(), socket = envelope.body.shift()
+    if (envelope.canceled) {
+        if (socket != null) {
+            socket.destroy()
+        }
+    } else {
+        switch (message.method) {
+        case 'initialize':
+            this._name = message.name
+            this._index = message.index
+            async(function () {
+                this.destructible.monitor('olio', Olio, this, message, async())
+            }, function (olio) {
+                this._olio = olio
+                this.ready.unlatch(null, olio, message.properties)
+            })
+            break
+        case 'connect':
+            // TODO This is also swallowing errors somehow.
+            this.destructible.monitor([ 'receiver', message ], this, '_createReceiver', message, socket, async())
+            break
+        case 'created':
+            this.siblings.set(message.name, null, {
+                name: message.name,
+                addresses: message.addresses,
+                count: message.count
+            })
+            break
+        }
     }
-    var message = envelope.message, socket = envelope.socket
-    switch (message.method) {
-    case 'initialize':
-        this._name = message.name
-        this._index = message.index
-        async(function () {
-            this.destructible.monitor('olio', Olio, this, message, async())
-        }, function (olio) {
-            this._ready.unlatch(null, this, olio, message.properties)
-        })
-        break
-    case 'connect':
-        // TODO This is also swallowing errors somehow.
-        this.destructible.monitor([ 'receiver', message ], this, '_createReceiver', message, socket, async())
-        break
-    case 'created':
-        this.siblings.set(message.name, null, {
-            name: message.name,
-            addresses: message.addresses,
-            count: message.count
-        })
-        break
-    }
-})
+}))
 
 module.exports = cadence(function (async, destructible, transmitter) {
-    new Dispatcher(destructible, transmitter, async())
+    return new Dispatcher(destructible, transmitter)
 })

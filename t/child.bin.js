@@ -7,12 +7,10 @@ function Listener (olio) {
     this.olio = olio
 }
 
-Listener.prototype.message = cadence(function (async, envelope) {
-    console.log(envelope)
-    this.olio.send(this.olio.name, this.olio.index, { sequence: 0 }, async())
-})
-
 module.exports = cadence(function (async, destructible, olio) {
+    olio.on('child:request', function (message) {
+        olio.send(olio.name, olio.index, 'child:response', { sequence: 0 })
+    })
     var http = require('http')
     var server = http.createServer(function (request, response) {
         response.writeHead(200, { 'content-type': 'application/json' })

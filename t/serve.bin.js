@@ -9,16 +9,14 @@ function Serve (olio) {
     this.got = new Signal
 }
 
-Serve.prototype.message = cadence(function (async, envelope) {
-    console.log('got back', envelope)
-    this.got.unlatch(null, envelope)
-})
-
 module.exports = cadence(function (async, destructible, olio) {
     var logger = require('prolific.logger').createLogger('olio.http')
     var Reactor = require('reactor')
     var Caller = require('conduit/caller')
     var serve = new Serve
+    olio.on('application:response', function (message) {
+        serve.got.unlatch(null, message)
+    })
     async(function () {
         olio.sender('run', cadence(function (async, destructible, inbox, outbox) {
             destructible.monitor('conduit', Conduit, inbox, outbox, null, async())
@@ -42,16 +40,16 @@ module.exports = cadence(function (async, destructible, olio) {
                 console.log('ipc called!!!!!')
                     var sequence = this.sequence++
                     async(function () {
-                        olio.send('run', +index, { method: 'send', sequence: sequence }, async())
+                        olio.send('run', +index, 'application:request', sequence)
                     }, function () {
-                        console.log('sent')
+                        console.log('waiting')
                         serve.got.wait(async())
                     }, function (got) {
                         console.log('>>>', got)
                         return got
                     })
                 }, function (response) {
-                    return [ 200, { 'content-type': 'application/json' }, response.body.sequence ]
+                    return [ 200, { 'content-type': 'application/json' }, response ]
                 })
             }),
             index: cadence(function (async) {

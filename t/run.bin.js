@@ -34,6 +34,9 @@ Run.prototype.reconfigure = cadence(function () {
 // constructed with a listener builder as an argument if it was going to be a
 // server. Could pass in a builder.
 module.exports = cadence(function (async, destructible, olio) {
+    olio.on('application:request', function (message)  {
+        olio.broadcast('serve', 'application:response', message)
+    })
     console.log('RUN CALLED')
     return new Run(olio)
 })

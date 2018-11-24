@@ -23,26 +23,30 @@ destructible.destruct.wait(shuttle, 'close')
 process.on('SIGTERM', function () { destructible.destroy() })
 process.on('SIGINT', noop)
 
-console.log(Transmitter)
-var transmitter = new Transmitter
-destructible.destruct.wait(transmitter, 'destroy')
-
 var cadence = require('cadence')
 
 cadence(function (async) {
+    var transmitter = new Transmitter
+    destructible.destruct.wait(transmitter, 'destroy')
     async(function () {
         destructible.monitor('dispatcher', Dispatcher, transmitter, async())
-    }, function (dispatcher, olio, configuration) {
+    }, function (dispatcher) {
+        transmitter.dispatcher = dispatcher
+        transmitter.register()
         async(function () {
-            require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
-            function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
-            memoryUsage()
-            setInterval(memoryUsage, 5000).unref()
-            var Child = Resolve(configuration, require)
-            destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
-        }, function (receiver) {
-            dispatcher.receiver = receiver
-            transmitter.ready()
+            dispatcher.ready.wait(async())
+        }, function (olio, properties) {
+            async(function () {
+                require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
+                function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
+                memoryUsage()
+                setInterval(memoryUsage, 5000).unref()
+                var Child = Resolve(properties, require)
+                destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, properties, async())
+            }, function (receiver) {
+                dispatcher.receiver = receiver
+                transmitter.ready()
+            })
         })
     })
 })(destructible.monitor('initialize', true))

@@ -6,7 +6,6 @@ var delta = require('delta')
 var cadence = require('cadence')
 
 var Resolve = require('./resolve')
-var Transmitter = require('./transmitter')
 
 var Reactor = require('reactor')
 var spawn = require('child_process').spawn
@@ -57,37 +56,33 @@ Mock.prototype.index = cadence(function (async) {
 })
 
 Mock.prototype.send = function (address, message, socket) {
-    this._children[address.name][address.index].messages.parent.push({ message: message, socket: coalesce(socket) })
+    this._children[address.name][address.index].transmitter.fromParent(message, coalesce(socket))
 }
 
 Mock.prototype.kibitz = function (address, message, socket) {
-    message.socket = socket
-    this._children[address.name][address.index].messages.siblings.push(message)
-}
-
-Mock.prototype.register = function (name, index, messages) {
-    this._registrator.register(name, index, { name: name, index: index })
-}
-
-Mock.prototype.ready = function (name, index) {
-    this._registrator.ready(name)
+    this._children[address.name][address.index].transmitter.fromSibling(message, socket)
 }
 
 Mock.prototype._spawn = cadence(function (async, destructible, Child, name, index, configuration, created) {
-    var transmitter = new Transmitter(this, name, index)
-    this._children[name][index] = { messages: transmitter.messages }
+    this._children[name][index] = { transmitter: null }
     async(function () {
         setImmediate(async())
     }, function () {
-        destructible.monitor('dispatcher', Dispatcher, transmitter, async())
-    }, function (dispatcher, olio, configuration) {
+        destructible.monitor('dispatcher', Dispatcher, this, async())
+    }, function (dispatcher) {
+        this._children[name][index] = { transmitter: dispatcher }
+        this._registrator.register(name, index, { name: name, index: index })
         async(function () {
-            destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
-        }, function (child) {
-            transmitter.ready()
-            dispatcher.receiver = child
-            created[name][index] = coalesce(child)
-            index++
+            dispatcher.ready.wait(async())
+        }, function (olio, configuration) {
+            async(function () {
+                destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
+            }, function (child) {
+                dispatcher.receiver = child
+                created[name][index] = coalesce(child)
+                this._registrator.ready(name)
+                index++
+            })
         })
     })
 })
