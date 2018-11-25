@@ -10,14 +10,16 @@ var Socket = require('procession/socket')(require('./hangup'))
 
 var Olio = require('./olio')
 
+var Keyify = require('keyify')
+
 var Turnstile = require('turnstile/redux')
 var restrictor = require('restrictor')
 
 function Dispatcher (destructible, transmitter) {
-    this.ready = new Signal
+    this.olio = new Signal
     this.transmitter = transmitter
     this.destructible = destructible
-    this.siblings = new Cubbyhole
+    this.ready = new Cubbyhole
 
     this.turnstile = new Turnstile
 
@@ -26,7 +28,7 @@ function Dispatcher (destructible, transmitter) {
 }
 
 Dispatcher.prototype.fromSibling = function (message, socket) {
-    this._olio.emit(message.name, message.body, socket)
+    this.olio.open[1].emit(message.name, message.body, socket)
 }
 
 Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
@@ -55,8 +57,15 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
             async(function () {
                 this.destructible.monitor('olio', Olio, this, message, async())
             }, function (olio) {
-                this._olio = olio
-                this.ready.unlatch(null, olio, message.properties)
+                this.olio.unlatch(null, olio, message.properties)
+            })
+            break
+        case 'registered':
+            this.registered.set(Keyify([ message.name, message.index ]), null, {
+                name: message.name,
+                index: message.index,
+                address: message.address,
+                count: message.count
             })
             break
         case 'connect':
@@ -64,7 +73,7 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
             this.destructible.monitor([ 'receiver', message ], this, '_createReceiver', message, socket, async())
             break
         case 'created':
-            this.siblings.set(message.name, null, {
+            this.ready.set(message.name, null, {
                 name: message.name,
                 addresses: message.addresses,
                 count: message.count

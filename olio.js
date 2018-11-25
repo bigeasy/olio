@@ -54,12 +54,14 @@ function Olio (destructible, dispatcher, message) {
     this._destructible = destructible
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
 
-    this._siblings = dispatcher.siblings
+    this._ready = dispatcher.ready
+    this._registered = dispatcher.registered
 
     this.name = message.name
     this.index = message.index
     this.address = message.address
     this.socket = message.socket
+    this.children = message.children
 
     this._transmitter = dispatcher.transmitter
 
@@ -85,9 +87,9 @@ Olio.prototype.send = restrictor.push(cadence(function (async, envelope) {
         }
     } else {
         async(function () {
-            this.sibling(to.name, async())
-        }, function (sibling) {
-            this._transmitter.kibitz(sibling.addresses[to.index], {
+            this._registered.get(Keyify([ to.name, to.index ], async())
+        }, function (registered) {
+            this._transmitter.kibitz(registered.address, {
                 name: name,
                 body: message
             }, coalesce(handle))
@@ -100,21 +102,25 @@ Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
         var to = { name: envelope.body.shift() }
         var name = envelope.body.shift()
         var message = envelope.body.shift()
-        async(function () {
-            this.sibling(to.name, async())
-        }, function (sibling) {
-            sibling.addresses.forEach(function (address, index) {
-                this._transmitter.kibitz(address, {
+        var loop = async.loop(function (index) {
+            if (index == this.children[to.name].count) {
+                return [ loop.break ]
+            }
+            async(function () {
+                this._registered.get(Keyify([ to.name, index ], async())
+            }, function (registered) {
+                this._transmitter.kibitz(registered.address, {
                     name: name,
                     body: message
                 }, null)
-            }, this)
-        })
+                return index + 1
+            })
+        })(0)
     }
 }))
 
-Olio.prototype.sibling = cadence(function (async, name) {
-    this._siblings.wait(name, async())
+Olio.prototype.ready = cadence(function (async, name) {
+    this._ready.wait(name, async())
 })
 
 Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
@@ -165,7 +171,7 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
 Olio.prototype.sender = cadence(function (async, name) {
     var vargs = Array.prototype.slice.call(arguments, 2)
     async(function () {
-        this.sibling(name, async())
+        this.ready(name, async())
     }, function (sibling) {
         var i = 0, receivers = []
         async(function () {

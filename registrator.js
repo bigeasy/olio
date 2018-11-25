@@ -10,13 +10,17 @@ function Registrator (sender, configuration) {
         var child = configuration.children[name]
         var workers = coalesce(child.workers, 1)
         this._count += workers
+        var addresses = []
+        for (var i = 0; i < workers; i++) {
+            addresses.push(null)
+        }
         this.children[name] = {
             name: name,
             registered: 0,
             ready: 0,
             count: workers,
             properties: child.properties,
-            addresses: []
+            addresses: addresses
         }
     }
 }
@@ -29,6 +33,14 @@ Registrator.prototype.register = function (name, index, path) {
     var child = this.children[name]
     child.registered++
     child.addresses[index] = coalesce(path)
+    var children = {}
+    for (var name in this._children) {
+        children[name] = {
+            name: name,
+            count: this._children[name].count,
+            ready: false
+        }
+    }
     this._sender.send(child.addresses[index], {
         method: 'initialize',
         socket: this._socket,
@@ -36,10 +48,31 @@ Registrator.prototype.register = function (name, index, path) {
         index: index,
         properties: child.properties,
         address: child.addresses[index],
-        count: child.count
+        count: child.count,
+        children: children
     })
     for (var name in this.children) {
         var sibling = this.children[name]
+        sibling.addresses.forEach(function (address, i) {
+            if (address != null) {
+                this._sender.send(address, {
+                    method: 'registered',
+                    name: child.name,
+                    index: index,
+                    address: child.addresses[index],
+                    count: child.count
+                })
+                if (!(sibling.name == child.name && i == index)) {
+                    this._sender.send(path, {
+                        method: 'registered',
+                        name: sibling.name,
+                        index: i,
+                        address: sibling.addresses[i],
+                        count: sibling.count
+                    })
+                }
+            }
+        }, this)
         if (sibling.ready == sibling.count) {
             for (var i = 0; i < child.count; i++) {
                 this._sender.send(child.addresses[i], {
