@@ -14,6 +14,13 @@ function prove (async, okay) {
             path: [ 2 ],
             body: {}
         }, 'register')
+        descendent.across('olio:operate', {
+            method: 'registered',
+            name: 'run',
+            index: 0,
+            address: [ 2 ],
+            count: 1
+        })
     }, function (message) {
         okay(message, {
             module: 'descendent',
@@ -61,7 +68,9 @@ function prove (async, okay) {
                 method: 'initialize',
                 name: 'run',
                 properties: { path: 't/child.bin', properties: {} },
-                index: 0
+                index: 0,
+                count: 1,
+                counts: { run: 1 }
             })
             descendent.across('olio:operate', {
                 method: 'created',

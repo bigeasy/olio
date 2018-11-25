@@ -73,7 +73,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, Child, name, inde
         this._children[name][index] = { transmitter: dispatcher }
         this._registrator.register(name, index, { name: name, index: index })
         async(function () {
-            dispatcher.ready.wait(async())
+            dispatcher.olio.wait(async())
         }, function (olio, configuration) {
             async(function () {
                 destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())

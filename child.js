@@ -54,7 +54,7 @@ cadence(function (async) {
         descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
 
         async(function () {
-            dispatcher.ready.wait(async())
+            dispatcher.olio.wait(async())
         }, function (olio, properties) {
             async(function () {
                 require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
