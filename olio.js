@@ -68,6 +68,11 @@ function Olio (destructible, dispatcher, message) {
     this.turnstile.listen(destructible.monitor('turnstile'))
     destructible.destruct.wait(this.turnstile, 'destroy')
 
+    destructible.destruct.wait(this, function () {
+        this._ready.destroy(new Error('canceled'))
+        this._registered.destroy(new Error('canceled'))
+    })
+
     events.EventEmitter.call(this)
 }
 util.inherits(Olio, events.EventEmitter)
