@@ -1,5 +1,6 @@
 // Node.js API.
 var path = require('path')
+var http = require('http')
 
 // Control-flow utilities.
 var delta = require('delta')
@@ -24,6 +25,8 @@ var Monitor = require('./monitor')
 var Registrator = require('./registrator')
 
 var delta = require('delta')
+
+var Downgrader = require('downgrader')
 
 function Mock (destructible, configuration) {
     this._destructible = destructible
@@ -104,9 +107,6 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
     }
     destructible.completed.wait(async().bind(null, null))
 })
-
-var http = require('http')
-var Downgrader = require('downgrader')
 
 module.exports = cadence(function (async, destructible, configuration) {
     var listener = new Mock(destructible, configuration), created = {}
