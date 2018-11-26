@@ -101,9 +101,9 @@ Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
         var to = { name: envelope.body.shift() }
         var name = envelope.body.shift()
         var message = envelope.body.shift()
-        var loop = async(function (index) {
+        async.loop([ 0 ], function (index) {
             if (index == this._counts[to.name]) {
-                return [ loop.break ]
+                return [ async.break ]
             }
             async(function () {
                 this._registered.wait(Keyify.stringify([ to.name, index ]), async())
@@ -114,7 +114,7 @@ Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
                 }, null)
                 return index + 1
             })
-        })(0)
+        })
     }
 }))
 
@@ -174,15 +174,15 @@ Olio.prototype.sender = cadence(function (async, name) {
     }, function (sibling) {
         var i = 0, receivers = []
         async(function () {
-            var loop = async(function () {
+            async.loop([], function () {
                 if (i == sibling.count) {
-                    return [ loop.break ]
+                    return [ async.break ]
                 }
                 // TODO `message.name` instead.
                 this._destructible.monitor([ 'created', sibling.name, i ], this, '_createSender', vargs, sibling, i, async())
             }, function (receiver) {
                 receivers[i++] = receiver
-            })()
+            })
         }, function () {
             return new Sender(receivers, sibling.addresses, sibling.count)
         })
