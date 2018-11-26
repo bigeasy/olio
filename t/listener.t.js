@@ -52,14 +52,13 @@ function prove (okay, callback) {
                     body: 'Olio Listener API\n'
                 }, 'index')
                 var Downgrader = require('downgrader')
-                var Operation = require('operation')
                 var http = require('http')
 
                 var downgrader = new Downgrader
-                downgrader.on('socket', Operation([ listener, 'socket' ]))
+                downgrader.on('socket', listener.socket.bind(listener))
 
                 var server = http.createServer(listener.reactor.middleware)
-                server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+                server.on('upgrade', downgrader.upgrade.bind(downgrader))
 
                 destructible.destruct.wait(server, 'close')
 
