@@ -26,6 +26,7 @@ var Registrator = require('./registrator')
 var delta = require('delta')
 
 function Mock (destructible, configuration) {
+    this._destructible = destructible
     this._children = {}
     this._registrator = new Registrator(this, configuration)
     this.reactor = new Reactor(this, function (dispatcher) {
@@ -61,25 +62,24 @@ Mock.prototype.kibitz = function (address, message, socket) {
     this._children[address.name][address.index].transmitter.fromSibling(message, socket)
 }
 
-Mock.prototype._spawn = cadence(function (async, destructible, Child, name, index, configuration, created) {
-    this._children[name][index] = { transmitter: null }
+Mock.prototype._spawn = cadence(function (async, destructible, spawn) {
+    this._children[spawn.name][spawn.index] = { transmitter: null }
     async(function () {
         setImmediate(async())
     }, function () {
         destructible.monitor('dispatcher', Dispatcher, this, async())
     }, function (dispatcher) {
-        this._children[name][index] = { transmitter: dispatcher }
-        this._registrator.register(name, index, { name: name, index: index })
+        this._children[spawn.name][spawn.index] = { transmitter: dispatcher }
+        this._registrator.register(spawn.name, spawn.index, { name: spawn.name, index: spawn.index })
         async(function () {
             dispatcher.olio.wait(async())
-        }, function (olio, configuration) {
+        }, function (olio, properties) {
             async(function () {
-                destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, configuration, async())
+                destructible.monitor([ 'child' ], spawn.Child, olio, properties, async())
             }, function (child) {
                 dispatcher.receiver = child
-                created[name][index] = coalesce(child)
-                this._registrator.ready(name)
-                index++
+                spawn.created[spawn.name][spawn.index] = coalesce(child)
+                this._registrator.ready(spawn.name)
             })
         })
     })
@@ -94,9 +94,15 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
         var index = 0
         var Child = Resolve(config, require)
         for (var index = 0; index < workers; index++) {
-            destructible.monitor([ 'child', name, index ], this, '_spawn', Child, name, index, configuration, created, async())
+            this._destructible.monitor([ 'child', name, index ], this, '_spawn', {
+                Child: Child,
+                name: name,
+                index: index,
+                created: created,
+            }, destructible.monitor({ name: name, index: index }))
         }
     }
+    destructible.completed.wait(async().bind(null, null))
 })
 
 var http = require('http')
@@ -119,7 +125,7 @@ module.exports = cadence(function (async, destructible, configuration) {
 
         delta(async()).ee(server).on('listening')
     }, function () {
-        listener.spawn(destructible, configuration, created, async())
+        destructible.monitor('spawn', true, listener, 'spawn', configuration, created, async())
     }, function () {
         return created
     })
