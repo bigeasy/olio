@@ -26,7 +26,7 @@ function prove (okay, callback) {
             async(function () {
                 program.ready.wait(async())
             }, function () {
-                okay(true, 'done')
+                okay('done')
                 program.emit('SIGINT')
             })
         })

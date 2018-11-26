@@ -39,7 +39,7 @@ var Staccato = require('staccato')
 
 var Socket = require('procession/socket')(require('./hangup'))
 
-var Turnstile = require('turnstile/redux')
+var Turnstile = require('turnstile')
 var restrictor = require('restrictor')
 
 var Keyify = require('keyify')

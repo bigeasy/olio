@@ -85,6 +85,6 @@ function prove (async, okay) {
         destructible.completed.wait(async())
         process.emit('SIGTERM')
     }, function () {
-        okay(true, 'ran')
+        okay('ran')
     })
 }

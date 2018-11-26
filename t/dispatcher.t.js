@@ -17,7 +17,7 @@ function prove (okay, callback) {
             destructible.destroy()
             dispatcher.fromParent({})
             dispatcher.fromParent({}, {
-                destroy: function () { okay(true, 'destroyed') }
+                destroy: function () { okay('destroyed') }
             })
         })
     })(destructible.monitor('test'))

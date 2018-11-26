@@ -13,6 +13,6 @@ function prove (async, okay) {
         Monitor(Interrupt, { destroyed: true }, child, async())
         child.kill()
     }, function () {
-        okay(true, 'no errors')
+        okay('no errors')
     })
 }
