@@ -36,7 +36,7 @@
                             "nop":                          "1.0.x",
                             "prolific.logger":              "8.4.x",
                             "prolific.shuttle":             "20.13.x",
-                            "procession":                   "2.6.x",
+                            "procession":                   "2.7.x",
                             "reactor":                      "10.9.x",
                             "restrictor":                   "2.3.x",
                             "signal":                       "4.0.x",
