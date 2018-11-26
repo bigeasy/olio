@@ -21,8 +21,6 @@ var Interrupt = require('interrupt').createInterrupter('subordinate')
 
 var Monitor = require('./monitor')
 
-var Operation = require('operation')
-
 var Registrator = require('./registrator')
 
 var delta = require('delta')

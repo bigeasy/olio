@@ -4,9 +4,6 @@ var events = require('events')
 
 var Procession = require('procession')
 
-// Contextualized callbacks and event handlers.
-var Operation = require('operation')
-
 // An evented semaphore.
 var Signal = require('signal')
 

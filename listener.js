@@ -19,8 +19,6 @@ var Registrator = require('./registrator')
 
 var Monitor = require('./monitor')
 
-var Operation = require('operation')
-
 var cluster = require('cluster')
 
 function Listener (destructible, configuration) {

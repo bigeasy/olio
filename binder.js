@@ -1,6 +1,5 @@
 var Olio = require('./olio')
 var assert = require('assert')
-var Operation = require('operation')
 var cadence = require('cadence')
 
 function Binder (distpacher, message) {

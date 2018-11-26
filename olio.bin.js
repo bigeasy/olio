@@ -25,9 +25,6 @@ require('arguable')(module, function (program, callback) {
     // Convert an HTTP request into a raw socket.
     var Downgrader = require('downgrader')
 
-    // Contextualized callbacks and event handlers.
-    var Operation = require('operation')
-
     var http = require('http')
     var delta = require('delta')
 
@@ -61,10 +58,10 @@ require('arguable')(module, function (program, callback) {
             destructible.monitor('listener', Listener, configuration, async())
         }, function (listener) {
             var downgrader = new Downgrader
-            downgrader.on('socket', Operation([ listener, 'socket' ]))
+            downgrader.on('socket', listener.socket.bind(listener))
 
             var server = http.createServer(listener.reactor.middleware)
-            server.on('upgrade', Operation([ downgrader, 'upgrade' ]))
+            server.on('upgrade', downgrader.upgrade.bind(downgrader))
 
             destructible.destruct.wait(server, 'close')
 
