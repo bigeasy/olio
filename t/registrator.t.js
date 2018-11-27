@@ -15,7 +15,10 @@ function prove (okay) {
                 properties: {},
                 address: [ 'one', 0 ],
                 count: 2,
-                counts: { one: 2, two: 1 }
+                siblings: {
+                    one: { properties: {}, count: 2 },
+                    two: { properties: {}, count: 1 }
+                }
             }
         }, 'register one 0')
     }, function (address, message) {
@@ -46,7 +49,10 @@ function prove (okay) {
                 properties: {},
                 address: [ 'one', 1 ],
                 count: 2,
-                counts: { one: 2, two: 1 }
+                siblings: {
+                    one: { properties: {}, count: 2 },
+                    two: { properties: {}, count: 1 }
+                }
             }
         }, 'register one 1')
     }, function (address, message) {
@@ -131,7 +137,10 @@ function prove (okay) {
                 properties: {},
                 address: [ 'two', 0 ],
                 count: 1,
-                counts: { one: 2, two: 1 }
+                siblings: {
+                    one: { properties: {}, count: 2 },
+                    two: { properties: {}, count: 1 }
+                }
             }
         }, 'register two 0')
     }, function (address, message) {

@@ -60,7 +60,7 @@ function Olio (destructible, dispatcher, message) {
     this.index = message.index
     this.address = message.address
     this.socket = message.socket
-    this.counts = message.counts
+    this.siblings = message.siblings
 
     this._transmitter = dispatcher.transmitter
 
@@ -107,7 +107,7 @@ Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
         var name = envelope.body.shift()
         var message = envelope.body.shift()
         async.loop([ 0 ], function (index) {
-            if (index == this.counts[to.name]) {
+            if (index == this.siblings[to.name].count) {
                 return [ async.break ]
             }
             async(function () {

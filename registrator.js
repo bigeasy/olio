@@ -6,7 +6,6 @@ function Registrator (sender, configuration) {
     this._socket = configuration.socket,
     this._count = 0
     this._registered = 0
-    var counts = {}
     for (var name in configuration.children) {
         var child = configuration.children[name]
         var workers = coalesce(child.workers, 1)
@@ -34,9 +33,12 @@ Registrator.prototype.register = function (name, index, path) {
     var child = this.children[name]
     child.registered++
     child.addresses[index] = coalesce(path)
-    var counts = {}
+    var siblings = {}
     for (var name in this.children) {
-        counts[name] = this.children[name].count
+        siblings[name] = {
+            properties: JSON.parse(JSON.stringify(this.children[name].properties)),
+            count: this.children[name].count
+        }
     }
     this._sender.send(child.addresses[index], {
         method: 'initialize',
@@ -46,7 +48,7 @@ Registrator.prototype.register = function (name, index, path) {
         properties: child.properties,
         address: child.addresses[index],
         count: child.count,
-        counts: counts
+        siblings: siblings
     })
     for (var name in this.children) {
         var sibling = this.children[name]
