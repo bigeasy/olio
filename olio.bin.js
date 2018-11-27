@@ -36,7 +36,7 @@ require('arguable')(module, function (program, callback) {
     program.assert(kill, 'kill must be an integer')
 
     var Destructible = require('destructible')
-    var destructible = new Destructible(kill, 'olio/listen.bin')
+    var destructible = new Destructible(kill, 'olio.bin')
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var shuttle = require('foremost')('prolific.shuttle')
@@ -51,7 +51,16 @@ require('arguable')(module, function (program, callback) {
 
     var Listener = require('./listener')
 
-    var configuration = JSON.parse(require('fs').readFileSync(program.ultimate.configuration, 'utf8'))
+    var path = require('path')
+
+    var configuration = program.ultimate.configuration
+
+    if (configuration[0] == '.') {
+        configuration = path.resolve(process.cwd(), configuration)
+    }
+
+    configuration = require(configuration)
+    configuration = configuration.configure(configuration.configuration)
 
     cadence(function (async) {
         async(function  () {
@@ -80,7 +89,7 @@ require('arguable')(module, function (program, callback) {
             server.unref()
 
             async(function () {
-                server.listen(program.ultimate.socket, async())
+                server.listen(configuration.socket, async())
             }, function () {
                 listener.spawn(configuration, async())
             }, function () {

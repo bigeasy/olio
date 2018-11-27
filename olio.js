@@ -129,6 +129,7 @@ Olio.prototype.ready = cadence(function (async, name) {
 
 Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
     async(function () {
+        console.log(process.cwd(), this.socket)
         var request = http.request({
             socketPath: this.socket,
             url: 'http://olio/',

@@ -6,7 +6,6 @@ var delta = require('delta')
 var cadence = require('cadence')
 
 var Reactor = require('reactor')
-var spawn = require('child_process').spawn
 
 var coalesce = require('extant')
 
@@ -97,6 +96,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
         var config = configuration.children[name]
         // TODO Set Node.js arguments.
         cluster.setupMaster({ exec: executable, args: [] })
+        console.log(executable)
         var workers = coalesce(config.workers, 1)
         var pids = []
         for (var i = 0; i < workers; i++) {

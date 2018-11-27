@@ -18,6 +18,7 @@ module.exports = cadence(function (async, destructible, olio) {
         serve.got.unlatch(null, message)
     })
     async(function () {
+        console.log('WILL CREATE SENDERS')
         olio.sender('run', cadence(function (async, destructible, inbox, outbox) {
             destructible.monitor('conduit', Conduit, inbox, outbox, null, async())
         }), async())
