@@ -19,7 +19,11 @@ var shuttle = require('foremost')('prolific.shuttle')
 shuttle.start({ uncaughtException: logger })
 destructible.destruct.wait(shuttle, 'close')
 
-process.on('SIGTERM', function () { destructible.destroy() })
+process.on('SIGTERM', function () {
+    destructible.destroy()
+    console.log(destructible.waiting)
+})
+process.on('SIGTERM', function () { console.log('GOT TERM') }
 process.on('SIGINT', noop)
 
 var cadence = require('cadence')
