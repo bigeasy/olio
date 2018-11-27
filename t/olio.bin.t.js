@@ -28,7 +28,7 @@ function prove (okay, callback) {
             async(function () {
                 program.ready.wait(async())
             }, function () {
-                setTimeout(async(), 250)
+                setTimeout(async(), 1000)
             }, function () {
                 okay('relative')
                 program.emit('SIGINT')
@@ -45,7 +45,7 @@ function prove (okay, callback) {
             async(function () {
                 program.ready.wait(async())
             }, function () {
-                setTimeout(async(), 250)
+                setTimeout(async(), 1000)
             }, function () {
                 okay('absolute')
                 program.emit('SIGINT')
