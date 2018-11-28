@@ -23,7 +23,7 @@ process.on('SIGTERM', function () {
     destructible.destroy()
     console.log(destructible.waiting)
 })
-process.on('SIGTERM', function () { console.log('GOT TERM') }
+process.on('SIGTERM', function () { console.log('GOT TERM') })
 process.on('SIGINT', noop)
 
 var cadence = require('cadence')
