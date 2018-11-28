@@ -28,6 +28,8 @@ var delta = require('delta')
 
 var Downgrader = require('downgrader')
 
+var Sequester = require('sequester')
+
 function Mock (destructible, configuration) {
     this._destructible = destructible
     this._children = {}
@@ -88,7 +90,27 @@ Mock.prototype._spawn = cadence(function (async, destructible, spawn) {
     })
 })
 
+// I don't mind if the startup hangs. I'm not going to time it out for the user.
+// Just so long a hung startup pretty obviously means some sort of user deadlock
+// and not that an error has been raised but the children have not been
+// notified. An error will cause us to destroy our `Destructible` tree which
+// ought to take down our dear user's provided children. When running the
+// executable the children are going to get a `SIGTERM` and the `Destructible`
+// in `child.js` will be destroyed.
+
+// Note that while we can use a `Destructible` to catch initialization errors as
+// we do here, we cannot use `Destructible` as a countdown latch. We use our
+// constructor monitoring `Destructible` with monitor callbacks that can
+// terminate. When they all terminate the destructible is still valid, possibly
+// expecting to be asked to create more monitor callbacks that can terminate as
+// it would if it where a server.
+//
+// Thus, we use the not often used `Sequester` object to create a countdown
+// latch.
+
+//
 Mock.prototype.spawn = cadence(function (async, destructible, configuration, created) {
+    var countdown = Sequester.createLock()
     for (var name in configuration.children) {
         var config = configuration.children[name]
         var workers = coalesce(config.workers, 1)
@@ -97,15 +119,23 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
         var index = 0
         var Child = Resolve(config, require)
         for (var index = 0; index < workers; index++) {
+            countdown.share(function () {})
             this._destructible.monitor([ 'child', name, index ], this, '_spawn', {
                 Child: Child,
                 name: name,
                 index: index,
                 created: created,
-            }, destructible.monitor({ name: name, index: index }, true))
+            }, (function (name) {
+                // This got weird.
+                var monitor = destructible.monitor({ name: name, index: index }, true)
+                return function () {
+                    monitor.apply(null, arguments)
+                    countdown.unlock()
+                }
+            })(name))
         }
     }
-    destructible.completed.wait(async().bind(null, null))
+    countdown.exclude(async())
 })
 
 module.exports = cadence(function (async, destructible, configuration) {

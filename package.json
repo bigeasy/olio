@@ -40,6 +40,7 @@
                             "procession":                   "2.7.x",
                             "reactor":                      "10.10.x",
                             "restrictor":                   "2.5.x",
+                            "sequester":                    "1.0.x",
                             "signal":                       "6.0.x",
                             "staccato":                     "6.5.x",
                             "turnstile":                    "4.9.x"

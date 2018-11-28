@@ -31,6 +31,7 @@ function prove (okay, callback) {
                 }
             }, async())
         }, function (children) {
+            console.log('--- children ---')
             ua.fetch({
                 url: '/',
                 socketPath: './t/socket',
