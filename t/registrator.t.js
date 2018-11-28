@@ -10,6 +10,7 @@ function prove (okay) {
             message:  {
                 method: 'initialize',
                 socket: './socket',
+                source: { module: 'example' },
                 name: 'one',
                 index: 0,
                 properties: {},
@@ -44,6 +45,7 @@ function prove (okay) {
             message:  {
                 method: 'initialize',
                 socket: './socket',
+                source: { module: 'example' },
                 name: 'one',
                 index: 1,
                 properties: {},
@@ -132,6 +134,7 @@ function prove (okay) {
             message:  {
                 method: 'initialize',
                 socket: './socket',
+                source: { path: './example.js' },
                 name: 'two',
                 index: 0,
                 properties: {},
@@ -274,8 +277,8 @@ function prove (okay) {
     }, {
         socket: './socket',
         children: {
-            one: { workers: 2, properties: {} },
-            two: { workers: 1, properties: {} }
+            one: { module: 'example', workers: 2, properties: {} },
+            two: { path: './example.js', workers: 1, properties: {} }
         }
     })
     registrator.register('one', 0, [ 'one', 0 ])

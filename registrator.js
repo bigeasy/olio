@@ -14,7 +14,13 @@ function Registrator (sender, configuration) {
         for (var i = 0; i < workers; i++) {
             addresses.push(null)
         }
+        var source = child.module ? {
+            module: child.module
+        } : {
+            path: child.path
+        }
         this.children[name] = {
+            source: source,
             name: name,
             registered: 0,
             ready: 0,
@@ -44,6 +50,7 @@ Registrator.prototype.register = function (name, index, path) {
         method: 'initialize',
         socket: this._socket,
         name: child.name,
+        source: child.source,
         index: index,
         properties: child.properties,
         address: child.addresses[index],
