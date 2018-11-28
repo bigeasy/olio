@@ -2,6 +2,15 @@ require('proof')(4, prove)
 
 function prove (okay, callback) {
     var path = require('path')
+    var fs = require('fs')
+
+    try {
+        fs.unlinkSync('t/socket')
+    } catch (e) {
+        if (e.code != 'ENOENT') {
+            throw e
+        }
+    }
 
     var Listener = require('../listener')
 
