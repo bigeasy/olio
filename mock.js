@@ -32,7 +32,7 @@ var Sequester = require('sequester')
 
 function Mock (destructible, configuration) {
     this._destructible = destructible
-    this._children = {}
+    this._dispatchers = {}
     this._registrator = new Registrator(this, configuration)
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
@@ -60,31 +60,29 @@ Mock.prototype.index = cadence(function (async) {
 })
 
 Mock.prototype.send = function (address, message, socket) {
-    this._children[address.name][address.index].transmitter.fromParent(message, coalesce(socket))
+    this._dispatchers[address.name][address.index].fromParent(message, coalesce(socket))
 }
 
 Mock.prototype.kibitz = function (address, message, socket) {
-    this._children[address.name][address.index].transmitter.fromSibling(message, socket)
+    this._dispatchers[address.name][address.index].fromSibling(message, socket)
 }
 
-Mock.prototype._spawn = cadence(function (async, destructible, spawn) {
-    this._children[spawn.name][spawn.index] = { transmitter: null }
+Mock.prototype._spawn = cadence(function (async, destructible, Child, address) {
     async(function () {
         setImmediate(async())
     }, function () {
         destructible.monitor('dispatcher', Dispatcher, this, async())
     }, function (dispatcher) {
-        this._children[spawn.name][spawn.index] = { transmitter: dispatcher }
-        this._registrator.register(spawn.name, spawn.index, { name: spawn.name, index: spawn.index })
+        this._dispatchers[address.name][address.index] = dispatcher
+        this._registrator.register(address.name, address.index, address)
         async(function () {
             dispatcher.olio.wait(async())
         }, function (olio, properties) {
             async(function () {
-                destructible.monitor([ 'child' ], spawn.Child, olio, properties, async())
+                destructible.monitor([ 'child' ], Child, olio, properties, async())
             }, function (child) {
                 dispatcher.receiver = child
-                spawn.created[spawn.name][spawn.index] = coalesce(child)
-                this._registrator.ready(spawn.name)
+                this._registrator.ready(address.name)
             })
         })
     })
@@ -109,33 +107,34 @@ Mock.prototype._spawn = cadence(function (async, destructible, spawn) {
 // latch.
 
 //
-Mock.prototype.spawn = cadence(function (async, destructible, configuration, created) {
+Mock.prototype.spawn = cadence(function (async, configuration) {
+    var created = {}
     var countdown = Sequester.createLock()
+    countdown.share(function () {})
     for (var name in configuration.children) {
-        var config = configuration.children[name]
-        var workers = coalesce(config.workers, 1)
-        this._children[name] = []
+        this._dispatchers[name] = []
         created[name] = []
-        var index = 0
-        var Child = Resolve(config, require)
-        for (var index = 0; index < workers; index++) {
+        var Child = Resolve(configuration.children[name], require)
+        for (var i = 0, I = coalesce(configuration.children[name].workers, 1); i < I; i++) {
             countdown.share(function () {})
-            this._destructible.monitor([ 'child', name, index ], this, '_spawn', {
-                Child: Child,
-                name: name,
-                index: index,
-                created: created,
-            }, (function (name) {
-                // This got weird.
-                var monitor = destructible.monitor({ name: name, index: index }, true)
-                return function () {
-                    monitor.apply(null, arguments)
+            var address = { name: name, index: i }
+            cadence(function (async, Child, address) {
+                async([function () {
                     countdown.unlock()
-                }
-            })(name))
+                }], function () {
+                    this._destructible.monitor([ 'child', address ], this, '_spawn', Child, address, async())
+                }, function (child) {
+                    created[address.name][address.index] = child
+                })
+            }).call(this, Child, address, this._destructible.monitor([ 'spawn', address ], true))
         }
     }
-    countdown.exclude(async())
+    async(function () {
+        countdown.unlock()
+        countdown.exclude(async())
+    }, function () {
+        return [ created ]
+    })
 })
 
 module.exports = cadence(function (async, destructible, configuration) {
@@ -155,8 +154,6 @@ module.exports = cadence(function (async, destructible, configuration) {
 
         delta(async()).ee(server).on('listening')
     }, function () {
-        destructible.monitor('spawn', true, listener, 'spawn', configuration, created, async())
-    }, function () {
-        return created
+        listener.spawn(configuration, async())
     })
 })
