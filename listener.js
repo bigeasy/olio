@@ -77,6 +77,7 @@ Listener.prototype._created = function (count, name, properties, pids) {
 }
 
 Listener.prototype._register = function (message) {
+    console.log('registering', message)
     var name = message.cookie.name, index = message.cookie.index
     this._children[name].paths[index] = message.from
     this._registrator.register(name, index, message.from)
@@ -105,11 +106,12 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
                 console.log('sending kill to', name)
             }.bind(this, name))
             this._destructible.destruct.wait(worker, 'kill')
+            console.log('adding child', { name: name, index: i })
             descendent.addChild(worker.process, { name: name, index: i })
             pids.push(worker.process.pid)
             Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'child', name, i ]))
         }
-        this._created(workers, name, worker.properties, pids)
+        this._created(workers, name, config.properties, pids)
     }
 })
 

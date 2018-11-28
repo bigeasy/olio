@@ -178,6 +178,7 @@ Olio.prototype.sender = cadence(function (async, name) {
     async(function () {
         this.ready(name, async())
     }, function (sibling) {
+        console.log('is ready', sibling)
         var i = 0, receivers = []
         async(function () {
             async.loop([], function () {
