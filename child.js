@@ -35,7 +35,7 @@ cadence(function (async) {
     destructible.destruct.wait(descendent, 'decrement')
 
     async(function () {
-        destructible.monitor('dispatcher', Dispatcher, {
+        destructible.durable('dispatcher', Dispatcher, {
             kibitz: function (address, message, handle) {
                 descendent.up(address, 'olio:message', message, handle)
             }
@@ -66,13 +66,13 @@ cadence(function (async) {
                 memoryUsage()
                 setInterval(memoryUsage, 5000).unref()
                 var Child = Resolve(properties, require)
-                destructible.monitor([ 'child', olio.name, olio.index ], Child, olio, properties, async())
+                destructible.durable([ 'child', olio.name, olio.index ], Child, olio, properties, async())
             }, function (receiver) {
                 dispatcher.receiver = receiver
                 descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
             })
         })
     })
-})(destructible.monitor('initialize', true))
+})(destructible.ephemeral('initialize'))
 
 exports.destructible = destructible

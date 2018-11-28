@@ -6,7 +6,7 @@ function Run (olio) {
 }
 
 Run.prototype.connect = cadence(function (async, destructible, inbox, outbox) {
-    destructible.monitor('conduit', Conduit, inbox, outbox, cadence(function (async, request, inbox, outbox) {
+    destructible.durable('conduit', Conduit, inbox, outbox, cadence(function (async, request, inbox, outbox) {
         return [ 1 ]
     }), async())
 })

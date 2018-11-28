@@ -25,7 +25,7 @@ function Dispatcher (destructible, transmitter) {
 
     this.turnstile = new Turnstile
 
-    this.turnstile.listen(destructible.monitor('turnstile'))
+    this.turnstile.listen(destructible.durable('turnstile'))
     destructible.destruct.wait(this.turnstile, 'destroy')
 }
 
@@ -37,10 +37,10 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
     async(function () {
         var readable = new Staccato.Readable(socket)
         var writable = new Staccato.Writable(socket)
-        destructible.monitor('socket', Socket, { label: 'receiver', message: message }, readable, writable, async())
+        destructible.durable('socket', Socket, { label: 'receiver', message: message }, readable, writable, async())
     }, function (inbox, outbox) {
         async(function () {
-            destructible.monitor('receiver', this.receiver, 'connect', inbox, outbox, async())
+            destructible.durable('receiver', this.receiver, 'connect', inbox, outbox, async())
         }, function (conduit) {
             outbox.push({ module: 'olio', method: 'connect' })
         })
@@ -57,7 +57,7 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
         switch (message.method) {
         case 'initialize':
             async(function () {
-                this.destructible.monitor('olio', Olio, this, message, async())
+                this.destructible.durable('olio', Olio, this, message, async())
             }, function (olio) {
                 this.olio.unlatch(null, olio, message.properties)
             })
@@ -72,7 +72,7 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
             break
         case 'connect':
             // TODO This is also swallowing errors somehow.
-            this.destructible.monitor([ 'receiver', message ], this, '_createReceiver', message, socket, async())
+            this.destructible.durable([ 'receiver', message ], this, '_createReceiver', message, socket, async())
             break
         case 'created':
             this.ready.set(message.name, null, {

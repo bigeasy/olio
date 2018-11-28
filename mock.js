@@ -71,7 +71,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, Child, address) {
     async(function () {
         setImmediate(async())
     }, function () {
-        destructible.monitor('dispatcher', Dispatcher, this, async())
+        destructible.durable('dispatcher', Dispatcher, this, async())
     }, function (dispatcher) {
         this._dispatchers[address.name][address.index] = dispatcher
         this._registrator.register(address.name, address.index, address)
@@ -79,7 +79,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, Child, address) {
             dispatcher.olio.wait(async())
         }, function (olio, properties) {
             async(function () {
-                destructible.monitor([ 'child' ], Child, olio, properties, async())
+                destructible.durable([ 'child' ], Child, olio, properties, async())
             }, function (child) {
                 dispatcher.receiver = child
                 this._registrator.ready(address.name)
@@ -122,11 +122,11 @@ Mock.prototype.spawn = cadence(function (async, configuration) {
                 async([function () {
                     countdown.unlock()
                 }], function () {
-                    this._destructible.monitor([ 'child', address ], this, '_spawn', Child, address, async())
+                    this._destructible.durable([ 'child', address ], this, '_spawn', Child, address, async())
                 }, function (child) {
                     created[address.name][address.index] = child
                 })
-            }).call(this, Child, address, this._destructible.monitor([ 'spawn', address ], true))
+            }).call(this, Child, address, this._destructible.ephemeral([ 'spawn', address ]))
         }
     }
     async(function () {

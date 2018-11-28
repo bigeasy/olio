@@ -64,7 +64,7 @@ require('arguable')(module, function (program, callback) {
 
     cadence(function (async) {
         async(function  () {
-            destructible.monitor('listener', Listener, configuration, async())
+            destructible.durable('listener', Listener, configuration, async())
         }, function (listener) {
             var downgrader = new Downgrader
             downgrader.on('socket', listener.socket.bind(listener))
@@ -96,5 +96,5 @@ require('arguable')(module, function (program, callback) {
                 program.ready.unlatch()
             })
         })
-    })(destructible.monitor('initialize', true))
+    })(destructible.ephemeral('initialize'))
 })

@@ -65,7 +65,7 @@ function Olio (destructible, dispatcher, message) {
     this._transmitter = dispatcher.transmitter
 
     this.turnstile = new Turnstile
-    this.turnstile.listen(destructible.monitor('turnstile'))
+    this.turnstile.listen(destructible.durable('turnstile'))
     destructible.destruct.wait(this.turnstile, 'destroy')
 
     destructible.destruct.wait(this, function () {
@@ -146,7 +146,7 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         async(function () {
             var readable = new Staccato.Readable(socket)
             var writable = new Staccato.Writable(socket)
-            destructible.monitor('socket', Socket, {
+            destructible.durable('socket', Socket, {
                 label: 'sender',
                 from: { name: this.name, index: this.index },
                 to: { name: message.name, index: index }
@@ -154,7 +154,7 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         }, function (inbox, outbox) {
             var shifter = inbox.shifter()
             async(function () {
-                destructible.monitor('receiver', Receiver, inbox, outbox, async())
+                destructible.durable('receiver', Receiver, inbox, outbox, async())
             }, function (conduit) {
                 async(function () {
                     shifter.dequeue(async())
@@ -185,7 +185,7 @@ Olio.prototype.sender = cadence(function (async, name) {
                     return [ async.break ]
                 }
                 // TODO `message.name` instead.
-                this._destructible.monitor([ 'created', sibling.name, i ], this, '_createSender', vargs, sibling, i, async())
+                this._destructible.durable([ 'created', sibling.name, i ], this, '_createSender', vargs, sibling, i, async())
             }, function (receiver) {
                 receivers[i++] = receiver
             })

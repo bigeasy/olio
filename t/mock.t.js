@@ -15,7 +15,7 @@ function prove (okay, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('mock', Mock, {
+            destructible.durable('mock', Mock, {
                 socket: 't/socket',
                 children: {
                     run: {
@@ -55,5 +55,5 @@ function prove (okay, callback) {
         }, function (body, response) {
             okay(body, 0, 'ipc')
         })
-    })(destructible.monitor('test'))
+    })(destructible.durable('test'))
 }

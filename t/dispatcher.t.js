@@ -12,7 +12,7 @@ function prove (okay, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('dispatcher', Dispatcher, null, async())
+            destructible.durable('dispatcher', Dispatcher, null, async())
         }, function (dispatcher) {
             destructible.destroy()
             dispatcher.fromParent({})
@@ -20,5 +20,5 @@ function prove (okay, callback) {
                 destroy: function () { okay('destroyed') }
             })
         })
-    })(destructible.monitor('test'))
+    })(destructible.durable('test'))
 }

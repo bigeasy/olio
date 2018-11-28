@@ -37,7 +37,7 @@ function prove (okay, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('listener', Listener, configuration, async())
+            destructible.durable('listener', Listener, configuration, async())
         }, function (listener) {
             async(function () {
                 listener.index(async())
@@ -92,5 +92,5 @@ function prove (okay, callback) {
                 okay(body, 0, 'ipc')
             })
         })
-    })(destructible.monitor('test'))
+    })(destructible.durable('test'))
 }

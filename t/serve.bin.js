@@ -20,7 +20,7 @@ module.exports = cadence(function (async, destructible, olio) {
     async(function () {
         console.log('WILL CREATE SENDERS')
         olio.sender('run', cadence(function (async, destructible, inbox, outbox) {
-            destructible.monitor('conduit', Conduit, inbox, outbox, null, async())
+            destructible.durable('conduit', Conduit, inbox, outbox, null, async())
         }), async())
     }, function (caller) {
     console.log('got CALLER!!!!')
@@ -72,7 +72,7 @@ module.exports = cadence(function (async, destructible, olio) {
             server.listen(8888)
             delta(async()).ee(server).on('listening')
         }, function () {
-            delta(destructible.monitor('http')).ee(server).on('close')
+            delta(destructible.durable('http')).ee(server).on('close')
             return serve
         })
     })

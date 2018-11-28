@@ -107,7 +107,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
             this._destructible.destruct.wait(worker, 'kill')
             descendent.addChild(worker.process, { name: name, index: i })
             pids.push(worker.process.pid)
-            Monitor(Interrupt, this, worker.process, this._destructible.monitor([ 'child', name, i ]))
+            Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'child', name, i ]))
         }
         this._created(workers, name, worker.properties, pids)
     }

@@ -23,7 +23,7 @@ function prove (okay, callback) {
     var cadence = require('cadence')
 
     var relative = cadence(function (async, destructible) {
-        var program = bin([ '--configuration', './t/configuration.js' ], destructible.monitor('bin'))
+        var program = bin([ '--configuration', './t/configuration.js' ], destructible.durable('bin'))
         async(function () {
             async(function () {
                 program.ready.wait(async())
@@ -40,7 +40,7 @@ function prove (okay, callback) {
     var absolute = cadence(function (async, destructible) {
         var program = bin([
             '--configuration', path.resolve(__dirname, './configuration.js')
-        ], destructible.monitor('bin'))
+        ], destructible.durable('bin'))
         async(function () {
             async(function () {
                 program.ready.wait(async())
@@ -55,11 +55,11 @@ function prove (okay, callback) {
 
     cadence(function (async) {
         async(function () {
-            destructible.monitor('relative', true, relative, async())
+            destructible.ephemeral('relative', relative, async())
         }, function () {
             setTimeout(async(), 250)
         }, function () {
-            destructible.monitor('absolute', true, absolute, async())
+            destructible.ephemeral('absolute', absolute, async())
         })
-    })(destructible.monitor('test'))
+    })(destructible.durable('test'))
 }
