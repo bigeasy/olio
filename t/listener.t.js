@@ -30,16 +30,14 @@ function prove (okay, callback) {
         socket: socketPath,
         children: {
             run: {
+                path: './t/run.bin.js',
                 workers: 1,
-                properties: {
-                    path: './t/run.bin.js',
-                }
+                properties: {}
             },
             serve: {
+                path: './t/serve.bin.js',
                 workers: 1,
-                properties: {
-                    path: './t/serve.bin.js',
-                }
+                properties: {}
             }
         }
     }

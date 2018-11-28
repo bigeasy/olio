@@ -59,7 +59,7 @@ Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envel
             async(function () {
                 this.destructible.durable('olio', Olio, this, message, async())
             }, function (olio) {
-                this.olio.unlatch(null, olio, message.properties)
+                this.olio.unlatch(null, olio, message.source, message.properties)
             })
             break
         case 'registered':

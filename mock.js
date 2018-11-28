@@ -67,7 +67,7 @@ Mock.prototype.kibitz = function (address, message, socket) {
     this._dispatchers[address.name][address.index].fromSibling(message, socket)
 }
 
-Mock.prototype._spawn = cadence(function (async, destructible, Child, address) {
+Mock.prototype._spawn = cadence(function (async, destructible, address) {
     async(function () {
         setImmediate(async())
     }, function () {
@@ -77,7 +77,8 @@ Mock.prototype._spawn = cadence(function (async, destructible, Child, address) {
         this._registrator.register(address.name, address.index, address)
         async(function () {
             dispatcher.olio.wait(async())
-        }, function (olio, properties) {
+        }, function (olio, source, properties) {
+            var Child = Resolve(source, require)
             async(function () {
                 destructible.durable([ 'child' ], Child, olio, properties, async())
             }, function (child) {
@@ -114,19 +115,18 @@ Mock.prototype.spawn = cadence(function (async, configuration) {
     for (var name in configuration.children) {
         this._dispatchers[name] = []
         created[name] = []
-        var Child = Resolve(configuration.children[name], require)
         for (var i = 0, I = coalesce(configuration.children[name].workers, 1); i < I; i++) {
             countdown.share(function () {})
             var address = { name: name, index: i }
-            cadence(function (async, Child, address) {
+            cadence(function (async, address) {
                 async([function () {
                     countdown.unlock()
                 }], function () {
-                    this._destructible.durable([ 'child', address ], this, '_spawn', Child, address, async())
+                    this._destructible.durable([ 'child', address ], this, '_spawn', address, async())
                 }, function (child) {
                     created[address.name][address.index] = child
                 })
-            }).call(this, Child, address, this._destructible.ephemeral([ 'spawn', address ]))
+            }).call(this, address, this._destructible.ephemeral([ 'spawn', address ]))
         }
     }
     async(function () {

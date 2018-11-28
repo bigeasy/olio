@@ -62,13 +62,13 @@ cadence(function (async) {
 
         async(function () {
             dispatcher.olio.wait(async())
-        }, function (olio, properties) {
+        }, function (olio, source, properties) {
+            var Child = Resolve(source, require)
             async(function () {
                 require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
                 function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
                 memoryUsage()
                 setInterval(memoryUsage, 5000).unref()
-                var Child = Resolve(properties, require)
                 destructible.durable([ 'child', olio.name, olio.index ], Child, olio, properties, async())
             }, function (receiver) {
                 dispatcher.receiver = receiver

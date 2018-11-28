@@ -67,7 +67,8 @@ function prove (async, okay) {
             descendent.across('olio:operate', {
                 method: 'initialize',
                 name: 'run',
-                properties: { path: 't/child.bin', properties: {} },
+                source: { path: 't/child.bin' },
+                properties: {},
                 index: 0,
                 count: 1,
                 counts: { run: 1 }
