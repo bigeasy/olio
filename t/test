@@ -9,7 +9,7 @@ echo ""
     || exit 1
 
 if [ "$TRAVIS" = "true" ]; then
-  node t/listener.t.js
+  for i in {1..25}; do node t/listener.t.js || echo bummer; done
   echo ""
   echo "running with coverage"
   t/cover
