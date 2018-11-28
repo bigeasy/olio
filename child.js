@@ -5,12 +5,15 @@ var path = require('path')
 var coalesce = require('extant')
 
 var Destructible = require('destructible')
-var destructible = new Destructible([ 'olio' ])
+var destructible = new Destructible('olio')
 
 var Resolve = require('./resolve')
 
 var Dispatcher = require('./dispatcher')
 
+destructible.completed.wait(function (error) {
+    if (error) console.log(error.stack)
+})
 destructible.completed.wait(abend)
 
 var logger = require('prolific.logger').createLogger('olio')

@@ -10,6 +10,7 @@ function Serve (olio) {
 }
 
 module.exports = cadence(function (async, destructible, olio) {
+    destructible.destruct.wait(function () { console.log('SERVE DESTROYED') })
     var logger = require('prolific.logger').createLogger('olio.http')
     var Reactor = require('reactor')
     var Caller = require('conduit/caller')

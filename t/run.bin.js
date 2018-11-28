@@ -50,5 +50,6 @@ module.exports = cadence(function (async, destructible, olio) {
             })
         })
     })
+    destructible.destruct.wait(function () { console.log('RUN DESTROYED') })
     return new Run(olio)
 })
