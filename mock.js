@@ -102,7 +102,7 @@ Mock.prototype.spawn = cadence(function (async, destructible, configuration, cre
                 name: name,
                 index: index,
                 created: created,
-            }, destructible.monitor({ name: name, index: index }))
+            }, destructible.monitor({ name: name, index: index }, true))
         }
     }
     destructible.completed.wait(async().bind(null, null))
