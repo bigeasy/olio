@@ -101,6 +101,9 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
         var pids = []
         for (var i = 0; i < workers; i++) {
             var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
+            this._destructible.destruct.wait(function (name) {
+                console.log('sending kill to', name)
+            }.bind(this, name))
             this._destructible.destruct.wait(worker, 'kill')
             descendent.addChild(worker.process, { name: name, index: i })
             pids.push(worker.process.pid)
