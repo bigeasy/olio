@@ -5,7 +5,7 @@ set -e
 echo ""
 
 if [ "$TRAVIS" = "true" ]; then
-  bash -c 'for i in {1..5}; do rm -f t/socket && node t/listener.t.js || echo bummer; done'
+  bash -c 'for i in {1..5}; do rm -f t/socket && node t/olio.bin.t.js || echo bummer; done'
 fi
 
 (proof run t/*.t.js | tee .proof.out | proof progress) \
