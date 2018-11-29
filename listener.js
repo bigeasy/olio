@@ -22,7 +22,7 @@ var cluster = require('cluster')
 
 function Listener (destructible, configuration) {
     this._destructible = destructible
-    this._destructible.markDestroyed(this)
+    this._destructible.destruct.wait(this, function () { this.destroyed = true })
     this.destroyed = false
 
     this._registrator = new Registrator(this, configuration)
