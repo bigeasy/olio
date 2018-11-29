@@ -2,13 +2,23 @@ require('proof')(3, prove)
 
 function prove (okay, callback) {
     var Destructible = require('destructible')
-    var destructible = new Destructible('t/pseudo.t')
+    var destructible = new Destructible('t/mock.t')
 
     destructible.completed.wait(callback)
 
     var Mock = require('../mock')
 
     var cadence = require('cadence')
+
+    var fs = require('fs')
+
+    try {
+        fs.unlinkSync('t/socket')
+    } catch (e) {
+        if (e.code != 'ENOENT') {
+            throw e
+        }
+    }
 
     var UserAgent = require('vizsla')
     var ua = new UserAgent

@@ -108,42 +108,40 @@ Mock.prototype._spawn = cadence(function (async, destructible, address) {
 // latch.
 
 //
-Mock.prototype.spawn = cadence(function (async, configuration) {
+Mock.prototype.spawn = cadence(function (async, forgivable, durable, configuration) {
     var created = {}
-    var countdown = Sequester.createLock()
-    countdown.share(function () {})
     for (var name in configuration.children) {
-        this._dispatchers[name] = []
         created[name] = []
+        this._dispatchers[name] = []
         for (var i = 0, I = coalesce(configuration.children[name].workers, 1); i < I; i++) {
-            countdown.share(function () {})
             var address = { name: name, index: i }
             cadence(function (async, address) {
-                async([function () {
-                    countdown.unlock()
-                }], function () {
-                    this._destructible.durable([ 'child', address ], this, '_spawn', address, async())
+                async(function () {
+                    durable.durable([ 'child', address ], this, '_spawn', address, async())
                 }, function (child) {
                     created[address.name][address.index] = child
                 })
-            }).call(this, address, this._destructible.ephemeral([ 'spawn', address ]))
+            }).call(this, address, forgivable.ephemeral([ address ]))
         }
     }
-    async(function () {
-        countdown.unlock()
-        countdown.exclude(async())
-    }, function () {
-        return [ created ]
-    })
+    forgivable.drain()
+
+    // We can't `forgivable.completed.wait` here because the `forgivable` would
+    // be waiting for it's own constructor to complete. We'll return the
+    // `forgivable` and wait for on the other side of this constructor
+    // invocation.
+
+    //
+    return [ created, forgivable ]
 })
 
 module.exports = cadence(function (async, destructible, configuration) {
-    var listener = new Mock(destructible, configuration), created = {}
+    var mock = new Mock(destructible, configuration), created = {}
     async(function () {
         var downgrader = new Downgrader
-        downgrader.on('socket', listener.socket.bind(listener))
+        downgrader.on('socket', mock.socket.bind(mock))
 
-        var server = http.createServer(listener.reactor.middleware)
+        var server = http.createServer(mock.reactor.middleware)
         server.on('upgrade', downgrader.upgrade.bind(downgrader))
 
         destructible.destruct.wait(server, 'close')
@@ -154,6 +152,12 @@ module.exports = cadence(function (async, destructible, configuration) {
 
         delta(async()).ee(server).on('listening')
     }, function () {
-        listener.spawn(configuration, async())
+        destructible.ephemeral('spawn', mock, 'spawn', destructible, configuration, async())
+    }, function (created, countdown) {
+        async(function () {
+            countdown.completed.wait(async())
+        }, function () {
+            return [ created ]
+        })
     })
 })
