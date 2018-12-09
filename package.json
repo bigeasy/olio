@@ -35,7 +35,7 @@
                             "keyify":                       "0.0.x",
                             "nop":                          "1.0.x",
                             "prolific.logger":              "8.6.x",
-                            "prolific.shuttle":             "20.13.x",
+                            "prolific.shuttle":             "20.15.x",
                             "prolific.evaluator":           "0.6.x",
                             "procession":                   "2.10.x",
                             "reactor":                      "10.10.x",
