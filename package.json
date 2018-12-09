@@ -54,7 +54,7 @@
     "main":                 "olio",
     "bin":
     {
-                            "olio":                         "0.41.3"
+                            "olio":                         "olio.bin.js"
     },
     "scripts":
     {
