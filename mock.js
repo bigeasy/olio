@@ -33,7 +33,6 @@ var Sequester = require('sequester')
 function Mock (destructible, configuration) {
     this._destructible = destructible
     this._dispatchers = { program: [{}] }
-    this._registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
     })
@@ -72,14 +71,14 @@ Mock.prototype.kibitz = function (address, message, socket) {
     this._dispatchers[address.program.name][address.program.index][address.name][address.index].fromSibling(message, socket)
 }
 
-Mock.prototype._spawn = cadence(function (async, destructible, address) {
+Mock.prototype._spawn = cadence(function (async, destructible, registrator, address) {
     async(function () {
         setImmediate(async())
     }, function () {
         destructible.durable('dispatcher', Dispatcher, this, async())
     }, function (dispatcher) {
         this._dispatchers[address.program.name][address.program.index][address.name][address.index] = dispatcher
-        this._registrator.register(address.name, address.index, address)
+        registrator.register(address.name, address.index, address)
         async(function () {
             dispatcher.olio.wait(async())
         }, function (olio, source, properties) {
@@ -88,7 +87,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, address) {
                 destructible.durable([ 'child' ], Child, olio, properties, async())
             }, function (child) {
                 dispatcher.receiver = child
-                this._registrator.ready(address.name)
+                registrator.ready(address.name)
             })
         })
     })
@@ -115,6 +114,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, address) {
 //
 Mock.prototype.spawn = cadence(function (async, forgivable, durable, configuration) {
     var created = {}
+    var registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
     for (var name in configuration.children) {
         created[name] = []
         this._dispatchers.program[0][name] = []
@@ -122,7 +122,7 @@ Mock.prototype.spawn = cadence(function (async, forgivable, durable, configurati
             var address = { program: { name: 'program', index: 0 }, name: name, index: i }
             cadence(function (async, address) {
                 async(function () {
-                    durable.durable([ 'child', address ], this, '_spawn', address, async())
+                    durable.durable([ 'child', address ], this, '_spawn', registrator, address, async())
                 }, function (child) {
                     created[address.name][address.index] = child
                 })
