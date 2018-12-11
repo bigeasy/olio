@@ -11,7 +11,7 @@
         --kill  <number>
             number of milliseconds to wait before declaring child processess hung
 
-        --configuration <string>
+        --application <string>
             path for UNIX domain socket server
 
     ___ $ ___ en_US ___
@@ -45,7 +45,7 @@ require('arguable')(module, function (program, callback) {
 
     destructible.completed.wait(callback)
 
-    program.required('configuration')
+    program.required('application')
 
     var cadence = require('cadence')
 
@@ -53,18 +53,18 @@ require('arguable')(module, function (program, callback) {
 
     var path = require('path')
 
-    var configuration = program.ultimate.configuration
+    var application = program.ultimate.application
 
-    if (configuration[0] == '.') {
-        configuration = path.resolve(process.cwd(), configuration)
+    if (application[0] == '.') {
+        application = path.resolve(process.cwd(), application)
     }
 
-    configuration = require(configuration)
-    configuration = configuration.configure(configuration.configuration)
+    application = require(application)
+    application = application.configure(application.configuration)
 
     cadence(function (async) {
         async(function  () {
-            destructible.durable('listener', Listener, configuration, async())
+            destructible.durable('listener', Listener, application, async())
         }, function (listener) {
             var downgrader = new Downgrader
             downgrader.on('socket', listener.socket.bind(listener))
@@ -89,9 +89,9 @@ require('arguable')(module, function (program, callback) {
             server.unref()
 
             async(function () {
-                server.listen(configuration.socket, async())
+                server.listen(application.socket, async())
             }, function () {
-                listener.spawn(configuration, async())
+                listener.spawn(application, async())
             }, function () {
                 program.ready.unlatch()
             })
