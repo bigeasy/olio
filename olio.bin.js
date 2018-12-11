@@ -12,7 +12,10 @@
             number of milliseconds to wait before declaring child processess hung
 
         --application <string>
-            path for UNIX domain socket server
+            path to composition definition
+
+        --configuration <string>
+            path to configuration JSON
 
     ___ $ ___ en_US ___
 
@@ -45,7 +48,7 @@ require('arguable')(module, function (program, callback) {
 
     destructible.completed.wait(callback)
 
-    program.required('application')
+    program.required('application', 'configuration')
 
     var cadence = require('cadence')
 
@@ -59,8 +62,13 @@ require('arguable')(module, function (program, callback) {
         application = path.resolve(process.cwd(), application)
     }
 
+    var configuration = program.ultimate.configuration
+    if (configuration[0] == '.') {
+        configuration = path.resolve(process.cwd(), configuration)
+    }
+
     application = require(application)
-    application = application.configure(application.configuration)
+    application = application.configure(require(configuration))
 
     cadence(function (async) {
         async(function  () {
