@@ -32,7 +32,7 @@ var Sequester = require('sequester')
 
 function Mock (destructible, configuration) {
     this._destructible = destructible
-    this._dispatchers = {}
+    this._dispatchers = { program: [{}] }
     this._registrator = new Registrator(this, configuration)
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
@@ -43,6 +43,10 @@ Mock.prototype.socket = function (request, socket) {
     var message = {
         module: 'olio',
         method: 'connect',
+        program: {
+            name: request.headers['x-olio-program-name'],
+            index: +request.headers['x-olio-program-index']
+        },
         to: {
             name: request.headers['x-olio-to-name'],
             index: +request.headers['x-olio-to-index']
@@ -52,7 +56,8 @@ Mock.prototype.socket = function (request, socket) {
             index: +request.headers['x-olio-from-index']
         }
     }
-    this.send({ name: message.to.name, index: message.to.index }, message, socket)
+    require('assert')(message.program.name)
+    this.send({ program: message.program, name: message.to.name, index: message.to.index }, message, socket)
 }
 
 Mock.prototype.index = cadence(function (async) {
@@ -60,11 +65,11 @@ Mock.prototype.index = cadence(function (async) {
 })
 
 Mock.prototype.send = function (address, message, socket) {
-    this._dispatchers[address.name][address.index].fromParent(message, coalesce(socket))
+    this._dispatchers[address.program.name][address.program.index][address.name][address.index].fromParent(message, coalesce(socket))
 }
 
 Mock.prototype.kibitz = function (address, message, socket) {
-    this._dispatchers[address.name][address.index].fromSibling(message, socket)
+    this._dispatchers[address.program.name][address.program.index][address.name][address.index].fromSibling(message, socket)
 }
 
 Mock.prototype._spawn = cadence(function (async, destructible, address) {
@@ -73,7 +78,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, address) {
     }, function () {
         destructible.durable('dispatcher', Dispatcher, this, async())
     }, function (dispatcher) {
-        this._dispatchers[address.name][address.index] = dispatcher
+        this._dispatchers[address.program.name][address.program.index][address.name][address.index] = dispatcher
         this._registrator.register(address.name, address.index, address)
         async(function () {
             dispatcher.olio.wait(async())
@@ -112,9 +117,9 @@ Mock.prototype.spawn = cadence(function (async, forgivable, durable, configurati
     var created = {}
     for (var name in configuration.children) {
         created[name] = []
-        this._dispatchers[name] = []
+        this._dispatchers.program[0][name] = []
         for (var i = 0, I = coalesce(configuration.children[name].workers, 1); i < I; i++) {
-            var address = { name: name, index: i }
+            var address = { program: { name: 'program', index: 0 }, name: name, index: i }
             cadence(function (async, address) {
                 async(function () {
                     durable.durable([ 'child', address ], this, '_spawn', address, async())

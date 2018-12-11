@@ -56,6 +56,8 @@ function Olio (destructible, dispatcher, message) {
     this._ready = dispatcher.ready
     this._registered = dispatcher.registered
 
+    require('assert')(message.program)
+    this.program = message.program
     this.name = message.name
     this.index = message.index
     this.address = message.address
@@ -134,6 +136,8 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
             socketPath: this.socket,
             url: 'http://olio/',
             headers: Downgrader.headers({
+                'x-olio-program-name': this.program.name,
+                'x-olio-program-index': this.program.index,
                 'x-olio-to-name': message.name,
                 'x-olio-to-index': index,
                 'x-olio-from-name': this.name,

@@ -21,6 +21,7 @@ function Registrator (sender, configuration) {
         }
         this.children[name] = {
             source: source,
+            program: { name: 'program', index: 0 },
             name: name,
             registered: 0,
             ready: 0,
@@ -49,6 +50,7 @@ Registrator.prototype.register = function (name, index, path) {
     this._sender.send(child.addresses[index], {
         method: 'initialize',
         socket: this._socket,
+        program: child.program,
         name: child.name,
         source: child.source,
         index: index,

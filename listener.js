@@ -47,6 +47,10 @@ Listener.prototype.socket = function (request, socket) {
     var message = {
         module: 'olio',
         method: 'connect',
+        program: {
+            name: request.headers['x-olio-program-name'],
+            index: +request.headers['x-olio-program-index']
+        },
         to: {
             name: request.headers['x-olio-to-name'],
             index: +request.headers['x-olio-to-index']
@@ -56,7 +60,7 @@ Listener.prototype.socket = function (request, socket) {
             index: +request.headers['x-olio-from-index']
         }
     }
-    console.log(this._children[message.to.name])
+    require('assert')(message.program.name)
     var path = this._children[message.to.name].paths[message.to.index]
     descendent.down(path, 'olio:operate', message, socket)
 }
@@ -77,7 +81,6 @@ Listener.prototype._created = function (count, name, properties, pids) {
 }
 
 Listener.prototype._register = function (message) {
-    console.log('registering', message)
     var name = message.cookie.name, index = message.cookie.index
     this._children[name].paths[index] = message.from
     this._registrator.register(name, index, message.from)
