@@ -25,7 +25,7 @@ function Listener (destructible, configuration) {
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
     this.destroyed = false
 
-    this._registrator = new Registrator(this, configuration)
+    this._registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
 
     descendent.increment()
     destructible.completed.wait(descendent, 'decrement')

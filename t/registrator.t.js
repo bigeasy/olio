@@ -278,6 +278,9 @@ function prove (okay) {
             sent.shift().apply(null, Array.prototype.slice.call(arguments))
         }
     }, {
+        name: 'program',
+        index: 0
+    }, {
         socket: './socket',
         children: {
             one: { module: 'example', workers: 2, properties: {} },

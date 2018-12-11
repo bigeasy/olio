@@ -1,6 +1,6 @@
 var coalesce = require('extant')
 
-function Registrator (sender, configuration) {
+function Registrator (sender, program, configuration) {
     this._sender = sender
     this.children = {}
     this._socket = configuration.socket,
@@ -21,7 +21,7 @@ function Registrator (sender, configuration) {
         }
         this.children[name] = {
             source: source,
-            program: { name: 'program', index: 0 },
+            program: program,
             name: name,
             registered: 0,
             ready: 0,

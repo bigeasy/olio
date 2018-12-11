@@ -33,7 +33,7 @@ var Sequester = require('sequester')
 function Mock (destructible, configuration) {
     this._destructible = destructible
     this._dispatchers = { program: [{}] }
-    this._registrator = new Registrator(this, configuration)
+    this._registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
     this.reactor = new Reactor(this, function (dispatcher) {
         dispatcher.dispatch('GET /', 'index')
     })
