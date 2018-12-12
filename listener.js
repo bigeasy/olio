@@ -25,7 +25,7 @@ function Listener (destructible, configuration) {
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
     this.destroyed = false
 
-    this._registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
+    this._registrator = {}
 
     descendent.increment()
     destructible.completed.wait(descendent, 'decrement')
@@ -81,9 +81,9 @@ Listener.prototype._created = function (count, name, properties, pids) {
 }
 
 Listener.prototype._register = function (message) {
-    var name = message.cookie.name, index = message.cookie.index
-    this._children[name].paths[index] = message.from
-    this._registrator.register(name, index, message.from)
+    var process = message.cookie.process, program = message.cookie.program
+    this._children[process.name].paths[process.index] = message.from
+    this._registrator[program.name][program.index].register(process.name, process.index, message.from)
 }
 
 Listener.prototype.send = function (address, message, socket) {
@@ -91,11 +91,13 @@ Listener.prototype.send = function (address, message, socket) {
 }
 
 Listener.prototype._ready = function (message) {
-    this._registrator.ready(message.cookie.name)
+    var process = message.cookie.process, program = message.cookie.program
+    this._registrator[program.name][program.index].ready(process.name)
 }
 
 Listener.prototype.spawn = cadence(function (async, configuration) {
     var executable = path.join(__dirname, 'child.js')
+    this._registrator.program = [ new Registrator(this, { name: 'program', index: 0 }, configuration) ]
     for (var name in configuration.children) {
         var config = configuration.children[name]
         // TODO Set Node.js arguments.
@@ -110,7 +112,10 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
             }.bind(this, name))
             this._destructible.destruct.wait(worker, 'kill')
             console.log('adding child', { name: name, index: i })
-            descendent.addChild(worker.process, { name: name, index: i })
+            descendent.addChild(worker.process, {
+                program: { name: 'program', index: 0 },
+                process: { name: name, index: i }
+            })
             pids.push(worker.process.pid)
             Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'child', name, i ]))
         }
