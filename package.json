@@ -39,7 +39,7 @@
                             "prolific.evaluator":           "0.6.x",
                             "procession":                   "2.10.x",
                             "reactor":                      "10.12.x",
-                            "restrictor":                   "2.5.x",
+                            "restrictor":                   "3.0.x",
                             "sequester":                    "1.0.x",
                             "signal":                       "7.0.x",
                             "staccato":                     "6.6.x",
