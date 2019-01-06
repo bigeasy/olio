@@ -41,7 +41,7 @@
                             "reactor":                      "10.12.x",
                             "restrictor":                   "2.5.x",
                             "sequester":                    "1.0.x",
-                            "signal":                       "6.0.x",
+                            "signal":                       "7.0.x",
                             "staccato":                     "6.6.x",
                             "turnstile":                    "5.0.x"
     },
