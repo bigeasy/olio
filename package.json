@@ -38,7 +38,7 @@
                             "prolific.shuttle":             "21.0.x",
                             "prolific.evaluator":           "0.6.x",
                             "procession":                   "2.10.x",
-                            "reactor":                      "10.12.x",
+                            "reactor":                      "11.0.x",
                             "restrictor":                   "3.0.x",
                             "sequester":                    "1.0.x",
                             "signal":                       "7.0.x",
