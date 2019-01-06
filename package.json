@@ -27,7 +27,7 @@
                             "delta":                        "3.0.x",
                             "descendent":                   "0.10.x",
                             "destructible":                 "0.43.x",
-                            "downgrader":                   "0.1.x",
+                            "downgrader":                   "0.2.x",
                             "extant":                       "1.0.x",
                             "foremost":                     "0.0.x",
                             "hash.fnv":                     "1.0.x",
