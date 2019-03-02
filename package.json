@@ -31,7 +31,7 @@
                             "extant":                       "1.0.x",
                             "hash.fnv":                     "1.0.x",
                             "interrupt":                    "7.0.x",
-                            "keyify":                       "0.0.x",
+                            "keyify":                       "1.0.x",
                             "nop":                          "1.0.x",
                             "prolific.logger":              "9.0.x",
                             "prolific.shuttle":             "21.0.x",
