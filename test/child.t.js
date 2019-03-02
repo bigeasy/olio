@@ -68,7 +68,7 @@ function prove (async, okay) {
                 method: 'initialize',
                 program: { name: 'program', index: 0 },
                 name: 'run',
-                source: { path: 't/child.bin' },
+                source: { path: 'test/child.bin' },
                 properties: {},
                 index: 0,
                 count: 1,

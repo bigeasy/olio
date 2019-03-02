@@ -29,6 +29,7 @@
                             "destructible":                 "1.0.x",
                             "downgrader":                   "1.0.x",
                             "extant":                       "1.0.x",
+                            "foremost":                     "1.0.x",
                             "hash.fnv":                     "1.0.x",
                             "interrupt":                    "7.0.x",
                             "keyify":                       "1.0.x",
@@ -56,6 +57,6 @@
     },
     "scripts":
     {
-                            "test": "proof platform win32 && proof test */*.t.js || t/test"
+                            "test": "proof test test/*.t.js"
     }
 }

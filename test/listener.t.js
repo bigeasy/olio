@@ -5,7 +5,7 @@ function prove (okay, callback) {
     var fs = require('fs')
 
     try {
-        fs.unlinkSync('t/socket')
+        fs.unlinkSync('test/socket')
     } catch (e) {
         if (e.code != 'ENOENT') {
             throw e
@@ -30,12 +30,12 @@ function prove (okay, callback) {
         socket: socketPath,
         children: {
             run: {
-                path: './t/run.bin.js',
+                path: './test/run.bin.js',
                 workers: 1,
                 properties: {}
             },
             serve: {
-                path: './t/serve.bin.js',
+                path: './test/serve.bin.js',
                 workers: 1,
                 properties: {}
             }
@@ -75,7 +75,7 @@ function prove (okay, callback) {
             }, function () {
                 ua.fetch({
                     url: '/',
-                    socketPath: './t/socket',
+                    socketPath: './test/socket',
                     parse: 'text',
                     raise: true
                 }, async())

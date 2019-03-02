@@ -2,7 +2,7 @@ require('proof')(3, prove)
 
 function prove (okay, callback) {
     var Destructible = require('destructible')
-    var destructible = new Destructible('t/mock.t')
+    var destructible = new Destructible('test/mock.t')
 
     destructible.completed.wait(callback)
 
@@ -13,7 +13,7 @@ function prove (okay, callback) {
     var fs = require('fs')
 
     try {
-        fs.unlinkSync('t/socket')
+        fs.unlinkSync('test/socket')
     } catch (e) {
         if (e.code != 'ENOENT') {
             throw e
@@ -26,15 +26,15 @@ function prove (okay, callback) {
     cadence(function (async) {
         async(function () {
             destructible.durable('mock', Mock, {
-                socket: 't/socket',
+                socket: 'test/socket',
                 children: {
                     run: {
-                        path: 't/run.bin',
+                        path: 'test/run.bin',
                         workers: 1,
                         properties: {}
                     },
                     serve: {
-                        path: 't/serve.bin',
+                        path: 'test/serve.bin',
                         workers: 1,
                         properties: {}
                     }
@@ -44,7 +44,7 @@ function prove (okay, callback) {
             console.log('--- children ---')
             ua.fetch({
                 url: '/',
-                socketPath: './t/socket',
+                socketPath: './test/socket',
                 parse: 'text',
                 raise: true
             }, async())

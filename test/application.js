@@ -14,12 +14,12 @@ exports.configure = function (configuration) {
         socket: configuration.socket,
         children: {
             run: {
-                path: './t/run.bin.js',
+                path: './test/run.bin.js',
                 workers: 1,
                 properties: {}
             },
             serve: {
-                path: './t/serve.bin.js',
+                path: './test/serve.bin.js',
                 workers: 1,
                 properties: {}
             }

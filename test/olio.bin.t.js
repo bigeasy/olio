@@ -2,7 +2,7 @@ require('proof')(2, prove)
 
 function prove (okay, callback) {
     var Destructible = require('destructible')
-    var destructible = new Destructible('t/olio.bin.t')
+    var destructible = new Destructible('test/olio.bin.t')
 
     destructible.completed.wait(callback)
 
@@ -10,7 +10,7 @@ function prove (okay, callback) {
     var fs = require('fs')
 
     try {
-        fs.unlinkSync('t/socket')
+        fs.unlinkSync('test/socket')
     } catch (e) {
         if (e.code != 'ENOENT') {
             throw e
@@ -24,8 +24,8 @@ function prove (okay, callback) {
 
     var relative = cadence(function (async, destructible) {
         var program = bin([
-            '--application', './t/application.js',
-            '--configuration', './t/configuration.js'
+            '--application', './test/application.js',
+            '--configuration', './test/configuration.js'
         ], destructible.durable('bin'))
         async(function () {
             async(function () {

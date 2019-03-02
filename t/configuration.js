@@ -1,1 +1,0 @@
-exports.socket = 't/socket'
