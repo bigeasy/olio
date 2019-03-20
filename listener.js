@@ -20,6 +20,8 @@ var Monitor = require('./monitor')
 
 var cluster = require('cluster')
 
+var assert = require('assert')
+
 function Listener (destructible, configuration) {
     this._destructible = destructible
     this._destructible.destruct.wait(this, function () { this.destroyed = true })
@@ -81,6 +83,7 @@ Listener.prototype._created = function (count, name, properties, pids) {
 }
 
 Listener.prototype._register = function (message) {
+    assert(message.from != null, 'is null ' + JSON.stringify(message.from))
     var process = message.cookie.process, program = message.cookie.program
     this._children[process.name].paths[process.index] = message.from
     this._registrator[program.name][program.index].register(process.name, process.index, message.from)
