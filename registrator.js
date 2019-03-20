@@ -81,7 +81,10 @@ Registrator.prototype.register = function (name, index, path) {
                 }
             }
         }, this)
-        if (sibling.ready == sibling.count) {
+        if (
+            child.registered == child.count &&
+            sibling.ready == sibling.count
+        ) {
             for (var i = 0; i < child.count; i++) {
                 this._sender.send(child.addresses[i], {
                     method: 'created',
