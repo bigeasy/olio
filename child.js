@@ -19,7 +19,7 @@ destructible.completed.wait(abend)
 var logger = require('prolific.logger').createLogger('olio')
 
 var shuttle = require('foremost')('prolific.shuttle')
-shuttle.start({ uncaughtException: logger })
+shuttle.start({ uncaughtException: logger, exit: true })
 destructible.destruct.wait(shuttle, 'close')
 
 process.on('SIGTERM', function () {

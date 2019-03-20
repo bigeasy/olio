@@ -43,7 +43,7 @@ require('arguable')(module, function (program, callback) {
     program.on('shutdown', destructible.destroy.bind(destructible))
 
     var shuttle = require('foremost')('prolific.shuttle')
-    shuttle.start(logger)
+    shuttle.start({ uncaughtException: logger, exit: true })
     destructible.destruct.wait(shuttle, 'close')
 
     destructible.completed.wait(callback)
