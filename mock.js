@@ -28,8 +28,6 @@ var delta = require('delta')
 
 var Downgrader = require('downgrader')
 
-var Sequester = require('sequester')
-
 function Mock (destructible, configuration) {
     this._destructible = destructible
     this._dispatchers = { program: [{}] }
@@ -97,9 +95,7 @@ Mock.prototype._spawn = cadence(function (async, destructible, registrator, addr
 // Just so long a hung startup pretty obviously means some sort of user deadlock
 // and not that an error has been raised but the children have not been
 // notified. An error will cause us to destroy our `Destructible` tree which
-// ought to take down our dear user's provided children. When running the
-// executable the children are going to get a `SIGTERM` and the `Destructible`
-// in `child.js` will be destroyed.
+// ought to take down our dear user's provided children.
 
 // Note that while we can use a `Destructible` to catch initialization errors as
 // we do here, we cannot use `Destructible` as a countdown latch. We use our
@@ -107,9 +103,6 @@ Mock.prototype._spawn = cadence(function (async, destructible, registrator, addr
 // terminate. When they all terminate the destructible is still valid, possibly
 // expecting to be asked to create more monitor callbacks that can terminate as
 // it would if it where a server.
-//
-// Thus, we use the not often used `Sequester` object to create a countdown
-// latch.
 
 //
 Mock.prototype.spawn = cadence(function (async, forgivable, durable, configuration) {
