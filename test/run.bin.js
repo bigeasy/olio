@@ -37,6 +37,9 @@ module.exports = cadence(function (async, destructible, olio) {
     olio.on('application:request', function (message)  {
         olio.broadcast('serve', 'application:response', message)
     })
+    destructible.destruct.wait(function () {
+        console.log('YES DESTRUCTING!!!')
+    })
     console.log('RUN CALLED')
     destructible.destruct.wait(function () {
         // This is an example of a test that I know is working only through
@@ -52,4 +55,8 @@ module.exports = cadence(function (async, destructible, olio) {
     })
     destructible.destruct.wait(function () { console.log('RUN DESTROYED') })
     return new Run(olio)
+})
+
+process.on('exit', function () {
+    console.log('yes exit')
 })

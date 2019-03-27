@@ -1,9 +1,12 @@
-require('proof')(4, require('cadence')(prove))
+require('proof')(4, prove)
 
-function prove (async, okay) {
+function prove (okay, callback) {
+    var Destructible = require('destructible')
+    var destructible = new Destructible('test/constituent.t.js')
+    destructible.completed.wait(callback)
     var descendent = require('foremost')('descendent')
     var Signal = require('signal')
-    var ready = new Signal()
+    var events = require('events')
     var messaged = new Signal()
     var expected = [function (message) {
         okay(message, {
@@ -48,21 +51,22 @@ function prove (async, okay) {
         }, 'kibitz')
         messaged.unlatch()
     }]
-    var destructible
-    async(function () {
-        var descendent = require('foremost')('descendent')
-        descendent.createMockProcess()
+    var cadence = require('cadence')
+    var constituent = require('../child')
+    descendent.createMockProcess()
+    var process = new events.EventEmitter
+    cadence(function (async) {
+        var mocked = new Signal()
         async(function () {
             descendent.increment()
         }, [function () {
             descendent.decrement()
         }], function () {
-            descendent.on('olio:mock', function () { ready.unlatch() })
+            descendent.on('olio:mock', function () { mocked.unlatch() })
             descendent.process.on('descendent:sent', function () {
                 expected.shift().apply(null, arguments)
             })
-            destructible = require('../child').destructible
-            ready.wait(async())
+            mocked.wait(async())
         }, function () {
             descendent.across('olio:operate', {
                 method: 'initialize',
@@ -80,13 +84,20 @@ function prove (async, okay) {
                 addresses: [[ 2 ]],
                 count: 1
             })
+            messaged.wait(async())
+        }, function () {
+            process.emit('disconnect')
         })
-    }, function () {
-        messaged.wait(async())
-    }, function () {
-        destructible.completed.wait(async())
-        process.emit('SIGTERM')
-    }, function () {
-        okay('ran')
-    })
+    })(destructible.durable('supervior'))
+    cadence(function (async) {
+        async(function () {
+            constituent({ scram: 10000 }, { disconnected: process }, async())
+        }, function (child) {
+            async(function () {
+                child.exit(async())
+            }, function (exitCode) {
+                okay(exitCode, 0, 'exit')
+            })
+        })
+    })(destructible.durable('consituent'))
 }

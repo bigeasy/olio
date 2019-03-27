@@ -20,7 +20,7 @@ function prove (okay, callback) {
     var ua = new UserAgent
 
     var Destructible = require('destructible')
-    var destructible = new Destructible('destructible')
+    var destructible = new Destructible(10000, 'destructible')
 
     destructible.completed.wait(callback)
 

@@ -104,17 +104,12 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
     for (var name in configuration.children) {
         var config = configuration.children[name]
         // TODO Set Node.js arguments.
-        cluster.setupMaster({ exec: executable, args: [] })
-        console.log(executable)
+        cluster.setupMaster({ exec: executable, args: [ '--scram', 10000 ] })
         var workers = coalesce(config.workers, 1)
         var pids = []
         for (var i = 0; i < workers; i++) {
             var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
-            this._destructible.destruct.wait(function (name) {
-                console.log('sending kill to', name)
-            }.bind(this, name))
-            this._destructible.destruct.wait(worker, 'kill')
-            console.log('adding child', { name: name, index: i })
+            this._destructible.destruct.wait(worker, function () { this.disconnect() })
             descendent.addChild(worker.process, {
                 program: { name: 'program', index: 0 },
                 process: { name: name, index: i }

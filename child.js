@@ -1,37 +1,29 @@
-var noop = require('nop')
-var fs = require('fs')
-var abend = require('abend')
-var path = require('path')
 var coalesce = require('extant')
-
-var Destructible = require('destructible')
-var destructible = new Destructible('olio')
-
 var Resolve = require('./resolve')
-
 var Dispatcher = require('./dispatcher')
 
-destructible.completed.wait(function (error) {
-    if (error) console.log(error.stack)
-})
-destructible.completed.wait(abend)
+/*
+    ___ usage ___ en_US ___
 
-var logger = require('prolific.logger').createLogger('olio')
+    usage: olio <socket> [command] <args>
 
-var shuttle = require('foremost')('prolific.shuttle')
-shuttle.start({ uncaughtException: logger, exit: true })
-destructible.destruct.wait(shuttle, 'close')
+        --scram  <number>
+            number of milliseconds to wait before declaring child processess hung
 
-process.on('SIGTERM', function () {
-    destructible.destroy()
-    console.log(destructible.waiting)
-})
-process.on('SIGTERM', function () { console.log('GOT TERM') })
-process.on('SIGINT', noop)
+    ___ $ ___ en_US ___
+ */
+require('arguable')(module, {
+    $destructible: [ 'olio', 'child' ],
+    $scram: 'scram',
+    $trap: 'swallow',
+    disconnected: process
+}, require('cadence')(function (async, destructible, arguable) {
+    var logger = require('prolific.logger').createLogger('olio')
 
-var cadence = require('cadence')
+    var shuttle = require('foremost')('prolific.shuttle')
+    shuttle.start({ uncaughtException: logger, exit: true })
+    destructible.destruct.wait(shuttle, 'close')
 
-cadence(function (async) {
     var descendent = require('foremost')('descendent')
 
     descendent.increment()
@@ -56,6 +48,9 @@ cadence(function (async) {
             descendent.removeListener('olio:operate', fromParent)
             descendent.removeListener('olio:message', fromSibling)
         })
+        arguable.options.disconnected.once('disconnect', function () {
+            destructible.destroy()
+        })
 
         descendent.across('olio:mock', {})
         descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
@@ -73,9 +68,8 @@ cadence(function (async) {
             }, function (receiver) {
                 dispatcher.receiver = receiver
                 descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
+                return []
             })
         })
     })
-})(destructible.ephemeral('initialize'))
-
-exports.destructible = destructible
+}))
