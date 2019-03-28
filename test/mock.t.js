@@ -27,7 +27,7 @@ function prove (okay, callback) {
         async(function () {
             destructible.durable('mock', Mock, {
                 socket: 'test/socket',
-                children: {
+                constituents: {
                     run: {
                         path: 'test/run.bin',
                         workers: 1,

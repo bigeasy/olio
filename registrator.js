@@ -6,8 +6,8 @@ function Registrator (sender, program, configuration) {
     this._socket = configuration.socket,
     this._count = 0
     this._registered = 0
-    for (var name in configuration.children) {
-        var child = configuration.children[name]
+    for (var name in configuration.constituents) {
+        var child = configuration.constituents[name]
         var workers = coalesce(child.workers, 1)
         this._count += workers
         var addresses = []

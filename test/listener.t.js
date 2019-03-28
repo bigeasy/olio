@@ -28,7 +28,7 @@ function prove (okay, callback) {
 
     var configuration = {
         socket: socketPath,
-        children: {
+        constituents: {
             run: {
                 path: './test/run.bin.js',
                 workers: 1,

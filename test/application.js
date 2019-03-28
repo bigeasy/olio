@@ -12,7 +12,7 @@
 exports.configure = function (configuration) {
     return {
         socket: configuration.socket,
-        children: {
+        constituents: {
             run: {
                 path: './test/run.bin.js',
                 workers: 1,

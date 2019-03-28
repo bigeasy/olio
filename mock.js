@@ -108,10 +108,10 @@ Mock.prototype._spawn = cadence(function (async, destructible, registrator, addr
 Mock.prototype.spawn = cadence(function (async, forgivable, durable, configuration) {
     var created = {}
     var registrator = new Registrator(this, { name: 'program', index: 0 }, configuration)
-    for (var name in configuration.children) {
+    for (var name in configuration.constituents) {
         created[name] = []
         this._dispatchers.program[0][name] = []
-        for (var i = 0, I = coalesce(configuration.children[name].workers, 1); i < I; i++) {
+        for (var i = 0, I = coalesce(configuration.constituents[name].workers, 1); i < I; i++) {
             var address = { program: { name: 'program', index: 0 }, name: name, index: i }
             cadence(function (async, address) {
                 async(function () {

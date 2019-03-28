@@ -282,7 +282,7 @@ function prove (okay) {
         index: 0
     }, {
         socket: './socket',
-        children: {
+        constituents: {
             one: { module: 'example', workers: 2, properties: {} },
             two: { path: './example.js', workers: 1, properties: {} }
         }
