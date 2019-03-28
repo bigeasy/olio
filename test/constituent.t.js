@@ -52,7 +52,7 @@ function prove (okay, callback) {
         messaged.unlatch()
     }]
     var cadence = require('cadence')
-    var constituent = require('../child')
+    var constituent = require('../constituent')
     descendent.createMockProcess()
     var process = new events.EventEmitter
     cadence(function (async) {

@@ -99,7 +99,7 @@ Listener.prototype._ready = function (message) {
 }
 
 Listener.prototype.spawn = cadence(function (async, configuration) {
-    var executable = path.join(__dirname, 'child.js')
+    var executable = path.join(__dirname, 'constituent.js')
     this._registrator.program = [ new Registrator(this, { name: 'program', index: 0 }, configuration) ]
     for (var name in configuration.constituents) {
         var config = configuration.constituents[name]
