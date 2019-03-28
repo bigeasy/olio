@@ -35,7 +35,7 @@ function Listener (destructible, configuration) {
     descendent.on('olio:registered', this._register.bind(this))
     descendent.on('olio:ready', this._ready.bind(this))
 
-    this._children = {}
+    this._constituents = {}
 
     this._process = process
     this._process.env.OLIO_SUPERVISOR_PROCESS_ID = process.pid
@@ -63,7 +63,7 @@ Listener.prototype.socket = function (request, socket) {
         }
     }
     require('assert')(message.program.name)
-    var path = this._children[message.to.name].paths[message.to.index]
+    var path = this._constituents[message.to.name].paths[message.to.index]
     descendent.down(path, 'olio:operate', message, socket)
 }
 
@@ -72,7 +72,7 @@ Listener.prototype.index = cadence(function (async) {
 })
 
 Listener.prototype._created = function (count, name, properties, pids) {
-    this._children[name] = {
+    this._constituents[name] = {
         count: count,
         registered: 0,
         ready: 0,
@@ -85,7 +85,7 @@ Listener.prototype._created = function (count, name, properties, pids) {
 Listener.prototype._register = function (message) {
     assert(message.from != null, 'is null ' + JSON.stringify(message.from))
     var process = message.cookie.process, program = message.cookie.program
-    this._children[process.name].paths[process.index] = message.from
+    this._constituents[process.name].paths[process.index] = message.from
     this._registrator[program.name][program.index].register(process.name, process.index, message.from)
 }
 
@@ -115,7 +115,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
                 process: { name: name, index: i }
             })
             pids.push(worker.process.pid)
-            Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'child', name, i ]))
+            Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'constituent', name, i ]))
         }
         this._created(workers, name, config.properties, pids)
     }

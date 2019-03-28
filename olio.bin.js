@@ -9,7 +9,8 @@
             display this message
 
         --scram  <number>
-            number of milliseconds to wait before declaring child processess hung
+            number of milliseconds to wait before declaring constituent
+            shutdown hung and forcing shutdown
 
         --application <string>
             path to composition definition
@@ -83,7 +84,7 @@ require('arguable')(module, {
         // don't see it and we exit with an exception thrown from within
         // Node.js, assertion failures from within the C++. We `unref` here to
         // surrender any socket handles in the process of being passed to
-        // children.
+        // constituents.
         //
         // We should always have a child of some kind so we don't have to worry
         // about this unref'ed server causing us to exit early.

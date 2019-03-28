@@ -2,75 +2,76 @@ var coalesce = require('extant')
 
 function Registrator (sender, program, configuration) {
     this._sender = sender
-    this.children = {}
+    this.constituents = {}
     this._socket = configuration.socket,
     this._count = 0
     this._registered = 0
     for (var name in configuration.constituents) {
-        var child = configuration.constituents[name]
-        var workers = coalesce(child.workers, 1)
+        var constituent = configuration.constituents[name]
+        var workers = coalesce(constituent.workers, 1)
         this._count += workers
         var addresses = []
         for (var i = 0; i < workers; i++) {
             addresses.push(null)
         }
-        var source = child.module ? {
-            module: child.module
+        var source = constituent.module ? {
+            module: constituent.module
         } : {
-            path: child.path
+            path: constituent.path
         }
-        this.children[name] = {
+        this.constituents[name] = {
             source: source,
             program: program,
             name: name,
             registered: 0,
             ready: 0,
             count: workers,
-            properties: child.properties,
+            properties: constituent.properties,
             addresses: addresses
         }
     }
 }
 
-// Registered lets us know that the child is ready to receive IPC messages. We
-// wait for all children to be registered before proceding with initialization.
+// Registered lets us know that the constituent is ready to receive IPC
+// messages. We wait for all constituents to be registered before proceding with
+// initialization.
 //
-// Ready let's us know that the child registered a listener.
+// Ready let's us know that the constituent registered a listener.
 Registrator.prototype.register = function (name, index, path) {
-    var child = this.children[name]
-    child.registered++
-    child.addresses[index] = coalesce(path)
+    var constituent = this.constituents[name]
+    constituent.registered++
+    constituent.addresses[index] = coalesce(path)
     var siblings = {}
-    for (var name in this.children) {
+    for (var name in this.constituents) {
         siblings[name] = {
-            properties: JSON.parse(JSON.stringify(this.children[name].properties)),
-            count: this.children[name].count
+            properties: JSON.parse(JSON.stringify(this.constituents[name].properties)),
+            count: this.constituents[name].count
         }
     }
-    this._sender.send(child.addresses[index], {
+    this._sender.send(constituent.addresses[index], {
         method: 'initialize',
         socket: this._socket,
-        program: child.program,
-        name: child.name,
-        source: child.source,
+        program: constituent.program,
+        name: constituent.name,
+        source: constituent.source,
         index: index,
-        properties: child.properties,
-        address: child.addresses[index],
-        count: child.count,
+        properties: constituent.properties,
+        address: constituent.addresses[index],
+        count: constituent.count,
         siblings: siblings
     })
-    for (var name in this.children) {
-        var sibling = this.children[name]
+    for (var name in this.constituents) {
+        var sibling = this.constituents[name]
         sibling.addresses.forEach(function (address, i) {
             if (address != null) {
                 this._sender.send(address, {
                     method: 'registered',
-                    name: child.name,
+                    name: constituent.name,
                     index: index,
-                    address: child.addresses[index],
-                    count: child.count
+                    address: constituent.addresses[index],
+                    count: constituent.count
                 })
-                if (!(sibling.name == child.name && i == index)) {
+                if (!(sibling.name == constituent.name && i == index)) {
                     this._sender.send(path, {
                         method: 'registered',
                         name: sibling.name,
@@ -82,11 +83,11 @@ Registrator.prototype.register = function (name, index, path) {
             }
         }, this)
         if (
-            child.registered == child.count &&
+            constituent.registered == constituent.count &&
             sibling.ready == sibling.count
         ) {
-            for (var i = 0; i < child.count; i++) {
-                this._sender.send(child.addresses[i], {
+            for (var i = 0; i < constituent.count; i++) {
+                this._sender.send(constituent.addresses[i], {
                     method: 'created',
                     name: sibling.name,
                     addresses: sibling.addresses,
@@ -98,19 +99,19 @@ Registrator.prototype.register = function (name, index, path) {
 }
 
 Registrator.prototype.ready = function (name) {
-    var child = this.children[name]
-    if (++child.ready != child.count) {
+    var constituent = this.constituents[name]
+    if (++constituent.ready != constituent.count) {
         return
     }
-    for (var name in this.children) {
-        var sibling = this.children[name]
+    for (var name in this.constituents) {
+        var sibling = this.constituents[name]
         if (sibling.registered == sibling.count) {
             for (var i = 0; i < sibling.count; i++) {
                 this._sender.send(sibling.addresses[i], {
                     method: 'created',
-                    name: child.name,
-                    addresses: child.addresses,
-                    count: child.count
+                    name: constituent.name,
+                    addresses: constituent.addresses,
+                    count: constituent.count
                 })
             }
         }

@@ -8,12 +8,13 @@ var Dispatcher = require('./dispatcher')
     usage: olio <socket> [command] <args>
 
         --scram  <number>
-            number of milliseconds to wait before declaring child processess hung
+            number of milliseconds to wait before declaring constituent
+            processess hung
 
     ___ $ ___ en_US ___
  */
 require('arguable')(module, {
-    $destructible: [ 'olio', 'child' ],
+    $destructible: [ 'olio', 'constituent' ],
     $scram: 'scram',
     $trap: 'swallow',
     disconnected: process
@@ -64,7 +65,7 @@ require('arguable')(module, {
                 function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
                 memoryUsage()
                 setInterval(memoryUsage, 5000).unref()
-                destructible.durable([ 'child', olio.name, olio.index ], Child, olio, properties, async())
+                destructible.durable([ 'constituent', olio.name, olio.index ], Child, olio, properties, async())
             }, function (receiver) {
                 dispatcher.receiver = receiver
                 descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})

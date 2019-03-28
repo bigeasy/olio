@@ -93,9 +93,9 @@ Mock.prototype._spawn = cadence(function (async, destructible, registrator, addr
 
 // I don't mind if the startup hangs. I'm not going to time it out for the user.
 // Just so long a hung startup pretty obviously means some sort of user deadlock
-// and not that an error has been raised but the children have not been
+// and not that an error has been raised but the constituents have not been
 // notified. An error will cause us to destroy our `Destructible` tree which
-// ought to take down our dear user's provided children.
+// ought to take down our dear user's provided constituents.
 
 // Note that while we can use a `Destructible` to catch initialization errors as
 // we do here, we cannot use `Destructible` as a countdown latch. We use our
@@ -115,7 +115,7 @@ Mock.prototype.spawn = cadence(function (async, forgivable, durable, configurati
             var address = { program: { name: 'program', index: 0 }, name: name, index: i }
             cadence(function (async, address) {
                 async(function () {
-                    durable.durable([ 'child', address ], this, '_spawn', registrator, address, async())
+                    durable.durable([ 'constituent', address ], this, '_spawn', registrator, address, async())
                 }, function (child) {
                     created[address.name][address.index] = child
                 })
