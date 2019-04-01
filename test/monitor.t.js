@@ -6,11 +6,11 @@ function prove (async, okay) {
     var Interrupt = require('interrupt').createInterrupter('olio')
     async(function () {
         var child = children.spawn('node', [ 't/program.js' ], { stdio: 'pipe' })
-        Monitor(Interrupt, {}, child, async())
+        Monitor(Interrupt, {}, child, { name: 'child', index: 1 }, async())
         child.kill('SIGINT')
     }, function () {
         var child = children.spawn('node', [ 't/program.js' ], { stdio: 'pipe' })
-        Monitor(Interrupt, { destroyed: true }, child, async())
+        Monitor(Interrupt, { destroyed: true }, child, { name: 'child', index: 1 }, async())
         child.kill()
     }, function () {
         okay('no errors')

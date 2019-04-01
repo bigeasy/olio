@@ -117,7 +117,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
                 process: { name: name, index: i }
             })
             pids.push(worker.process.pid)
-            Monitor(Interrupt, this, worker.process, this._destructible.durable([ 'constituent', name, i ]))
+            Monitor(Interrupt, this, worker.process, { name: name, index: i }, this._destructible.durable([ 'constituent', name, i ]))
         }
         this._created(workers, name, config.properties, pids)
     }
