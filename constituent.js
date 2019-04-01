@@ -49,8 +49,12 @@ require('arguable')(module, {
             descendent.removeListener('olio:operate', fromParent)
             descendent.removeListener('olio:message', fromSibling)
         })
-        arguable.options.disconnected.once('disconnect', function () {
+        descendent.on('olio:shutdown', function () {
             destructible.destroy()
+        })
+
+        arguable.exited.wait(function () {
+            arguable.options.disconnected.disconnect()
         })
 
         descendent.across('olio:mock', {})
@@ -59,13 +63,13 @@ require('arguable')(module, {
         async(function () {
             dispatcher.olio.wait(async())
         }, function (olio, source, properties) {
-            var Child = Resolve(source, require)
+            var Constituent = Resolve(source, require)
             async(function () {
                 require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
                 function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
                 memoryUsage()
                 setInterval(memoryUsage, 5000).unref()
-                destructible.durable([ 'constituent', olio.name, olio.index ], Child, olio, properties, async())
+                destructible.durable([ 'constituent', olio.name, olio.index ], Constituent, olio, properties, async())
             }, function (receiver) {
                 dispatcher.receiver = receiver
                 descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})

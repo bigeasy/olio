@@ -1,10 +1,11 @@
 var delta = require('delta')
 var cadence = require('cadence')
+var logger = require('prolific.logger').createLogger('olio')
 
 module.exports = cadence(function (async, Interrupt, self, child) {
     async(function () {
         delta(async()).ee(child).on('exit')
     }, function (code, signal) {
-        Interrupt.assert(self.destroyed || signal == 'SIGINT', 'olio.exit', { code: code, signal: signal })
+        logger.notice('exit', { code: code, signal: signal })
     })
 })

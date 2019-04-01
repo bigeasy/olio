@@ -109,7 +109,9 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
         var pids = []
         for (var i = 0; i < workers; i++) {
             var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
-            this._destructible.destruct.wait(worker, function () { this.disconnect() })
+            this._destructible.destruct.wait({ pid: worker.process.pid, name: name }, function () {
+                descendent.down([ this.pid ], 'olio:shutdown', true)
+            })
             descendent.addChild(worker.process, {
                 program: { name: 'program', index: 0 },
                 process: { name: name, index: i }

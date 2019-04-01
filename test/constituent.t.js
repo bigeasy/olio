@@ -86,12 +86,12 @@ function prove (okay, callback) {
             })
             messaged.wait(async())
         }, function () {
-            process.emit('disconnect')
+            descendent.across('olio:shutdown', true)
         })
     })(destructible.durable('supervior'))
     cadence(function (async) {
         async(function () {
-            constituent({ scram: 10000 }, { disconnected: process }, async())
+            constituent({ scram: 10000 }, { disconnected: { disconnect: function () {} } }, async())
         }, function (child) {
             async(function () {
                 child.exit(async())
