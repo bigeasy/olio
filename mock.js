@@ -20,8 +20,6 @@ var Dispatcher = require('./dispatcher')
 // Exceptions that you can catch by type.
 var Interrupt = require('interrupt').createInterrupter('subordinate')
 
-var Monitor = require('./monitor')
-
 var Registrator = require('./registrator')
 
 var delta = require('delta')
