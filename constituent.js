@@ -53,6 +53,10 @@ require('arguable')(module, {
             destructible.destroy()
         })
 
+        destructible.destruct.wait(function () {
+            console.log('DESTRUCTIBLE CAUSE', require('util').inspect(destructible.cause, { depth: Infinity }))
+        })
+
         arguable.exited.wait(function () {
             arguable.options.disconnected.disconnect()
         })
