@@ -104,7 +104,7 @@ Listener.prototype.spawn = cadence(function (async, configuration) {
     for (var name in configuration.constituents) {
         var config = configuration.constituents[name]
         // TODO Set Node.js arguments.
-        cluster.setupMaster({ exec: executable, args: [ '--scram', 10000 ] })
+        cluster.setupMaster({ exec: executable, args: [ '--scram', coalesce(configuration.scram, 8000) ] })
         var workers = coalesce(config.workers, 1)
         var pids = []
         for (var i = 0; i < workers; i++) {
