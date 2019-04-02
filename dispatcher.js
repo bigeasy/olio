@@ -58,6 +58,9 @@ Dispatcher.prototype._createReceiver = cadence(function (async, destructible, me
                 writer.raise()
             })
         })(destructible.durable('socket.write'))
+        destructible.completed.wait(function () {
+            socket.destroy()
+        })
         return [ reader.inbox, writer.outbox ]
     }, function (inbox, outbox) {
         async(function () {

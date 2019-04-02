@@ -170,6 +170,9 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
                     writer.raise()
                 })
             })(destructible.durable('socket.write'))
+            destructible.completed.wait(function () {
+                socket.destroy()
+            })
             return [ reader.inbox, writer.outbox ]
         }, function (inbox, outbox) {
             var shifter = inbox.shifter()
