@@ -35,9 +35,9 @@ var delta = require('delta')
 
 var Conduit = require('conduit')
 
-var Staccato = require('staccato')
-
-var Socket = require('procession/socket')(require('./hangup'))
+var Procession = require('procession')
+var Reader = require('procession/reader')
+var Writer = require('procession/writer')
 
 var Turnstile = require('turnstile')
 var restrictor = require('restrictor')
@@ -46,6 +46,10 @@ var Keyify = require('keyify')
 
 var events = require('events')
 var util = require('util')
+
+var stackify = require('./stackify')
+
+var logger = require('prolific.logger').createLogger('olio')
 
 function Olio (destructible, dispatcher, message) {
     this.destroyed = false
@@ -147,13 +151,26 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
         request.end()
     }, function (request, socket, head) {
         async(function () {
-            var readable = new Staccato.Readable(socket)
-            var writable = new Staccato.Writable(socket)
-            destructible.durable('socket', Socket, {
-                label: 'sender',
-                from: { name: this.name, index: this.index },
-                to: { name: message.name, index: index }
-            }, readable, writable, head, async())
+            socket.on('error', stackify(logger, 'sender.socket'))
+            var reader = new Reader(new Procession, socket, head)
+            destructible.destruct.wait(reader, 'destroy')
+            cadence(function (async) {
+                async(function () {
+                    reader.read(async())
+                }, function () {
+                    reader.raise()
+                })
+            })(destructible.durable('socket.read'))
+            var writer = new Writer(new Procession, socket)
+            destructible.destruct.wait(writer, 'destroy')
+            cadence(function (async) {
+                async(function () {
+                    writer.write(async())
+                }, function () {
+                    writer.raise()
+                })
+            })(destructible.durable('socket.write'))
+            return [ reader.inbox, writer.outbox ]
         }, function (inbox, outbox) {
             var shifter = inbox.shifter()
             async(function () {

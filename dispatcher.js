@@ -4,9 +4,9 @@ var Signal = require('signal')
 
 var Cubbyhole = require('cubbyhole')
 
-var Staccato = require('staccato')
-
-var Socket = require('procession/socket')(require('./hangup'))
+var Procession = require('procession')
+var Reader = require('procession/reader')
+var Writer = require('procession/writer')
 
 var Olio = require('./olio')
 
@@ -14,6 +14,10 @@ var Keyify = require('keyify')
 
 var Turnstile = require('turnstile')
 var restrictor = require('restrictor')
+
+var logger = require('prolific.logger').createLogger('olio')
+
+var stackify = require('./stackify')
 
 function Dispatcher (destructible, transmitter) {
     this.olio = new Signal
@@ -35,9 +39,26 @@ Dispatcher.prototype.fromSibling = function (message, socket) {
 
 Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
     async(function () {
-        var readable = new Staccato.Readable(socket)
-        var writable = new Staccato.Writable(socket)
-        destructible.durable('socket', Socket, { label: 'receiver', message: message }, readable, writable, async())
+        socket.on('error', stackify(logger, 'receiver.socket'))
+        var reader = new Reader(new Procession, socket)
+        destructible.destruct.wait(reader, 'destroy')
+        cadence(function (async) {
+            async(function () {
+                reader.read(async())
+            }, function () {
+                reader.raise()
+            })
+        })(destructible.durable('socket.read'))
+        var writer = new Writer(new Procession, socket)
+        destructible.destruct.wait(writer, 'destroy')
+        cadence(function (async) {
+            async(function () {
+                writer.write(async())
+            }, function () {
+                writer.raise()
+            })
+        })(destructible.durable('socket.write'))
+        return [ reader.inbox, writer.outbox ]
     }, function (inbox, outbox) {
         async(function () {
             destructible.durable('receiver', this.receiver, 'connect', inbox, outbox, async())
