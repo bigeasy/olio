@@ -152,24 +152,15 @@ Olio.prototype._createSender = cadence(function (async, destructible, Receiver, 
     }, function (request, socket, head) {
         async(function () {
             socket.on('error', stackify(logger, 'sender.socket'))
+
             var reader = new Reader(new Procession, socket, head)
             destructible.destruct.wait(reader, 'destroy')
-            cadence(function (async) {
-                async(function () {
-                    reader.read(async())
-                }, function () {
-                    reader.raise()
-                })
-            })(destructible.durable('socket.read'))
+            reader.read(destructible.durable('socket.read'))
+
             var writer = new Writer(new Procession, socket)
             destructible.destruct.wait(writer, 'destroy')
-            cadence(function (async) {
-                async(function () {
-                    writer.write(async())
-                }, function () {
-                    writer.raise()
-                })
-            })(destructible.durable('socket.write'))
+            writer.write(destructible.durable('socket.write'))
+
             destructible.completed.wait(function () {
                 socket.destroy()
             })
