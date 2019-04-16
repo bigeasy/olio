@@ -34,7 +34,7 @@
                             "interrupt":                    "7.0.x",
                             "keyify":                       "1.0.x",
                             "nop":                          "1.0.x",
-                            "prolific.logger":              "9.0.x",
+                            "prolific.logger":              "10.0.x",
                             "prolific.shuttle":             "22.0.x",
                             "procession":                   "4.0.x",
                             "reactor":                      "13.0.x",
