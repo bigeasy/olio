@@ -1,11 +1,11 @@
-var delta = require('delta')
-var cadence = require('cadence')
-var logger = require('prolific.logger').createLogger('olio')
+const logger = require('prolific.logger').createLogger('olio')
+const once = require('prospective/once')
 
-module.exports = cadence(function (async, Interrupt, self, child, constituent) {
-    async(function () {
-        delta(async()).ee(child).on('exit')
-    }, function (code, signal) {
+module.exports = async function (Interrupt, self, child, constituent) {
+    try {
+        const [ code, signal ] = await once(child, 'exit')
         logger.notice('exit', { code: code, signal: signal, constituent: constituent })
-    })
-})
+    } catch (error) {
+        logger.error('exit', { stack: error.stack, constituent: constituent })
+    }
+}
