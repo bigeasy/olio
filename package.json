@@ -35,7 +35,7 @@
                             "p-queue":                      "6.1.0",
                             "prolific.logger":              "10.0.x",
                             "prolific.shuttle":             "24.0.x",
-                            "staccato":                     "10.0.x"
+                            "staccato":                     "10.0.4"
     },
     "devDependencies":
     {
