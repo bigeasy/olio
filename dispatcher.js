@@ -1,105 +1,84 @@
-var cadence = require('cadence')
+const Cubbyhole = require('cubbyhole')
 
-var Signal = require('signal')
+const Future = require('prospective/future')
 
-var Cubbyhole = require('cubbyhole')
+const Staccato = require('staccato')
+const Conduit = require('conduit')
 
-var Procession = require('procession')
-var Reader = require('procession/reader')
-var Writer = require('procession/writer')
+const Avenue = require('avenue')
+const Serialize = require('avenue/serialize')
+const Deserialize  = require('avenue/deserialize')
 
-var Olio = require('./olio')
+const Olio = require('./olio')
 
-var Keyify = require('keyify')
+const Keyify = require('keyify')
 
-var Turnstile = require('turnstile')
-var restrictor = require('restrictor')
+const logger = require('prolific.logger').createLogger('olio')
 
-var logger = require('prolific.logger').createLogger('olio')
+class Dispatcher {
+    constructor (destructible, transmitter) {
+        this._destructible = destructible
+        this.olio = new Future
+        this.transmitter = transmitter
+        this.destructible = destructible
+        this.destroyed = false
+        destructible.destruct(() => this.destroyed = true)
+        this.ready = new Cubbyhole
+        this.registered = new Cubbyhole
+    }
 
-var stackify = require('./stackify')
+    fromSibling (message, socket) {
+        this.olio.open[1].emit(message.name, message.body, socket)
+    }
 
-function Dispatcher (destructible, transmitter) {
-    this.olio = new Signal
-    this.transmitter = transmitter
-    this.destructible = destructible
-
-    this.ready = new Cubbyhole
-    this.registered = new Cubbyhole
-
-    this.turnstile = new Turnstile
-
-    this.turnstile.listen(destructible.durable('turnstile'))
-    destructible.destruct.wait(this.turnstile, 'destroy')
-}
-
-Dispatcher.prototype.fromSibling = function (message, socket) {
-    this.olio.open[1].emit(message.name, message.body, socket)
-}
-
-Dispatcher.prototype._createReceiver = cadence(function (async, destructible, message, socket) {
-    async(function () {
-        socket.on('error', stackify(logger, 'receiver.socket'))
-
-        var reader = new Reader(new Procession, socket)
-        destructible.destruct.wait(reader, 'destroy')
-        reader.read(destructible.durable('socket.read'))
-
-        var writer = new Writer(new Procession, socket)
-        destructible.destruct.wait(writer, 'destroy')
-        writer.write(destructible.durable('socket.write'))
-
-        destructible.completed.wait(function () {
-            socket.destroy()
-        })
-        return [ reader.inbox, writer.outbox ]
-    }, function (inbox, outbox) {
-        async(function () {
-            destructible.durable('receiver', this.receiver, 'connect', inbox, outbox, async())
-        }, function (conduit) {
-            outbox.push({ module: 'olio', method: 'connect' })
-        })
-    })
-})
-
-Dispatcher.prototype.fromParent = restrictor.push(cadence(function (async, envelope) {
-    var message = envelope.body.shift(), socket = envelope.body.shift()
-    if (envelope.canceled) {
-        if (socket != null) {
-            socket.destroy()
+    // TODO Add PQueue.
+    async fromParent (message, socket) {
+        if (this.destroyed) {
+            return
         }
-    } else {
         switch (message.method) {
-        case 'initialize':
-            async(function () {
-                this.destructible.durable('olio', Olio, this, message, async())
-            }, function (olio) {
-                this.olio.unlatch(null, olio, message.source, message.properties)
-            })
+        case 'initialize': {
+                const destructible = this._destructible.durable('olio')
+                this.olio.resolve([ new Olio(destructible, this, message), message.source, message.properties ])
+            }
             break
-        case 'registered':
-            this.registered.set(Keyify.stringify([ message.name, message.index ]), null, {
-                name: message.name,
-                index: message.index,
-                address: message.address,
-                count: message.count
-            })
+        case 'registered': {
+                this.registered.set(Keyify.stringify([ message.name, message.index ]), {
+                    name: message.name,
+                    index: message.index,
+                    address: message.address,
+                    count: message.count
+                })
+            }
             break
-        case 'connect':
-            // TODO This is also swallowing errors somehow.
-            this.destructible.durable([ 'receiver', message ], this, '_createReceiver', message, socket, async())
+        case 'connect': {
+                // TODO This is also swallowing errors somehow.
+                const destructible = this.destructible.durable([
+                    'receiver', message.from.name, message.from.index
+                ])
+                socket.on('error', error => {
+                    logger.error({ stack: error.stack, message: message })
+                    destructible.destroy()
+                })
+                const inbox = new Avenue, outbox = new Avenue
+                destructible.durable('deserialize', Deserialize(new Staccato.Readable(socket), inbox))
+                destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
+                destructible.promise.then(() => socket.destroy())
+                const conduit = new Conduit
+                await destructible.durable('conduit', conduit.pump(inbox.shifter(), outbox))
+                socket.write(JSON.stringify({ module: 'olio', method: 'connect' }) + '\n')
+            }
             break
-        case 'created':
-            this.ready.set(message.name, null, {
-                name: message.name,
-                addresses: message.addresses,
-                count: message.count
-            })
+        case 'created': {
+                this.ready.set(message.name, {
+                    name: message.name,
+                    addresses: message.addresses,
+                    count: message.count
+                })
+            }
             break
         }
     }
-}))
+}
 
-module.exports = cadence(function (async, destructible, transmitter) {
-    return new Dispatcher(destructible, transmitter)
-})
+module.exports = Dispatcher

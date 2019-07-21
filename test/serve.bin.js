@@ -1,5 +1,5 @@
 module.exports = async function (destructible, olio) {
-    const once = require('prosective/once')
+    const once = require('prospective/once')
     const sender = await olio.sender('run')
     const fastify = require('fastify')()
     fastify.get('/worker/:id/conduit', async request => {
@@ -12,4 +12,5 @@ module.exports = async function (destructible, olio) {
     })
     await fastify.listen(8080)
     destructible.destruct(() => fastify.close())
+    return null
 }

@@ -1,6 +1,6 @@
-var coalesce = require('extant')
-var Resolve = require('./resolve')
-var Dispatcher = require('./dispatcher')
+const coalesce = require('extant')
+const Resolve = require('./resolve')
+const Dispatcher = require('./dispatcher')
 
 /*
     ___ usage ___ en_US ___
@@ -14,71 +14,59 @@ var Dispatcher = require('./dispatcher')
     ___ $ ___ en_US ___
  */
 require('arguable')(module, {
-    $destructible: [ 'olio', 'constituent' ],
-    $scram: 'scram',
     $trap: 'swallow',
     disconnected: process
-}, require('cadence')(function (async, destructible, arguable) {
-    var logger = require('prolific.logger').createLogger('olio')
+}, async (arguable) => {
+    const Destructible = require('destructible')
+    // TODO How do we name these really?
+    const destructible = new Destructible('constituent')
+    const logger = require('prolific.logger').createLogger('olio')
 
-    var shuttle = require('foremost')('prolific.shuttle')
+    const shuttle = require('foremost')('prolific.shuttle')
     shuttle.start({ uncaughtException: logger, exit: true })
-    destructible.destruct.wait(shuttle, 'close')
+    destructible.destruct(() => shuttle.close())
 
-    var descendent = require('foremost')('descendent')
+    const descendent = require('foremost')('descendent')
 
     descendent.increment()
-    destructible.destruct.wait(descendent, 'decrement')
+    destructible.destruct(() => descendent.decrement())
 
-    async(function () {
-        destructible.durable('dispatcher', Dispatcher, {
-            kibitz: function (address, message, handle) {
-                descendent.up(address, 'olio:message', message, handle)
-            }
-        }, async())
-    }, function (dispatcher) {
-        function fromParent (message, handle) {
-            dispatcher.fromParent(message.body, handle)
+    const dispatcher = new Dispatcher(destructible.durable('dispatcher'), {
+        kibitz: (address, message, handle) => {
+            descendent.up(address, 'olio:message', message, handle)
         }
-        descendent.on('olio:operate', fromParent)
-        function fromSibling (message, handle) {
-            dispatcher.fromSibling(message.body, handle)
-        }
-        descendent.on('olio:message', fromSibling)
-        destructible.completed.wait(function () {
-            descendent.removeListener('olio:operate', fromParent)
-            descendent.removeListener('olio:message', fromSibling)
-        })
-        descendent.on('olio:shutdown', function () {
-            destructible.destroy()
-        })
-
-        destructible.destruct.wait(function () {
-            console.log('DESTRUCTIBLE CAUSE', require('util').inspect(destructible.cause, { depth: Infinity }))
-        })
-
-        arguable.exited.wait(function () {
-            arguable.options.disconnected.disconnect()
-        })
-
-        descendent.across('olio:mock', {})
-        descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
-
-        async(function () {
-            dispatcher.olio.wait(async())
-        }, function (olio, source, properties) {
-            var Constituent = Resolve(source, require)
-            async(function () {
-                require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
-                function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
-                memoryUsage()
-                setInterval(memoryUsage, 5000).unref()
-                destructible.durable([ 'constituent', olio.name, olio.index ], Constituent, olio, properties, async())
-            }, function (receiver) {
-                dispatcher.receiver = receiver
-                descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
-                return []
-            })
-        })
     })
-}))
+
+    function fromParent (message, handle) {
+        dispatcher.fromParent(message.body, handle)
+    }
+    descendent.on('olio:operate', fromParent)
+    function fromSibling (message, handle) {
+        dispatcher.fromSibling(message.body, handle)
+    }
+    descendent.on('olio:message', fromSibling)
+    destructible.promise.then(() => {
+        descendent.removeListener('olio:operate', fromParent)
+        descendent.removeListener('olio:message', fromSibling)
+    })
+    descendent.on('olio:shutdown', () => destructible.destroy())
+    destructible.promise.then(() => arguable.options.disconnected.disconnect())
+
+    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
+
+    const [ olio, source, properties ] = await dispatcher.olio.promise
+
+    const Constituent = Resolve(source, require)
+    require('prolific.sink').properties.olio = { name: olio.name, index: olio.index }
+    function memoryUsage () { logger.notice('memory', process.memoryUsage()) }
+    memoryUsage()
+    setInterval(memoryUsage, 5000).unref()
+
+    const sub = destructible.durable([ 'constituent', olio.name, olio.index ])
+    dispatcher.receiver = await Constituent(destructible, olio, properties)
+
+    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
+
+    await destructible.promise
+    return 0
+})

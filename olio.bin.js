@@ -25,77 +25,78 @@
 
     ___ . ___
  */
-require('arguable')(module, {
-    $destructible: 'olio',
-    $scram: { scram: 10000 }
-}, require('cadence')(function (async, destructible, arguable) {
-    // Convert an HTTP request into a raw socket.
-    var Downgrader = require('downgrader')
+require('arguable')(module, async arguable => {
+    const logger = require('prolific.logger').createLogger('olio')
 
-    var http = require('http')
-    var delta = require('delta')
+    const Destructible = require('destructible')
+    const destructible = new Destructible('olio')
 
-    var logger = require('prolific.logger').createLogger('olio')
+    const coalesce = require('extant')
 
-    var coalesce = require('extant')
-
-    var shuttle = require('foremost')('prolific.shuttle')
+    const shuttle = require('foremost')('prolific.shuttle')
     shuttle.start({ uncaughtException: logger, exit: true })
-    destructible.destruct.wait(shuttle, 'close')
+    destructible.destruct(() => shuttle.close())
 
     arguable.required('application', 'configuration')
 
-    var cadence = require('cadence')
+    const Listener = require('./listener')
 
-    var Listener = require('./listener')
+    const path = require('path')
 
-    var path = require('path')
-
-    var application = arguable.ultimate.application
-
-    if (application[0] == '.') {
-        application = path.resolve(process.cwd(), application)
+    function resolve (file) {
+        if (file[0] == '.') {
+            return path.resolve(process.cwd(), file)
+        }
+        return file
     }
 
-    var configuration = arguable.ultimate.configuration
-    if (configuration[0] == '.') {
-        configuration = path.resolve(process.cwd(), configuration)
+    const file = {
+        application: resolve(arguable.ultimate.application),
+        configuration: resolve(arguable.ultimate.configuration)
     }
 
-    application = require(application)
-    application = application.configure(require(configuration))
+    const configuration = require(file.configuration)
+    const application = require(file.application).configure(configuration)
 
-    async(function  () {
-        destructible.durable('listener', Listener, application, async())
-    }, function (listener) {
-        var downgrader = new Downgrader
-        downgrader.on('socket', listener.socket.bind(listener))
+    const listener = new Listener(destructible.durable('listener'), configuration)
 
-        var server = http.createServer(listener.reactor.middleware)
-        server.on('upgrade', downgrader.upgrade.bind(downgrader))
+    const { default: PQueue } = require('p-queue')
 
-        destructible.destruct.wait(server, 'close')
+    const queue = new PQueue
+    const Header = require('./header')
 
-        // Passing sockets around makes it hard for us to ensure that we are
-        // going to destroy them. They could be in a pipe on the way down to a
-        // child that exits before getting the message. I've not seen evidence
-        // that delivery is guaranteed. When I leave a listener outside of my
-        // Descendent module to see if I can catch the straggling message, I
-        // don't see it and we exit with an exception thrown from within
-        // Node.js, assertion failures from within the C++. We `unref` here to
-        // surrender any socket handles in the process of being passed to
-        // constituents.
-        //
-        // We should always have a child of some kind so we don't have to worry
-        // about this unref'ed server causing us to exit early.
-        server.unref()
-
-        async(function () {
-            server.listen(application.socket, async())
-        }, function () {
-            listener.spawn(application, async())
-        }, function () {
-            return []
+    const once = require('prospective/once')
+    const net = require('net')
+    const server = net.createServer(function (socket) {
+        queue.add(async () => {
+            const header = await Header(socket)
+            listener.socket(header, socket)
         })
     })
-}))
+    server.listen(application.socket)
+    await once(server, 'listening')
+    // Passing sockets around makes it hard for us to ensure that we are going
+    // to destroy them. They could be in a pipe on the way down to a child that
+    // exits before getting the message. I've not seen evidence that delivery is
+    // guaranteed. When I leave a listener outside of my Descendent module to
+    // see if I can catch the straggling message, I don't see it and we exit
+    // with an exception thrown from within Node.js, assertion failures from
+    // within the C++. We `unref` here to surrender any socket handles in the
+    // process of being passed to constituents.
+    //
+    // We should always have a child of some kind so we don't have to worry
+    // about this unref'ed server causing us to exit early.
+
+    //
+    server.unref()
+
+    destructible.destruct(() => server.close())
+
+    listener.spawn(application)
+
+    await arguable.destroyed
+    destructible.destroy()
+    await destructible.promise
+
+    return 0
+})

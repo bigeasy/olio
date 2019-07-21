@@ -1,213 +1,133 @@
 // Node.js API.
-var assert = require('assert')
-var events = require('events')
+const net = require('net')
 
-var Procession = require('procession')
-
-// An evented semaphore.
-var Signal = require('signal')
-
-// Return the first not null-like value.
-var coalesce = require('extant')
-
-// Asynchronous control flow.
-var cadence = require('cadence')
-
-// Do nothing.
-var noop = require('nop')
+const once = require('prospective/once')
 
 // Generate a unique, canonical string key from a JSON object.
-var Keyify = require('keyify')
+const Keyify = require('keyify')
 
-// Controlled demolition of asynchronous operations.
-var Destructible = require('destructible')
+const events = require('events')
 
-var Cubbyhole = require('cubbyhole')
+const logger = require('prolific.logger').createLogger('olio')
 
-var Interrupt = require('interrupt').createInterrupter('olio')
+const Conduit = require('conduit')
+const Staccato = require('staccato')
+const Avenue = require('avenue')
+const Serialize = require('avenue/serialize')
+const Deserialize = require('avenue/deserialize')
 
-var Sender = require('./sender')
+const Queue = require('p-queue')
 
-var http = require('http')
-var Downgrader = require('downgrader')
+const Header = require('./header')
+const Sender = require('./sender')
 
-var delta = require('delta')
+const Interrupt = require('interrupt')
 
-var Conduit = require('conduit')
+class Olio extends events.EventEmitter {
+    constructor (destructible, dispatcher, message) {
+        super()
+        this.destroyed = false
 
-var Procession = require('procession')
-var Reader = require('procession/reader')
-var Writer = require('procession/writer')
+        this._destructible = destructible
+        this._destructible.destruct(() => this.destroyed = true)
 
-var Turnstile = require('turnstile')
-var restrictor = require('restrictor')
+        this._ready = dispatcher.ready
+        this._registered = dispatcher.registered
 
-var Keyify = require('keyify')
+        require('assert')(message.program)
+        this.program = message.program
+        this.name = message.name
+        this.index = message.index
+        this.address = message.address
+        this.socket = message.socket
+        this.siblings = message.siblings
 
-var events = require('events')
-var util = require('util')
+        this._transmitter = dispatcher.transmitter
 
-var stackify = require('./stackify')
-
-var logger = require('prolific.logger').createLogger('olio')
-
-function Olio (destructible, dispatcher, message) {
-    this.destroyed = false
-
-    this._destructible = destructible
-    this._destructible.destruct.wait(this, function () { this.destroyed = true })
-
-    this._ready = dispatcher.ready
-    this._registered = dispatcher.registered
-
-    require('assert')(message.program)
-    this.program = message.program
-    this.name = message.name
-    this.index = message.index
-    this.address = message.address
-    this.socket = message.socket
-    this.siblings = message.siblings
-
-    this._transmitter = dispatcher.transmitter
-
-    this.turnstile = new Turnstile
-    this.turnstile.listen(destructible.durable('turnstile'))
-    destructible.destruct.wait(this.turnstile, 'destroy')
-
-    destructible.destruct.wait(this, function () {
-        this._ready.destroy(new Error('canceled'))
-        this._registered.destroy(new Error('canceled'))
-    })
-
-    events.EventEmitter.call(this)
-}
-util.inherits(Olio, events.EventEmitter)
-
-Olio.prototype.send = restrictor.push(cadence(function (async, envelope) {
-    var to = {
-        name: envelope.body.shift(),
-        index: envelope.body.shift()
-    }
-    var name = envelope.body.shift()
-    var message = envelope.body.shift()
-    var handle = coalesce(envelope.body.shift())
-    if (envelope.canceled) {
-        if (handle != null) {
-            handle.destroy()
-        }
-    } else {
-        async(function () {
-            this._registered.wait(Keyify.stringify([ to.name, to.index ]), async())
-        }, function (registered) {
-            this._transmitter.kibitz(registered.address, {
-                name: name,
-                body: message
-            }, coalesce(handle))
+        destructible.destruct(() => {
+            this._ready.destroy(new Olio.Error('unready', { latched: this._ready.latched }))
+            this._registered.destroy(new Olio.Error('unregistered', { latched: this._registered.latched }))
         })
-    }
-}))
 
-Olio.prototype.broadcast = restrictor.push(cadence(function (async, envelope) {
-    if (!envelope.canceled) {
-        var to = { name: envelope.body.shift() }
-        var name = envelope.body.shift()
-        var message = envelope.body.shift()
-        async.loop([ 0 ], function (index) {
-            if (index == this.siblings[to.name].count) {
-                return [ async.break ]
+        events.EventEmitter.call(this)
+    }
+
+    async send (name, index, messageName, message, handle) {
+        if (this.destroyed) {
+            if (handle != null) {
+                handle.destroy()
             }
-            async(function () {
-                this._registered.wait(Keyify.stringify([ to.name, index ]), async())
-            }, function (registered) {
+        } else {
+            await this._message.add(() => async () => {
+                await this._registered.get(Keyify.stringify([ name, index ]))
                 this._transmitter.kibitz(registered.address, {
                     name: name,
                     body: message
-                }, null)
-                return index + 1
+                }, coalesce(handle))
             })
-        })
+        }
     }
-}))
 
-Olio.prototype.ready = cadence(function (async, name) {
-    this._ready.wait(name, async())
-})
-
-Olio.prototype._createSender = cadence(function (async, destructible, Receiver, message, index) {
-    async(function () {
-        var request = http.request({
-            socketPath: this.socket,
-            url: 'http://olio/',
-            headers: Downgrader.headers({
-                'x-olio-program-name': this.program.name,
-                'x-olio-program-index': this.program.index,
-                'x-olio-to-name': message.name,
-                'x-olio-to-index': index,
-                'x-olio-from-name': this.name,
-                'x-olio-from-index': this.index
-            })
-        })
-        delta(async()).ee(request).on('upgrade')
-        request.end()
-    }, function (request, socket, head) {
-        async(function () {
-            socket.on('error', stackify(logger, 'sender.socket'))
-
-            var reader = new Reader(new Procession, socket, head)
-            destructible.destruct.wait(reader, 'destroy')
-            reader.read(destructible.durable('socket.read'))
-
-            var writer = new Writer(new Procession, socket)
-            destructible.destruct.wait(writer, 'destroy')
-            writer.write(destructible.durable('socket.write'))
-
-            destructible.completed.wait(function () {
-                socket.destroy()
-            })
-            return [ reader.inbox, writer.outbox ]
-        }, function (inbox, outbox) {
-            var shifter = inbox.shifter()
-            async(function () {
-                destructible.durable('receiver', Receiver, inbox, outbox, async())
-            }, function (conduit) {
-                async(function () {
-                    shifter.dequeue(async())
-                }, function (header) {
-                    Interrupt.assert(header.module == 'olio' && header.method == 'connect', 'failed to start middleware')
-                    Interrupt.assert(shifter.shift() == null, 'unexpected traffic on connect')
-                    // Do we do this or do we register an end to pumping instead? It
-                    // would depend on how we feal about ending a Conduit. I do
-                    // believe it pushed out a `null` to indicate that the stream
-                    // has closed. A Window would look for this and wait for
-                    // restart. The Window needs to be closed explicity.
-                    return [ conduit ]
-                })
-            })
-        })
-    })
-})
-
-Olio.prototype.sender = cadence(function (async, name) {
-    var vargs = Array.prototype.slice.call(arguments, 2)
-    async(function () {
-        this.ready(name, async())
-    }, function (sibling) {
-        var i = 0, receivers = []
-        async(function () {
-            async.loop([], function () {
-                if (i == sibling.count) {
-                    return [ async.break ]
+    async broadcast (envelope) {
+        if (!this.destroyed) {
+            await this._messages.add(() => async () => {
+                const to = { name: envelope.body.shift() }
+                const name = envelope.body.shift()
+                const message = envelope.body.shift()
+                for (let i = 0; i < this.siblings[to.name].count; i++) {
+                    await this._registered.get(Keyify.stringify([ to.name, index ]))
+                    this._transmitter.kibitz(registered.address, {
+                        name: name,
+                        body: message
+                    }, null)
                 }
-                // TODO `message.name` instead.
-                this._destructible.durable([ 'created', sibling.name, i ], this, '_createSender', vargs, sibling, i, async())
-            }, function (receiver) {
-                receivers[i++] = receiver
             })
-        }, function () {
-            return new Sender(receivers, sibling.addresses, sibling.count)
-        })
-    })
-})
+        }
+    }
+
+    ready (name) {
+        return this._ready.get(name)
+    }
+
+    async sender (name, ...vargs) {
+        const sibling = await this._ready.get(name)
+        const receivers = []
+        for (let i = 0; i < sibling.count; i++) {
+            const destructible = this._destructible.durable([ 'sender', sibling.name, i ])
+            const socket = net.connect(this.socket)
+            socket.on('error', error => {
+                logger.error({ stack: error.stack, sibling: sibling })
+                destructible.destroy()
+            })
+            socket.write(JSON.stringify({
+                program: {
+                    name: this.program.name,
+                    index: this.program.index
+                },
+                to: {
+                    name: sibling.name,
+                    index: i,
+                },
+                from: {
+                    name: this.name,
+                    index: this.index
+                }
+            }) + '\n')
+            const deployed = await Header(socket)
+            Olio.Error.assert(deployed != null && deployed.module == 'olio' && deployed.method == 'connect', 'failed to start middleware')
+            const inbox = new Avenue, outbox = new Avenue
+            destructible.durable('deserialize', Deserialize(new Staccato.Readable(socket), inbox))
+            destructible.destruct(() => socket.destroy())
+            destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
+            destructible.destruct(() => outbox.push(null))
+            const client = receivers[i] = new Conduit
+            destructible.durable('conduit', client.pump(inbox.shifter(), outbox))
+        }
+        return new Sender(receivers, sibling.addresses, sibling.count)
+    }
+
+    static Error = Interrupt.create('Olio.Error')
+}
 
 // TODO You're working through this right now.
 //
@@ -232,6 +152,4 @@ Olio.prototype.sender = cadence(function (async, name) {
 
 //
 
-module.exports = cadence(function (async, destructible, dispatcher, message) {
-    return new Olio(destructible, dispatcher, message)
-})
+module.exports = Olio

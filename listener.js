@@ -1,128 +1,114 @@
 // Node.js API.
-var path = require('path')
+const path = require('path')
 
-// Control-flow utilities.
-var delta = require('delta')
-var cadence = require('cadence')
+const coalesce = require('extant')
 
-var Reactor = require('reactor')
-
-var coalesce = require('extant')
-
-var descendent = require('foremost')('descendent')
+const descendent = require('foremost')('descendent')
 
 // Exceptions that you can catch by type.
-var Interrupt = require('interrupt').createInterrupter('subordinate')
+const Interrupt = require('interrupt').create('olio')
 
-var Registrator = require('./registrator')
+const Registrator = require('./registrator')
 
-var Monitor = require('./monitor')
+const Monitor = require('./monitor')
 
-var cluster = require('cluster')
+const cluster = require('cluster')
 
-var assert = require('assert')
+const assert = require('assert')
 
-function Listener (destructible, configuration) {
-    this._destructible = destructible
-    this._destructible.destruct.wait(this, function () { this.destroyed = true })
-    this.destroyed = false
+class Listener {
+    constructor (destructible, configuration) {
+        this._destructible = destructible
+        this._destructible.destruct(() => this.destroyed = true)
+        this.destroyed = false
 
-    this._registrator = {}
+        this._registrator = {}
 
-    descendent.increment()
-    destructible.completed.wait(descendent, 'decrement')
+        descendent.increment()
+        destructible.promise.then(() => descendent.decrement())
 
-    descendent.on('olio:registered', this._register.bind(this))
-    descendent.on('olio:ready', this._ready.bind(this))
+        descendent.on('olio:registered', this._register.bind(this))
+        descendent.on('olio:ready', this._ready.bind(this))
 
-    this._constituents = {}
+        this._constituents = {}
 
-    this._process = process
-    this._process.env.OLIO_SUPERVISOR_PROCESS_ID = process.pid
+        this._process = process
+        this._process.env.OLIO_SUPERVISOR_PROCESS_ID = process.pid
+    }
 
-    this.reactor = new Reactor(this, function (dispatcher) {
-        dispatcher.dispatch('GET /', 'index')
-    })
-}
+    socket (header, socket) {
+        const message = {
+            module: 'olio',
+            method: 'connect',
+            program: header.program,
+            to: header.to,
+            from: header.from
+        }
+        require('assert')(message.program.name)
+        const path = this._constituents[message.to.name].paths[message.to.index]
+        descendent.down(path, 'olio:operate', message, socket)
+    }
 
-Listener.prototype.socket = function (request, socket) {
-    var message = {
-        module: 'olio',
-        method: 'connect',
-        program: {
-            name: request.headers['x-olio-program-name'],
-            index: +request.headers['x-olio-program-index']
-        },
-        to: {
-            name: request.headers['x-olio-to-name'],
-            index: +request.headers['x-olio-to-index']
-        },
-        from: {
-            name: request.headers['x-olio-from-name'],
-            index: +request.headers['x-olio-from-index']
+    _created (count, name, properties, pids) {
+        this._constituents[name] = {
+            count: count,
+            registered: 0,
+            ready: 0,
+            properties: properties,
+            pids: pids,
+            paths: []
         }
     }
-    require('assert')(message.program.name)
-    var path = this._constituents[message.to.name].paths[message.to.index]
-    descendent.down(path, 'olio:operate', message, socket)
-}
 
-Listener.prototype.index = cadence(function (async) {
-    return [ 200, { 'content-type': 'text/plain' }, 'Olio Listener API\n' ]
-})
-
-Listener.prototype._created = function (count, name, properties, pids) {
-    this._constituents[name] = {
-        count: count,
-        registered: 0,
-        ready: 0,
-        properties: properties,
-        pids: pids,
-        paths: []
+    _register (message) {
+        assert(message.from != null, 'is null ' + JSON.stringify(message.from))
+        const process = message.cookie.process, program = message.cookie.program
+        this._constituents[process.name].paths[process.index] = message.from
+        this._registrator[program.name][program.index].register(process.name, process.index, message.from)
     }
-}
 
-Listener.prototype._register = function (message) {
-    assert(message.from != null, 'is null ' + JSON.stringify(message.from))
-    var process = message.cookie.process, program = message.cookie.program
-    this._constituents[process.name].paths[process.index] = message.from
-    this._registrator[program.name][program.index].register(process.name, process.index, message.from)
-}
+    send (address, message, socket) {
+        descendent.down(address, 'olio:operate', message, coalesce(socket))
+    }
 
-Listener.prototype.send = function (address, message, socket) {
-    descendent.down(address, 'olio:operate', message, coalesce(socket))
-}
+    _ready (message) {
+        const process = message.cookie.process, program = message.cookie.program
+        this._registrator[program.name][program.index].ready(process.name)
+    }
 
-Listener.prototype._ready = function (message) {
-    var process = message.cookie.process, program = message.cookie.program
-    this._registrator[program.name][program.index].ready(process.name)
-}
+    _shutdown (pid) {
+        this._destructible.destruct(() => {
+            descendent.down([ pid ], 'olio:shutdown', true)
+        })
+    }
 
-Listener.prototype.spawn = cadence(function (async, configuration) {
-    var executable = path.join(__dirname, 'constituent.js')
-    this._registrator.program = [ new Registrator(this, { name: 'program', index: 0 }, configuration) ]
-    for (var name in configuration.constituents) {
-        var config = configuration.constituents[name]
+    _spawn (destructible, name, config) {
         // TODO Set Node.js arguments.
-        cluster.setupMaster({ exec: executable, args: [ '--scram', coalesce(config.scram, configuration.scram, 8000) ] })
-        var workers = coalesce(config.workers, 1)
-        var pids = []
-        for (var i = 0; i < workers; i++) {
-            var worker = cluster.fork({ OLIO_WORKER_INDEX: i })
-            this._destructible.destruct.wait({ pid: worker.process.pid, name: name }, function () {
-                descendent.down([ this.pid ], 'olio:shutdown', true)
-            })
+        const executable = path.join(__dirname, 'constituent.js')
+        cluster.setupMaster({ exec: executable, args: [] })
+        const workers = coalesce(config.workers, 1)
+        const pids = []
+        for (let index = 0; index < workers; index++) {
+            const worker = cluster.fork({ OLIO_WORKER_INDEX: index })
             descendent.addChild(worker.process, {
                 program: { name: 'program', index: 0 },
-                process: { name: name, index: i }
+                process: { name, index }
             })
-            pids.push(worker.process.pid)
-            Monitor(Interrupt, this, worker.process, { name: name, index: i }, this._destructible.durable([ 'constituent', name, i ]))
+            const pid = worker.process.pid
+            destructible.destruct(descendent.down.bind(descendent, [ pid ], 'olio:shutdown', true))
+            pids.push(pid)
+            destructible.durable([ 'process', index ], Monitor(Interrupt, this, worker.process, { name, index }))
         }
         this._created(workers, name, config.properties, pids)
     }
-})
 
-module.exports = cadence(function (async, destructible, configuration) {
-    return new Listener(destructible, configuration)
-})
+    spawn (configuration) {
+        this._registrator.program = [ new Registrator(this, { name: 'program', index: 0 }, configuration) ]
+
+        for (const name in configuration.constituents) {
+            this._spawn(this._destructible.durable([ 'constituent', name ]), name, configuration.constituents[name])
+        }
+    }
+}
+
+module.exports = Listener
