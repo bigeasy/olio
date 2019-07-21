@@ -15,6 +15,10 @@ const Keyify = require('keyify')
 
 const logger = require('prolific.logger').createLogger('olio')
 
+// TODO It makes more sense to wait for all the children to register before
+// returning the Olio so that we at least know that that much is working and so
+// that a failed startup doesn't report in user code if it doesn't have to.
+
 class Dispatcher {
     constructor (destructible, transmitter) {
         this._destructible = destructible
