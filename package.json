@@ -49,6 +49,6 @@
     },
     "scripts":
     {
-                            "test": "cat olio.bin.js && mocha test/*.test.js"
+                            "test": "npm ls && mocha test/*.test.js"
     }
 }
