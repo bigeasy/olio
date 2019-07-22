@@ -49,6 +49,6 @@
     },
     "scripts":
     {
-                            "test": "npm ls && mocha test/*.test.js"
+                            "test": "mocha test/*.test.js"
     }
 }
