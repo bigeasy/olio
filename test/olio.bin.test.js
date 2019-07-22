@@ -18,7 +18,17 @@ describe('olio.bin', () => {
             '--application', './test/application.js',
             '--configuration', path.resolve(__dirname, './configuration.js')
         ])
-        setTimeout(() => child.destroy(), 1000)
+
+        // TODO Await a ready property of the program.
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        const axios = require('axios')
+
+        const response = await axios.get('http://127.0.0.1:8080/worker/0/ipc')
+
+        assert.equal(response.data, 1, 'ipc')
+
+        child.destroy()
         await child.promise
     })
 })

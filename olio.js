@@ -1,6 +1,8 @@
 // Node.js API.
 const net = require('net')
 
+const coalesce = require('extant')
+
 const once = require('prospective/once')
 
 // Generate a unique, canonical string key from a JSON object.
@@ -16,7 +18,7 @@ const Avenue = require('avenue')
 const Serialize = require('avenue/serialize')
 const Deserialize = require('avenue/deserialize')
 
-const Queue = require('p-queue')
+const { default: PQueue } = require('p-queue')
 
 const Header = require('./header')
 const Sender = require('./sender')
@@ -42,6 +44,8 @@ class Olio extends events.EventEmitter {
         this.socket = message.socket
         this.siblings = message.siblings
 
+        this._message = new PQueue
+
         this._transmitter = dispatcher.transmitter
 
         destructible.destruct(() => {
@@ -58,26 +62,23 @@ class Olio extends events.EventEmitter {
                 handle.destroy()
             }
         } else {
-            await this._message.add(() => async () => {
-                await this._registered.get(Keyify.stringify([ name, index ]))
+            await this._message.add(async () => {
+                const registered = await this._registered.get(Keyify.stringify([ name, index ]))
                 this._transmitter.kibitz(registered.address, {
-                    name: name,
+                    name: messageName,
                     body: message
                 }, coalesce(handle))
             })
         }
     }
 
-    async broadcast (envelope) {
+    async broadcast (name, eventName, message) {
         if (!this.destroyed) {
-            await this._messages.add(() => async () => {
-                const to = { name: envelope.body.shift() }
-                const name = envelope.body.shift()
-                const message = envelope.body.shift()
-                for (let i = 0; i < this.siblings[to.name].count; i++) {
-                    await this._registered.get(Keyify.stringify([ to.name, index ]))
+            await this._message.add(async () => {
+                for (let i = 0; i < this.siblings[name].count; i++) {
+                    const registered = await this._registered.get(Keyify.stringify([ name, i ]))
                     this._transmitter.kibitz(registered.address, {
-                        name: name,
+                        name: eventName,
                         body: message
                     }, null)
                 }

@@ -31,8 +31,10 @@ class Dispatcher {
         this.registered = new Cubbyhole
     }
 
-    fromSibling (message, socket) {
-        this.olio.open[1].emit(message.name, message.body, socket)
+    async fromSibling (message, socket) {
+        const [ olio ] = await this.olio.promise
+        olio.emit(message.name, message.body, socket)
+        return null
     }
 
     // TODO Add PQueue.
