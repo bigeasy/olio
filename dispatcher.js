@@ -69,7 +69,7 @@ class Dispatcher {
                 destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
                 destructible.promise.then(() => socket.destroy())
                 const conduit = new Conduit
-                await destructible.durable('conduit', conduit.pump(inbox.shifter(), outbox))
+                destructible.durable('conduit', conduit.pump(inbox.shifter(), outbox, this.receiver))
                 socket.write(JSON.stringify({ module: 'olio', method: 'connect' }) + '\n')
             }
             break

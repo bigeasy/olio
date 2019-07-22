@@ -3,7 +3,8 @@ module.exports = async function (destructible, olio) {
     const sender = await olio.sender('run')
     const fastify = require('fastify')()
     fastify.get('/worker/:id/conduit', async request => {
-        return await sender.hash(request.params.id).request({ value: 1 })
+        const conduit = sender.hash(request.params.id).conduit
+        return await conduit.request({ value: 1 })
     })
     fastify.get('/worker/:index/ipc', async request => {
         olio.send('run', +request.params.index, 'application:request', 1)
