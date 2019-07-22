@@ -25,7 +25,7 @@
                             "conduit":                      "6.0.x",
                             "cubbyhole":                    "2.0.x",
                             "descendent":                   "2.0.x",
-                            "destructible":                 "4.0.x",
+                            "destructible":                 "4.0.5",
                             "extant":                       "1.0.x",
                             "foremost":                     "1.0.x",
                             "hash.fnv":                     "1.0.x",
