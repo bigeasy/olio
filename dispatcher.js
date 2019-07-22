@@ -60,10 +60,8 @@ class Dispatcher {
                 const destructible = this.destructible.durable([
                     'receiver', message.from.name, message.from.index
                 ])
-                socket.on('error', error => {
-                    logger.error({ stack: error.stack, message: message })
-                    destructible.destroy()
-                })
+                socket.on('error', logger.stackTrace({ message: message }))
+                socket.on('close', () => destructible.destroy())
                 const inbox = new Avenue, outbox = new Avenue
                 destructible.durable('deserialize', Deserialize(new Staccato.Readable(socket), inbox))
                 destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))

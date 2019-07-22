@@ -95,10 +95,8 @@ class Olio extends events.EventEmitter {
         for (let i = 0; i < sibling.count; i++) {
             const destructible = this._destructible.durable([ 'sender', sibling.name, i ])
             const socket = net.connect(this.socket)
-            socket.on('error', error => {
-                logger.error({ stack: error.stack, sibling: sibling })
-                destructible.destroy()
-            })
+            socket.on('error', logger.stackTrace({ sibling: sibling }))
+            socket.on('close', () => destructible.destroy())
             socket.write(JSON.stringify({
                 program: {
                     name: this.program.name,
