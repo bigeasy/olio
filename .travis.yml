@@ -15,4 +15,4 @@ install:
   - npm install -g nyc mocha
 
 script:
-  - nyc npm test
+  - npm test
