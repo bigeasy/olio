@@ -19,7 +19,7 @@ require('arguable')(module, {
 }, async (arguable) => {
     const Destructible = require('destructible')
     // TODO How do we name these really?
-    const destructible = new Destructible('constituent')
+    const destructible = new Destructible('constituent', 500)
     const logger = require('prolific.logger').createLogger('olio')
 
     const shuttle = require('foremost')('prolific.shuttle')

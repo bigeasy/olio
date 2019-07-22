@@ -18,7 +18,7 @@ describe('olio.bin', () => {
             '--application', './test/application.js',
             '--configuration', path.resolve(__dirname, './configuration.js')
         ])
-        setTimeout(() => child.destroy(), 250)
+        setTimeout(() => child.destroy(), 1000)
         await child.promise
     })
 })
