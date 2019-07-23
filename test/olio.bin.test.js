@@ -24,12 +24,15 @@ describe('olio.bin', () => {
 
         const axios = require('axios')
 
+        console.log('IPC')
         const ipc = await axios.get('http://127.0.0.1:8081/worker/0/ipc')
         assert.equal(ipc.data, 1, 'ipc')
 
+        console.log('Conduit')
         const conduit = await axios.get('http://127.0.0.1:8081/worker/0/conduit')
         assert.equal(conduit.data, 1, 'ipc')
 
+        console.log('Done')
         child.destroy()
         await child.promise
     })
