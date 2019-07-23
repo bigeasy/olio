@@ -17,6 +17,7 @@ require('arguable')(module, {
     $trap: 'swallow',
     disconnected: process
 }, async (arguable) => {
+    console.log('LAUNCHED CONSTITUENT')
     const Destructible = require('destructible')
     // TODO How do we name these really?
     const destructible = new Destructible('constituent', 500)
