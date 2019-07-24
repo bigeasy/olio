@@ -86,6 +86,10 @@ class Olio extends events.EventEmitter {
         }
     }
 
+    // Doesn't seem necessary. Especially if we do not actually build until
+    // everything is ready.
+
+    //
     ready (name) {
         return this._ready.get(name)
     }

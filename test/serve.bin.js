@@ -1,4 +1,5 @@
 module.exports = async function (destructible, olio) {
+    await olio.ready('run')
     const once = require('prospective/once')
     const sender = await olio.sender('run')
     const fastify = require('fastify')()
