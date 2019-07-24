@@ -20,7 +20,7 @@ describe('olio.bin', () => {
         ])
 
         // TODO Await a ready property of the program.
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 1500))
 
         const axios = require('axios')
 
