@@ -76,12 +76,6 @@ class Listener {
         this._registrator[program.name][program.index].ready(process.name)
     }
 
-    _shutdown (pid) {
-        this._destructible.destruct(() => {
-            descendent.down([ pid ], 'olio:shutdown', true)
-        })
-    }
-
     _spawn (destructible, name, config) {
         // TODO Set Node.js arguments.
         const executable = path.join(__dirname, 'constituent.js')
