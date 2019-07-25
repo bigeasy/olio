@@ -40,6 +40,9 @@ class Dispatcher {
     // TODO Add PQueue.
     async fromParent (message, socket) {
         if (this.destroyed) {
+            if (socket != null) {
+                socket.destroy()
+            }
             return
         }
         switch (message.method) {
