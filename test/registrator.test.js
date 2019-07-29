@@ -295,8 +295,3 @@ describe('registrator', () => {
         registrator.ready('two')
     })
 })
-return
-require('proof')(18, prove)
-
-function prove (okay) {
-}
