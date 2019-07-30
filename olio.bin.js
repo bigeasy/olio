@@ -25,13 +25,17 @@
 
     ___ . ___
  */
-require('arguable')(module, async arguable => {
+require('arguable')(module, { messenger: process }, async arguable => {
+    await new Promise(resolve => setImmediate(resolve))
+
     const logger = require('prolific.logger').createLogger('olio')
 
     const Destructible = require('destructible')
     const destructible = new Destructible('olio')
 
     const coalesce = require('extant')
+
+    const sendIf = require('./send')
 
     const shuttle = require('foremost')('prolific.shuttle')
     shuttle.start({ uncaughtException: logger, exit: true })
@@ -93,6 +97,10 @@ require('arguable')(module, async arguable => {
     destructible.destruct(() => server.close())
 
     listener.spawn(application)
+
+    await listener.ready
+
+    sendIf(arguable.options.messenger, 'olio:ready')
 
     await arguable.destroyed
     destructible.destroy()

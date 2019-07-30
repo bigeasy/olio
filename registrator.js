@@ -1,4 +1,5 @@
 const coalesce = require('extant')
+const Cubbyhole = require('cubbyhole')
 
 class Registrator {
     constructor (sender, program, configuration) {
@@ -7,6 +8,7 @@ class Registrator {
         this._socket = configuration.socket,
         this._count = 0
         this._registered = 0
+        this.created = new Cubbyhole
         for (const name in configuration.constituents) {
             const constituent = configuration.constituents[name]
             const workers = coalesce(constituent.workers, 1)
@@ -87,6 +89,7 @@ class Registrator {
                 constituent.registered == constituent.count &&
                 sibling.ready == sibling.count
             ) {
+                this.created.set(constituent.name, true)
                 for (let i = 0; i < constituent.count; i++) {
                     this._sender.send(constituent.addresses[i], {
                         method: 'created',
@@ -107,6 +110,7 @@ class Registrator {
         for (const name in this.constituents) {
             const sibling = this.constituents[name]
             if (sibling.registered == sibling.count) {
+                this.created.set(constituent.name, true)
                 for (let i = 0; i < sibling.count; i++) {
                     this._sender.send(sibling.addresses[i], {
                         method: 'created',

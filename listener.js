@@ -71,6 +71,19 @@ class Listener {
         descendent.down(address, 'olio:operate', message, coalesce(socket))
     }
 
+    get ready () {
+        return (async () => {
+            for (const program in this._registrator) {
+                for (const registrator of this._registrator[program]) {
+                    for (const name in registrator.constituents) {
+                        await registrator.created.get(name)
+                    }
+                }
+            }
+            return true
+        })()
+    }
+
     _ready (message) {
         const process = message.cookie.process, program = message.cookie.program
         this._registrator[program.name][program.index].ready(process.name)

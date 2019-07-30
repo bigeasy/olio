@@ -12,7 +12,6 @@ module.exports = async function (destructible, olio) {
         const [ result ] = await once(olio, 'application:response')
         return result
     })
-    console.log('LISTENING')
     await fastify.listen(8081)
     destructible.destruct(() => fastify.close())
     return null
