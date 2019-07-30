@@ -89,7 +89,6 @@ class Registrator {
                 constituent.registered == constituent.count &&
                 sibling.ready == sibling.count
             ) {
-                this.created.set(constituent.name, true)
                 for (let i = 0; i < constituent.count; i++) {
                     this._sender.send(constituent.addresses[i], {
                         method: 'created',
@@ -107,10 +106,10 @@ class Registrator {
         if (++constituent.ready != constituent.count) {
             return
         }
+        this.created.set(constituent.name, true)
         for (const name in this.constituents) {
             const sibling = this.constituents[name]
             if (sibling.registered == sibling.count) {
-                this.created.set(constituent.name, true)
                 for (let i = 0; i < sibling.count; i++) {
                     this._sender.send(sibling.addresses[i], {
                         method: 'created',

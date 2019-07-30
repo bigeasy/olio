@@ -13,6 +13,7 @@ module.exports = async function (destructible, olio) {
         return result
     })
     await fastify.listen(8081)
+    console.log('listening')
     destructible.destruct(() => fastify.close())
     return null
 }
