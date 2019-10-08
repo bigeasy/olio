@@ -29,7 +29,7 @@
                             "extant":                       "1.0.x",
                             "foremost":                     "1.0.x",
                             "hash.fnv":                     "1.0.x",
-                            "interrupt":                    "8.0.x",
+                            "interrupt":                    "9.0.0-alpha.0",
                             "keyify":                       "2.0.x",
                             "nop":                          "1.0.x",
                             "p-queue":                      "6.1.1",
