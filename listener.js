@@ -3,7 +3,7 @@ const path = require('path')
 
 const coalesce = require('extant')
 
-const descendent = require('foremost')('descendent')
+const descendant = require('foremost')('descendant')
 
 // Exceptions that you can catch by type.
 const Interrupt = require('interrupt').create('olio')
@@ -24,11 +24,11 @@ class Listener {
 
         this._registrator = {}
 
-        descendent.increment()
-        destructible.promise.then(() => descendent.decrement())
+        descendant.increment()
+        destructible.promise.then(() => descendant.decrement())
 
-        descendent.on('olio:registered', this._register.bind(this))
-        descendent.on('olio:ready', this._ready.bind(this))
+        descendant.on('olio:registered', this._register.bind(this))
+        descendant.on('olio:ready', this._ready.bind(this))
 
         this._constituents = {}
 
@@ -46,7 +46,7 @@ class Listener {
         }
         require('assert')(message.program.name)
         const path = this._constituents[message.to.name].paths[message.to.index]
-        descendent.down(path, 'olio:operate', message, socket)
+        descendant.down(path, 'olio:operate', message, socket)
     }
 
     _created (count, name, properties, pids) {
@@ -68,7 +68,7 @@ class Listener {
     }
 
     send (address, message, socket) {
-        descendent.down(address, 'olio:operate', message, coalesce(socket))
+        descendant.down(address, 'olio:operate', message, coalesce(socket))
     }
 
     get ready () {
@@ -97,12 +97,12 @@ class Listener {
         const pids = []
         for (let index = 0; index < workers; index++) {
             const worker = cluster.fork({ OLIO_WORKER_INDEX: index })
-            descendent.addChild(worker.process, {
+            descendant.addChild(worker.process, {
                 program: { name: 'program', index: 0 },
                 process: { name, index }
             })
             const pid = worker.process.pid
-            destructible.destruct(descendent.down.bind(descendent, [ pid ], 'olio:shutdown', true))
+            destructible.destruct(descendant.down.bind(descendant, [ pid ], 'olio:shutdown', true))
             pids.push(pid)
             destructible.durable([ 'process', index ], Monitor(Interrupt, this, worker.process, { name, index }))
         }

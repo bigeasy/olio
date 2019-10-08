@@ -26,33 +26,33 @@ require('arguable')(module, {
     shuttle.start({ uncaughtException: logger, exit: true })
     destructible.destruct(() => shuttle.close())
 
-    const descendent = require('foremost')('descendent')
+    const descendant = require('foremost')('descendant')
 
-    descendent.increment()
-    destructible.destruct(() => descendent.decrement())
+    descendant.increment()
+    destructible.destruct(() => descendant.decrement())
 
     const dispatcher = new Dispatcher(destructible.durable('dispatcher'), {
         kibitz: (address, message, handle) => {
-            descendent.up(address, 'olio:message', message, handle)
+            descendant.up(address, 'olio:message', message, handle)
         }
     })
 
     function fromParent (message, handle) {
         dispatcher.fromParent(message.body, handle)
     }
-    descendent.on('olio:operate', fromParent)
+    descendant.on('olio:operate', fromParent)
     function fromSibling (message, handle) {
         dispatcher.fromSibling(message.body, handle)
     }
-    descendent.on('olio:message', fromSibling)
+    descendant.on('olio:message', fromSibling)
     destructible.promise.then(() => {
-        descendent.removeListener('olio:operate', fromParent)
-        descendent.removeListener('olio:message', fromSibling)
+        descendant.removeListener('olio:operate', fromParent)
+        descendant.removeListener('olio:message', fromSibling)
     })
-    descendent.on('olio:shutdown', () => destructible.destroy())
+    descendant.on('olio:shutdown', () => destructible.destroy())
     destructible.promise.then(() => arguable.options.disconnected.disconnect())
 
-    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
+    descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
 
     const [ olio, source, properties ] = await dispatcher.olio.promise
 
@@ -65,7 +65,7 @@ require('arguable')(module, {
     const sub = destructible.durable([ 'constituent', olio.name, olio.index ])
     dispatcher.receiver = await Constituent(destructible, olio, properties)
 
-    descendent.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
+    descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
 
     await destructible.promise
     return 0

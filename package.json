@@ -24,7 +24,7 @@
                             "arguable":                     "10.0.x",
                             "conduit":                      "^7.0.0-alpha.4",
                             "cubbyhole":                    "2.0.x",
-                            "descendent":                   "2.0.x",
+                            "descendant":                   "^3.0.0-alpha.0",
                             "destructible":                 "4.0.x",
                             "extant":                       "1.0.x",
                             "foremost":                     "1.0.x",
