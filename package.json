@@ -33,7 +33,7 @@
                             "keyify":                       "2.0.x",
                             "nop":                          "1.0.x",
                             "p-queue":                      "6.1.1",
-                            "prolific.logger":              "10.0.x",
+                            "prolific.logger":              "11.0.0",
                             "prolific.shuttle":             "24.0.x",
                             "prospective":                  "0.1.0-alpha.1",
                             "staccato":                     "11.0.0-alpha.1"
