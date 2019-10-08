@@ -62,18 +62,23 @@ require('arguable')(module, { messenger: process }, async arguable => {
 
     const listener = new Listener(destructible.durable('listener'), configuration)
 
-    const { default: PQueue } = require('p-queue')
+    const Queue = require('avenue')
 
-    const queue = new PQueue
+    const sockets = new Queue().shifter().paired
     const Header = require('./header')
+
+    destructible.durable('socket', async () => {
+        for await (const socket of sockets.shifter.iterator()) {
+            const header = await Header(socket)
+            listener.socket(header, socket)
+        }
+    })
+    destructible.destruct(() => sockets.shifter.destroy())
 
     const once = require('prospective/once')
     const net = require('net')
     const server = net.createServer(function (socket) {
-        queue.add(async () => {
-            const header = await Header(socket)
-            listener.socket(header, socket)
-        })
+        sockets.queue.push(socket)
     })
     server.listen(application.socket)
     await once(server, 'listening').promise

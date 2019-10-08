@@ -32,7 +32,6 @@
                             "interrupt":                    "9.0.0-alpha.0",
                             "keyify":                       "2.0.x",
                             "nop":                          "1.0.x",
-                            "p-queue":                      "6.1.1",
                             "prolific.logger":              "11.0.0",
                             "prolific.shuttle":             "26.0.0",
                             "prospective":                  "0.1.0-alpha.1",

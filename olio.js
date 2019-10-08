@@ -16,8 +16,6 @@ const Avenue = require('avenue')
 const Serialize = require('avenue/serialize')
 const Deserialize = require('avenue/deserialize')
 
-const { default: PQueue } = require('p-queue')
-
 const Header = require('./header')
 const Sender = require('./sender')
 
@@ -42,8 +40,6 @@ class Olio extends events.EventEmitter {
         this.socket = message.socket
         this.siblings = message.siblings
 
-        this._message = new PQueue
-
         this._transmitter = dispatcher.transmitter
 
         destructible.destruct(() => {
@@ -60,27 +56,23 @@ class Olio extends events.EventEmitter {
                 handle.destroy()
             }
         } else {
-            await this._message.add(async () => {
-                const registered = await this._registered.get(Keyify.stringify([ name, index ]))
-                this._transmitter.kibitz(registered.address, {
-                    name: messageName,
-                    body: message
-                }, coalesce(handle))
-            })
+            const registered = await this._registered.get(Keyify.stringify([ name, index ]))
+            this._transmitter.kibitz(registered.address, {
+                name: messageName,
+                body: message
+            }, coalesce(handle))
         }
     }
 
     async broadcast (name, eventName, message) {
         if (!this.destroyed) {
-            await this._message.add(async () => {
-                for (let i = 0; i < this.siblings[name].count; i++) {
-                    const registered = await this._registered.get(Keyify.stringify([ name, i ]))
-                    this._transmitter.kibitz(registered.address, {
-                        name: eventName,
-                        body: message
-                    }, null)
-                }
-            })
+            for (let i = 0; i < this.siblings[name].count; i++) {
+                const registered = await this._registered.get(Keyify.stringify([ name, i ]))
+                this._transmitter.kibitz(registered.address, {
+                    name: eventName,
+                    body: message
+                }, null)
+            }
         }
     }
 
