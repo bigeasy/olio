@@ -13,7 +13,7 @@ const Olio = require('./olio')
 
 const Keyify = require('keyify')
 
-const logger = require('prolific.logger').createLogger('olio')
+const logger = require('prolific.logger').create('olio')
 
 // TODO It makes more sense to wait for all the children to register before
 // returning the Olio so that we at least know that that much is working and so

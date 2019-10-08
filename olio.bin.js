@@ -28,7 +28,7 @@
 require('arguable')(module, { messenger: process }, async arguable => {
     await new Promise(resolve => setImmediate(resolve))
 
-    const logger = require('prolific.logger').createLogger('olio')
+    const logger = require('prolific.logger').create('olio')
 
     const Destructible = require('destructible')
     const destructible = new Destructible('olio')
@@ -37,9 +37,7 @@ require('arguable')(module, { messenger: process }, async arguable => {
 
     const sendIf = require('./send')
 
-    const shuttle = require('foremost')('prolific.shuttle')
-    shuttle.start({ uncaughtException: logger, exit: true })
-    destructible.destruct(() => shuttle.close())
+    require('foremost')('prolific.shuttle').create()
 
     arguable.required('application', 'configuration')
 

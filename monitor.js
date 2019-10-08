@@ -1,4 +1,4 @@
-const logger = require('prolific.logger').createLogger('olio')
+const logger = require('prolific.logger').create('olio')
 const once = require('prospective/once')
 
 module.exports = async function (Interrupt, self, child, constituent) {

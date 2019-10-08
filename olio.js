@@ -8,7 +8,7 @@ const Keyify = require('keyify')
 
 const events = require('events')
 
-const logger = require('prolific.logger').createLogger('olio')
+const logger = require('prolific.logger').create('olio')
 
 const Conduit = require('conduit')
 const Staccato = require('staccato')

@@ -20,10 +20,9 @@ require('arguable')(module, {
     const Destructible = require('destructible')
     // TODO How do we name these really?
     const destructible = new Destructible('constituent', 500)
-    const logger = require('prolific.logger').createLogger('olio')
+    const logger = require('prolific.logger').create('olio')
 
-    const shuttle = require('foremost')('prolific.shuttle')
-    shuttle.start({ uncaughtException: logger, exit: true })
+    require('foremost')('prolific.shuttle').create()
     destructible.destruct(() => shuttle.close())
 
     const descendant = require('foremost')('descendant')
