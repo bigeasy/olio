@@ -25,7 +25,7 @@ class Listener {
         this._registrator = {}
 
         descendant.increment()
-        destructible.promise.then(() => descendant.decrement())
+        destructible.destructed.then(() => descendant.decrement())
 
         descendant.on('olio:registered', this._register.bind(this))
         descendant.on('olio:ready', this._ready.bind(this))

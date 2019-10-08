@@ -45,12 +45,12 @@ require('arguable')(module, {
         dispatcher.fromSibling(message.body, handle)
     }
     descendant.on('olio:message', fromSibling)
-    destructible.promise.then(() => {
+    destructible.destructed.then(() => {
         descendant.removeListener('olio:operate', fromParent)
         descendant.removeListener('olio:message', fromSibling)
     })
     descendant.on('olio:shutdown', () => destructible.destroy())
-    destructible.promise.then(() => arguable.options.disconnected.disconnect())
+    destructible.destructed.then(() => arguable.options.disconnected.disconnect())
 
     descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
 
@@ -67,6 +67,6 @@ require('arguable')(module, {
 
     descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
 
-    await destructible.promise
+    await destructible.destructed
     return 0
 })

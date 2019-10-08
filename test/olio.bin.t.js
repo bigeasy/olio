@@ -35,5 +35,5 @@ require('proof')(3, async (okay) => {
     okay(conduit.data, 1, 'conduit')
 
     child.destroy()
-    await child.promise
+    await child.destructed
 })

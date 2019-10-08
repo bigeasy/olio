@@ -104,7 +104,7 @@ require('arguable')(module, { messenger: process }, async arguable => {
 
     await arguable.destroyed
     destructible.destroy()
-    await destructible.promise
+    await destructible.destructed
 
     return 0
 })
