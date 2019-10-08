@@ -3,8 +3,6 @@ const net = require('net')
 
 const coalesce = require('extant')
 
-const once = require('prospective/once')
-
 // Generate a unique, canonical string key from a JSON object.
 const Keyify = require('keyify')
 

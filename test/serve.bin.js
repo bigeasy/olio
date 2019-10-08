@@ -9,7 +9,7 @@ module.exports = async function (destructible, olio) {
     })
     fastify.get('/worker/:index/ipc', async request => {
         olio.send('run', +request.params.index, 'application:request', 1)
-        const [ result ] = await once(olio, 'application:response')
+        const [ result ] = await once(olio, 'application:response').promise
         return result
     })
     await fastify.listen(8081)

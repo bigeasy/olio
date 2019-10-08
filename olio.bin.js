@@ -78,7 +78,7 @@ require('arguable')(module, { messenger: process }, async arguable => {
         })
     })
     server.listen(application.socket)
-    await once(server, 'listening')
+    await once(server, 'listening').promise
     // Passing sockets around makes it hard for us to ensure that we are going
     // to destroy them. They could be in a pipe on the way down to a child that
     // exits before getting the message. I've not seen evidence that delivery is
