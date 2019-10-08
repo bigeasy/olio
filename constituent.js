@@ -23,7 +23,6 @@ require('arguable')(module, {
     const logger = require('prolific.logger').create('olio')
 
     require('foremost')('prolific.shuttle').create()
-    destructible.destruct(() => shuttle.close())
 
     const descendant = require('foremost')('descendant')
 
