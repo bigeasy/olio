@@ -20,7 +20,7 @@
     },
     "dependencies":
     {
-                            "avenue":                       "0.1.x",
+                            "avenue":                       "0.2.0-alpha.0",
                             "arguable":                     "10.0.x",
                             "conduit":                      "^7.0.0-alpha.4",
                             "cubbyhole":                    "3.0.0-alpha.1",
