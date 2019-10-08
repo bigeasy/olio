@@ -22,7 +22,7 @@
     {
                             "avenue":                       "0.1.x",
                             "arguable":                     "10.0.x",
-                            "conduit":                      ">=7.0.0-alpha.0",
+                            "conduit":                      "^7.0.0-alpha.4",
                             "cubbyhole":                    "2.0.x",
                             "descendent":                   "2.0.x",
                             "destructible":                 "4.0.x",
