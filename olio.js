@@ -123,8 +123,7 @@ class Olio extends events.EventEmitter {
             destructible.destruct(() => socket.destroy())
             destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
             destructible.destruct(() => outbox.push(null))
-            const client = receivers[i] = new Conduit
-            destructible.durable('conduit', client.pump(inbox.shifter(), outbox))
+            const client = receivers[i] = new Conduit(destructible.durable('conduit'), inbox.shifter(), outbox)
         }
         return new Sender(receivers, sibling.addresses, sibling.count)
     }
