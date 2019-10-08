@@ -36,7 +36,7 @@
                             "prolific.logger":              "10.0.x",
                             "prolific.shuttle":             "24.0.x",
                             "prospective":                  "0.1.0-alpha.1",
-                            "staccato":                     "10.0.x"
+                            "staccato":                     "11.0.0-alpha.1"
     },
     "devDependencies":
     {
