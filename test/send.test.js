@@ -1,6 +1,5 @@
-describe('send if', () => {
+require('proof')(1, (okay) => {
     const sendIf = require('../send')
-    it('can not send if send not present', () => {
-        sendIf({}, 'message')
-    })
+    sendIf({}, 'do not send if send not present')
+    okay('did not send')
 })

@@ -1,9 +1,6 @@
-describe('resolve', () => {
-    const assert = require('assert')
+require('proof')(3, (okay) => {
     const resolve = require('../resolve')
-    it('can resolve', () => {
-        assert.equal(resolve({ path: './test/resolved.js' }, require).value, 1, 'resolve path with extension')
-        assert.equal(resolve({ path: './test/resolved' }, require).value, 1, 'resolve path no extension')
-        assert.equal(resolve({ module: './resolved' }, require).value, 1, 'resolve as module')
-    })
+    okay(resolve({ path: './test/resolved.js' }, require).value, 1, 'resolve path with extension')
+    okay(resolve({ path: './test/resolved' }, require).value, 1, 'resolve path no extension')
+    okay(resolve({ module: './resolved' }, require).value, 1, 'resolve as module')
 })
