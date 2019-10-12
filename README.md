@@ -1,19 +1,20 @@
-Olio
+[![Actions Status](https://github.com/bigeasy/olio/workflows/Node%20CI/badge.svg)](https://github.com/bigeasy/olio/actions)
+[![codecov](https://codecov.io/gh/bigeasy/olio/branch/master/graph/badge.svg)](https://codecov.io/gh/bigeasy/olio)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A process compositor.
 
-    Discussion:     https://github.com/bigeasy/olio/issues/1
+| What          | Where                                     |
+| --- | --- |
+| Discussion    | https://github.com/bigeasy/olio/issues/1  |
+| Documentation | https://bigeasy.github.io/olio            |
+| Source        | https://github.com/bigeasy/olio           |
+| Issues        | https://github.com/bigeasy/olio/issues    |
+| CI            | https://travis-ci.org/bigeasy/olio        |
+| Coverage:     | https://codecov.io/gh/bigeasy/olio        |
+| License:      | MIT                                       |
 
-    Documentation:  https://bigeasy.github.io/olio
-    Source:         https://github.com/bigeasy/olio
-    Issues:         https://github.com/bigeasy/olio/issues
-    CI:             https://travis-ci.org/bigeasy/olio
-    Coverage:       https://coveralls.io/github/bigeasy/olio
 
-    Install:        `npm install olio`
-
-    License:        MIT
-
-To learn everything you want to know about Olio start here:
-
-    http://bigeasy.github.io/olio
+```
+npm install olio
+```
