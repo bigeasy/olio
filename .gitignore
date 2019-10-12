@@ -1,8 +1,7 @@
+/.dots
+/.nyc_output
 /.wiseguy
 /docs
 /node_modules
-/.proof.out
 /coverage
-/.nyc_output
-/node_modules/*
-!/node_modules/olio.test.bin.js
+/node_modules
