@@ -1,6 +1,6 @@
 {
     "name":                 "olio",
-    "version":              "7.0.0-alpha.1",
+    "version":              "7.0.0-alpha.2",
     "description":
 
       "Process compostior.",
@@ -20,8 +20,8 @@
     },
     "dependencies":
     {
-                            "avenue":                       "^0.2.0-alpha.0",
                             "arguable":                     "^11.1.0-alpha.0",
+                            "avenue":                       "^0.2.0-alpha.0",
                             "conduit":                      "^7.0.0-alpha.4",
                             "cubbyhole":                    "^3.0.0-alpha.2",
                             "descendant":                   "^3.0.0-alpha.1",
