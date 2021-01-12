@@ -75,7 +75,7 @@ require('arguable')(module, { messenger: process }, async arguable => {
     })
     destructible.destruct(() => sockets.shifter.destroy())
 
-    const once = require('prospective/once')
+    const once = require('eject')
     const net = require('net')
     const server = net.createServer(function (socket) {
         sockets.queue.push(socket)

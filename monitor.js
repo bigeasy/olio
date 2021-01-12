@@ -1,5 +1,5 @@
 const logger = require('prolific.logger').create('olio')
-const once = require('prospective/once')
+const once = require('eject')
 
 module.exports = async function (Interrupt, self, child, constituent) {
     try {

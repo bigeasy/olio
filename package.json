@@ -26,6 +26,7 @@
                             "cubbyhole":                    "^3.0.0-alpha.2",
                             "descendant":                   "^3.0.0-alpha.1",
                             "destructible":                 "^5.2.0-alpha.1",
+                            "eject":                        "0.2.3",
                             "extant":                       "^1.0.15",
                             "foremost":                     "^1.0.5",
                             "hash.fnv":                     "^1.0.7",
@@ -35,7 +36,6 @@
                             "perhaps":                      "0.0.6",
                             "prolific.logger":              "^11.0.1",
                             "prolific.shuttle":             "^26.0.1",
-                            "prospective":                  "^0.1.0-alpha.3",
                             "staccato":                     "^11.0.0-alpha.3"
     },
     "devDependencies":
