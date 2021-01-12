@@ -1,6 +1,6 @@
 const Cubbyhole = require('cubbyhole')
 
-const Future = require('prospective/future')
+const Future = require('perhaps')
 
 const Staccato = require('staccato')
 const Conduit = require('conduit')
