@@ -21,7 +21,7 @@
     "dependencies":
     {
                             "arguable":                     "11.1.0-alpha.0",
-                            "avenue":                       "0.2.0-alpha.0",
+                            "avenue":                       "0.6.13",
                             "conduit":                      "7.0.0-alpha.9",
                             "cubbyhole":                    "4.0.2",
                             "descendant":                   "3.0.0-alpha.4",
