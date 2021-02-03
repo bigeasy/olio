@@ -20,23 +20,23 @@
     },
     "dependencies":
     {
-                            "arguable":                     "^11.1.0-alpha.0",
-                            "avenue":                       "^0.2.0-alpha.0",
+                            "arguable":                     "11.1.0-alpha.0",
+                            "avenue":                       "0.2.0-alpha.0",
                             "conduit":                      "7.0.0-alpha.6",
-                            "cubbyhole":                    "^3.0.0-alpha.2",
-                            "descendant":                   "^3.0.0-alpha.1",
-                            "destructible":                 "^5.2.0-alpha.1",
+                            "cubbyhole":                    "3.0.0-alpha.2",
+                            "descendant":                   "3.0.0-alpha.1",
+                            "destructible":                 "5.2.0-alpha.1",
                             "eject":                        "0.2.3",
-                            "extant":                       "^1.0.15",
+                            "extant":                       "1.0.15",
                             "foremost":                     "^1.0.5",
                             "hash.fnv":                     "^1.0.7",
-                            "interrupt":                    "^9.0.0-alpha.1",
+                            "interrupt":                    "9.0.0-alpha.1",
                             "keyify":                       "^2.0.3",
                             "nop":                          "1.0.0",
                             "perhaps":                      "0.0.6",
-                            "prolific.logger":              "^11.0.1",
-                            "prolific.shuttle":             "^26.0.1",
-                            "staccato":                     "^11.0.0-alpha.3"
+                            "prolific.logger":              "11.0.1",
+                            "prolific.shuttle":             "28.0.0-alpha.1",
+                            "staccato":                     "11.0.0-alpha.3"
     },
     "devDependencies":
     {
