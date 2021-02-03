@@ -42,7 +42,7 @@
     {
                             "axios":                        "0.21.1",
                             "byline":                       "5.0.0",
-                            "fastify":                      "3.9.2",
+                            "fastify":                      "3.11.0",
                             "proof":                        "^8.0.0-alpha.8"
     },
     "main":                 "olio",
