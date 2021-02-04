@@ -28,6 +28,7 @@ require('proof')(3, async (okay) => {
 
     const axios = require('axios')
 
+    try {
     const ipc = await axios.get('http://127.0.0.1:8081/worker/0/ipc')
     okay(ipc.data, 1, 'ipc')
 
@@ -35,5 +36,8 @@ require('proof')(3, async (okay) => {
     okay(conduit.data, 1, 'conduit')
 
     child.destroy()
-    await child.destructed
+    } catch (error) {
+        console.log(error.stack)
+    }
+    await child.promise
 })

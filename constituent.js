@@ -1,4 +1,4 @@
-const coalesce = require('extant')
+const { coalesce } = require('extant')
 const Resolve = require('./resolve')
 const Dispatcher = require('./dispatcher')
 
@@ -43,12 +43,12 @@ require('arguable')(module, {
         dispatcher.fromSibling(message.body, handle)
     }
     descendant.on('olio:message', fromSibling)
-    destructible.destructed.then(() => {
+    destructible.done.then(() => {
         descendant.removeListener('olio:operate', fromParent)
         descendant.removeListener('olio:message', fromSibling)
     })
     descendant.on('olio:shutdown', () => destructible.destroy())
-    destructible.destructed.then(() => arguable.options.disconnected.disconnect())
+    destructible.done.then(() => arguable.options.disconnected.disconnect())
 
     descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
 
@@ -60,11 +60,11 @@ require('arguable')(module, {
     memoryUsage()
     setInterval(memoryUsage, 5000).unref()
 
-    const sub = destructible.durable([ 'constituent', olio.name, olio.index ])
+    const sub = destructible.durable(`constituent.${olio.name}.${olio.index}`)
     dispatcher.receiver = await Constituent(destructible, olio, properties)
 
     descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:ready', {})
 
-    await destructible.destructed
+    await destructible.promise
     return 0
 })

@@ -62,7 +62,7 @@ require('arguable')(module, { messenger: process }, async arguable => {
 
     const listener = new Listener(destructible.durable('listener'), configuration)
 
-    const Queue = require('avenue')
+    const { Queue } = require('avenue')
 
     const sockets = new Queue().shifter().paired
     const Header = require('./header')

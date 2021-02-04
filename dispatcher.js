@@ -2,18 +2,18 @@ const Cubbyhole = require('cubbyhole')
 
 const Future = require('perhaps')
 
-const Staccato = require('staccato')
+const { Staccato } = require('staccato')
 const Conduit = require('conduit')
 
-const Avenue = require('avenue')
-const Serialize = require('avenue/serialize')
-const Deserialize  = require('avenue/deserialize')
+const { Queue } = require('avenue')
 
 const Olio = require('./olio')
 
 const Keyify = require('keyify')
 
 const logger = require('prolific.logger').create('olio')
+
+const { Recorder, Player } = require('transcript')
 
 // TODO It makes more sense to wait for all the children to register before
 // returning the Olio so that we at least know that that much is working and so
@@ -52,7 +52,7 @@ class Dispatcher {
             }
             break
         case 'registered': {
-                this.registered.set(Keyify.stringify([ message.name, message.index ]), {
+                this.registered.resolve(Keyify.stringify([ message.name, message.index ]), {
                     name: message.name,
                     index: message.index,
                     address: message.address,
@@ -64,19 +64,34 @@ class Dispatcher {
                 // TODO This is also swallowing errors somehow.
                 const destructible = this.destructible.durable([
                     'receiver', message.from.name, message.from.index
-                ])
+                ].join('.'))
                 socket.on('error', logger.stackTrace({ message: message }))
                 socket.on('close', () => destructible.destroy())
-                const inbox = new Avenue, outbox = new Avenue
-                destructible.durable('deserialize', Deserialize(new Staccato.Readable(socket), inbox))
-                destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
-                destructible.destructed.then(() => socket.destroy())
+                const inbox = new Queue, outbox = new Queue, staccato = new Staccato(socket)
+                const recorder = Recorder.create(() => 0)
+                destructible.durable('serialize', async () => {
+                    for await (const buffers of outbox.shifter()) {
+                        await staccato.writable.write([ recorder([ buffers ]) ])
+                    }
+                    staccato.writable.end()
+                    destructible.destroy()
+                })
+                const player = new Player(() => 0)
+                destructible.durable('deserialize', async () => {
+                    for await (const buffer of staccato.readable) {
+                        for await (const entry of player.split(buffer)) {
+                            inbox.push(entry.parts)
+                        }
+                    }
+                    destructible.destroy()
+                    inbox.push(null)
+                })
                 const conduit = new Conduit(destructible.durable('conduit'), inbox.shifter(), outbox, this.receiver)
                 socket.write(JSON.stringify({ module: 'olio', method: 'connect' }) + '\n')
             }
             break
         case 'created': {
-                this.ready.set(message.name, {
+                this.ready.resolve(message.name, {
                     name: message.name,
                     addresses: message.addresses,
                     count: message.count

@@ -1,12 +1,9 @@
 // Node.js API.
 const path = require('path')
 
-const coalesce = require('extant')
+const { coalesce } = require('extant')
 
 const descendant = require('foremost')('descendant')
-
-// Exceptions that you can catch by type.
-const Interrupt = require('interrupt').create('olio')
 
 const Registrator = require('./registrator')
 
@@ -25,7 +22,7 @@ class Listener {
         this._registrator = {}
 
         descendant.increment()
-        destructible.destructed.then(() => descendant.decrement())
+        destructible.done.then(() => descendant.decrement())
 
         descendant.on('olio:registered', this._register.bind(this))
         descendant.on('olio:ready', this._ready.bind(this))
@@ -104,7 +101,7 @@ class Listener {
             const pid = worker.process.pid
             destructible.destruct(descendant.down.bind(descendant, [ pid ], 'olio:shutdown', true))
             pids.push(pid)
-            destructible.durable([ 'process', index ], Monitor(Interrupt, this, worker.process, { name, index }))
+            destructible.durable(`process.${index}`, Monitor(this, worker.process, { name, index }))
         }
         this._created(workers, name, config.properties, pids)
     }
@@ -113,7 +110,7 @@ class Listener {
         this._registrator.program = [ new Registrator(this, { name: 'program', index: 0 }, configuration) ]
 
         for (const name in configuration.constituents) {
-            this._spawn(this._destructible.durable([ 'constituent', name ]), name, configuration.constituents[name])
+            this._spawn(this._destructible.durable(`constituent.${name}`), name, configuration.constituents[name])
         }
     }
 }

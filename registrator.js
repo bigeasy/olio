@@ -1,4 +1,4 @@
-const coalesce = require('extant')
+const { coalesce } = require('extant')
 const Cubbyhole = require('cubbyhole')
 
 class Registrator {
@@ -106,7 +106,7 @@ class Registrator {
         if (++constituent.ready != constituent.count) {
             return
         }
-        this.created.set(constituent.name, true)
+        this.created.resolve(constituent.name, true)
         for (const name in this.constituents) {
             const sibling = this.constituents[name]
             if (sibling.registered == sibling.count) {

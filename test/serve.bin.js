@@ -8,8 +8,9 @@ module.exports = async function (destructible, olio) {
         return await conduit.invoke({ value: 1 })
     })
     fastify.get('/worker/:index/ipc', async request => {
-        olio.send('run', +request.params.index, 'application:request', 1)
-        const [ result ] = await once(olio, 'application:response').promise
+        const promise = once(olio, 'application:response').promise
+        await olio.send('run', +request.params.index, 'application:request', 1)
+        const [ result ] = await promise
         return result
     })
     await fastify.listen(8081)

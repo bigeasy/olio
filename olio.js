@@ -1,7 +1,7 @@
 // Node.js API.
 const net = require('net')
 
-const coalesce = require('extant')
+const { coalesce } = require('extant')
 
 // Generate a unique, canonical string key from a JSON object.
 const Keyify = require('keyify')
@@ -11,15 +11,15 @@ const events = require('events')
 const logger = require('prolific.logger').create('olio')
 
 const Conduit = require('conduit')
-const Staccato = require('staccato')
-const Avenue = require('avenue')
-const Serialize = require('avenue/serialize')
-const Deserialize = require('avenue/deserialize')
+const { Staccato } = require('staccato')
+const { Queue } = require('avenue')
 
 const Header = require('./header')
 const Sender = require('./sender')
 
-const Interrupt = require('interrupt')
+const { Interrupt } = require('interrupt')
+
+const { Recorder, Player } = require('transcript')
 
 class Olio extends events.EventEmitter {
     constructor (destructible, dispatcher, message) {
@@ -88,7 +88,7 @@ class Olio extends events.EventEmitter {
         const sibling = await this._ready.get(name)
         const receivers = []
         for (let i = 0; i < sibling.count; i++) {
-            const destructible = this._destructible.durable([ 'sender', sibling.name, i ])
+            const destructible = this._destructible.durable(`sender.${sibling.name}.${i}`)
             const socket = net.connect(this.socket)
             socket.on('error', logger.stackTrace({ sibling: sibling }))
             socket.on('close', () => destructible.destroy())
@@ -106,19 +106,36 @@ class Olio extends events.EventEmitter {
                     index: this.index
                 }
             }) + '\n')
+            // **TODO** Pass a staccato to Header function.
             const deployed = await Header(socket)
             Olio.Error.assert(deployed != null && deployed.module == 'olio' && deployed.method == 'connect', 'failed to start middleware')
-            const inbox = new Avenue, outbox = new Avenue
-            destructible.durable('deserialize', Deserialize(new Staccato.Readable(socket), inbox))
+            const inbox = new Queue, outbox = new Queue, staccato = new Staccato(socket)
+            const player = new Player(() => 0)
+            destructible.durable('deserialize', async () => {
+                for await (const buffer of staccato.readable) {
+                    for await (const entry of player.split(buffer)) {
+                        inbox.push(entry.parts)
+                    }
+                }
+                destructible.destroy()
+                inbox.push(null)
+            })
             destructible.destruct(() => socket.destroy())
-            destructible.durable('serialize', Serialize(outbox.shifter(), new Staccato.Writable(socket)))
+            const recorder = Recorder.create(() => 0)
+            destructible.durable('serialize', async () => {
+                for await (const buffers of outbox.shifter()) {
+                    await staccato.writable.write([ recorder([ buffers ]) ])
+                }
+                staccato.writable.end()
+                destructible.destroy()
+            })
             destructible.destruct(() => outbox.push(null))
             const client = receivers[i] = new Conduit(destructible.durable('conduit'), inbox.shifter(), outbox)
         }
         return new Sender(receivers, sibling.addresses, sibling.count)
     }
 
-    static Error = Interrupt.create('Olio.Error')
+    static Error = Interrupt.create('Olio.Error', {})
 }
 
 // TODO You're working through this right now.
