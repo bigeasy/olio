@@ -3,6 +3,8 @@ const net = require('net')
 
 const { coalesce } = require('extant')
 
+const once = require('eject')
+
 // Generate a unique, canonical string key from a JSON object.
 const Keyify = require('keyify')
 
@@ -92,6 +94,7 @@ class Olio extends events.EventEmitter {
             const socket = net.connect(this.socket)
             socket.on('error', logger.stackTrace({ sibling: sibling }))
             socket.on('close', () => destructible.destroy())
+            await once(socket, 'connect').promise
             socket.write(JSON.stringify({
                 program: {
                     name: this.program.name,
