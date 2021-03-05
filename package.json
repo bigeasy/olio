@@ -35,7 +35,7 @@
                             "nop":                          "1.0.0",
                             "perhaps":                      "0.0.6",
                             "prolific.logger":              "11.0.3",
-                            "prolific.shuttle":             "28.0.0-alpha.1",
+                            "prolific.shuttle":             "28.0.0-alpha.2",
                             "staccato":                     "13.0.0-alpha.3",
                             "transcript":                   "0.1.4"
     },
