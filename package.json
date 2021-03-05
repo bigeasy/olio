@@ -43,7 +43,7 @@
     {
                             "axios":                        "0.21.1",
                             "byline":                       "5.0.0",
-                            "fastify":                      "3.12.0",
+                            "fastify":                      "3.13.0",
                             "proof":                        "^9.0.3"
     },
     "main":                 "olio",
