@@ -105,9 +105,8 @@ require('arguable')(module, { messenger: process }, async arguable => {
 
     sendIf(arguable.options.messenger, 'olio:ready')
 
-    await arguable.destroyed
-    destructible.destroy()
-    await destructible.destructed
+    arguable.on('destroy', () => destructible.destroy())
+    await destructible.promise
 
     return 0
 })
