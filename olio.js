@@ -19,7 +19,7 @@ const { Queue } = require('avenue')
 const Header = require('./header')
 const Sender = require('./sender')
 
-const { Interrupt } = require('interrupt')
+const Interrupt = require('interrupt')
 
 const { Recorder, Player } = require('transcript')
 

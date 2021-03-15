@@ -13,6 +13,8 @@ const cluster = require('cluster')
 
 const assert = require('assert')
 
+const noop = require('nop')
+
 class Listener {
     constructor (destructible, configuration) {
         this._destructible = destructible
@@ -22,7 +24,7 @@ class Listener {
         this._registrator = {}
 
         descendant.increment()
-        destructible.done.then(() => descendant.decrement())
+        destructible.promise.then(() => descendant.decrement(), noop)
 
         descendant.on('olio:registered', this._register.bind(this))
         descendant.on('olio:ready', this._ready.bind(this))

@@ -1,3 +1,4 @@
+const noop = require('nop')
 const { coalesce } = require('extant')
 const Resolve = require('./resolve')
 const Dispatcher = require('./dispatcher')
@@ -43,12 +44,12 @@ require('arguable')(module, {
         dispatcher.fromSibling(message.body, handle)
     }
     descendant.on('olio:message', fromSibling)
-    destructible.done.then(() => {
+    destructible.promise.then(() => {
         descendant.removeListener('olio:operate', fromParent)
         descendant.removeListener('olio:message', fromSibling)
-    })
+    }, noop)
     descendant.on('olio:shutdown', () => destructible.destroy())
-    destructible.done.then(() => arguable.options.disconnected.disconnect())
+    destructible.promise.then(() => arguable.options.disconnected.disconnect(), noop)
 
     descendant.up(+coalesce(process.env.OLIO_SUPERVISOR_PROCESS_ID, 0), 'olio:registered', {})
 
