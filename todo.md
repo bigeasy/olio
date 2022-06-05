@@ -23,3 +23,5 @@ happening. Catching exceptions is actually quite rare. Rarely do you actually
 filter them out like that.
 - [ ] Create HTTP interrogtation Olio child.
 - [ ] Log process details from Olio supervisor.
+- [ ] Capture failure to publish to child IPC in Olio.
+- [ ] Assert that we are disconnected when the exit comes in Descendent in Olio.
